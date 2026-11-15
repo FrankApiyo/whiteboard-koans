@@ -48,7 +48,9 @@ defmodule Easel.ShapesTest do
     end
 
     test "a numeric string is normalised to an integer" do
-      assert {:ok, %{x: 5, w: 30}} = Shapes.cast(payload("rect", %{"w" => "30", "h" => 40, "x" => "5"}))
+      assert {:ok, %{x: 5, w: 30}} =
+               Shapes.cast(payload("rect", %{"w" => "30", "h" => 40, "x" => "5"}))
+
       assert {:error, _} = Shapes.cast(payload("rect", %{"w" => "abc", "h" => 1}))
     end
 
