@@ -5,7 +5,7 @@ Files this chapter touches
   - lib/easel_web/live/board_live.ex (this chapter's Elixir koans)
   - lib/easel/shapes.ex (this chapter's Elixir koans)
 
-The browser sends each change to the server and hears back. From the Phoenix course:
+Browser to server and back. From the Phoenix course:
 handle_event/3 runs for each event the browser sends (chapter 10, LiveView basics), and a
 changeset checks data from outside (chapter 04). Here code sends the event, not a form:
 live.pushEvent(event, payload, onReply) pushes it, and the server's {:reply, map, socket}

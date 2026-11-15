@@ -3,14 +3,15 @@ Files this chapter touches
   - assets/test/support/board_harness.ts: renderBoard
   - test/support/board_helpers.ex (this chapter's Elixir koans)
 
-Easel is tested at three heights. Most tests are pure: geometry, guards, the tool machine and
-the throttle are functions over plain data. Components run in jsdom with Testing Library, as
-the Phoenix course's LiveView tests ran with no browser: render mounts one, queries find
-elements by role and name as a person would, and a fake live records pushes and plays events.
-Only the Playwright suite in e2e/ runs the real thing: the solved app as a server, two browsers.
+Testing at three heights. Most tests are pure: geometry, guards, the tool machine and the throttle
+are functions over plain data. Components run in jsdom with Testing Library, as the Phoenix
+course's LiveView tests (chapter 22, testing the app) ran with no browser: render mounts one,
+queries find elements by role and name as a person would, and a fake live records pushes and plays
+events. Only the Playwright suite in e2e/ runs the real thing, the solved app and two browsers,
+and only there do Board and BoardLive meet: LiveViewTest runs no JavaScript and Vitest fakes live,
+so a renamed event or prop passes both and fails only here.
 
-A harness is the setup every test of a component repeats, in one function that answers what
-the tests need back. A Toolbar harness, for one:
+A harness puts the setup every test of a component repeats in one function. A Toolbar harness:
 
     function renderToolbar(tool: Tool = "select") {
       const state = new BoardState([], 1)
@@ -18,15 +19,16 @@ the tests need back. A Toolbar harness, for one:
       return { ...render(Toolbar, { state, ondelete: () => {} }), state }
     }
 
-renderBoard is Board's: the overrides a test gives laid over default props, Board rendered,
-and its canvas found in the render's own container, so two Boards can share a page. Board.test
-in assets/test uses it; run that suite with KOANS_LIB=solutions/lib npm run test:app here, and
-npm test once exported. The e2e suite is never run beside the dev server: playwright.config.ts
-starts the app with MIX_ENV "e2e" on port 4100. collaboration.spec.ts holds 7 tests, and before
-each, e2e/board.ts signs two people in, each in a browser context of its own.
+renderBoard is Board's: the overrides a test gives laid over default props, Board rendered, and
+its canvas found in the render's own container, so two Boards can share a page. Board.test in
+assets/test uses it (KOANS_LIB=solutions/lib npm run test:app here, npm test once exported). The
+e2e suite never uses the dev server: playwright.config.ts starts its own, with MIX_ENV "e2e" on
+port 4100 and its own database. collaboration.spec.ts checks what only a real browser can, such as
+"every shape is still there after a reload": a fresh mount. Before each test, e2e/board.ts signs
+two people in, each in its own browser context (own cookies, so two names).
 
     Write:          assets/test/support/board_harness.ts:19  (14: render Board, place its canvas)
-    Exercised by:   assets/koans/14_testing_the_whole_thing.test.ts:61
+    Exercised by:   assets/koans/14_testing_the_whole_thing.test.ts:63
 
 API you'll use
   - render, within: render(Toolbar, props) answers container, rerender, unmount and queries;
@@ -108,14 +110,14 @@ test("Tests find Board's parts as a person does, by role and name: the group Dra
   expect(names).toEqual(["Ada (you)", "Lin"])
 })
 
-test("The Playwright suite is read here, never run: it starts the app with MIX_ENV e2e on port 4100, its spec holds 7 tests, and before each, two people sign in, each in a browser context of its own.", () => {
+test("The Playwright suite is read here, never run: it starts the app with MIX_ENV e2e on port 4100, one of its tests reloads the page, and before each test two people sign in, each in a browser context of its own.", () => {
   const config = readFileSync("playwright.config.ts", "utf8")
   const spec = readFileSync("e2e/collaboration.spec.ts", "utf8")
   const helpers = readFileSync("e2e/board.ts", "utf8")
 
   expect(/const port = (\d+)/.exec(config)?.[1]).toBe("4100")
   expect(config).toContain('MIX_ENV: "e2e"')
-  expect(spec.match(/^test\("/gm)?.length).toBe(7)
+  expect(/^test\("(every shape[^"]*)"/m.exec(spec)?.[1]).toBe("every shape is still there after a reload")
   expect(spec).toContain("visitors = await twoPeopleOnOneBoard(browser)")
   expect(helpers).toContain("const context = await browser.newContext()")
 })

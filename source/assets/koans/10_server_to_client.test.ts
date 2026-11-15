@@ -4,7 +4,7 @@ Files this chapter touches
   - assets/js/inbox.ts: applyIncoming, listen
   - lib/easel_web/live/board_live.ex (this chapter's Elixir koans)
 
-The server tells the browser what changed. From the Phoenix course: handle_info/2 takes
+Server to browser. From the Phoenix course: handle_info/2 takes
 messages from other processes (chapter 14, PubSub and Presence). BoardLive's handle_info/2
 turns each board op into push_event(socket, event, payload). In the browser LiveView fires it
 on window as phx:<event>, and live.handleEvent(event, callback) listens there; handleEvent

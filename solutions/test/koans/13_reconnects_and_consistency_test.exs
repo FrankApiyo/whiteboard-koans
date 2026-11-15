@@ -11,11 +11,11 @@ defmodule Koans.Ch13.ReconnectsAndConsistencyTest do
   sync_id, on which the browser's surviving component resyncs (the TypeScript koans).
 
   The board server can restart under its viewers instead: it crashes, and the DynamicSupervisor
-  starts it again from the database, without the ops still in the save window. init/1 calls
-  announce_restart/1, which broadcasts :board_restarted on the board's topic, and each BoardLive
-  answers it as a reconnect would: a fresh snapshot and a new sync_id. live_svelte then sends
-  only the props that changed, which it can tell only with socket={@socket}. A shop's price
-  list does the same when its prices reload:
+  starts it again from the database. A crash still saves in terminate/2; a :kill skips it and
+  loses the ops in the save window. init/1 calls announce_restart/1, which broadcasts
+  :board_restarted on the board's topic, and each BoardLive answers it as a reconnect would: a
+  fresh snapshot and a new sync_id. live_svelte then sends only the props that changed, which it
+  can tell only with socket={@socket}. A shop's price list does the same when its prices reload:
 
       def handle_info(:prices_reloaded, socket),
         do: {:noreply, assign(socket, prices: Prices.all(), version: Prices.version())}

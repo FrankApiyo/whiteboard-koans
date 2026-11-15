@@ -9,7 +9,7 @@ defmodule Koans.Ch07.BoardsAndShapesInTheDatabaseTest do
     - lib/easel/boards.ex: Easel.Boards.generate_slug/0, create_board/1, list_boards/1,
       load_shapes/1, save_shapes/2
 
-  Boards and shapes live in two tables. The migrations and schemas are given: a board has a
+  Boards and shapes in tables. The migrations and schemas are given: a board has a
   title and a slug with a unique index, and a shape row has board_id, client_id (a UUID the
   browser makes with crypto.randomUUID(), cast by each shape schema's Ecto.UUID id field), kind,
   color, z and data, a :map column that SQLite keeps as JSON text. JSON has no atoms, so a row

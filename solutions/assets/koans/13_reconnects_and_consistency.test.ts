@@ -2,33 +2,40 @@
 Files this chapter touches
   - assets/js/resync.ts: applyProps
   - lib/easel_web/live/board_live.ex (this chapter's Elixir koans)
+  - lib/easel/boards/board_server.ex (this chapter's Elixir koans)
 
-Every browser ends up with the server's board. From the Phoenix course (chapter 10, LiveView
-basics): a dropped socket reconnects by itself and the server mounts again, in a new process.
-The page stays, and so does live_svelte's hook element, so LiveView calls the hook's updated()
-with the new props, never mounted(): Board and its BoardState survive the reconnect.
+Every browser converges. From the Phoenix course (chapter 10, LiveView basics, and chapter 13
+on reconnects): a dropped socket reconnects by itself and the server mounts again, in a new
+process. The page stays, and so does live_svelte's hook element, so LiveView calls the hook's
+updated() with the new props, never mounted(): Board and its BoardState survive the reconnect.
 
 So each connected mount sends a fresh sync_id with its snapshot, and Board's effect hands both
 to applyProps(state, props). A sync_id other than the state's means "this is the whole board
 now": replace every shape and keep the new id. The same sync_id changes nothing. Other, not
-greater: sync ids are unique integers, not a count, and start over when the server restarts. A
-playlist that reloads on a new version does the same:
+greater: sync ids are unique integers for this run of the app, not a count: after a restart they
+start low again, so compare with !==. A playlist that reloads on a new version does the same:
 
     if (next.version !== list.version) list.load(next.tracks, next.version)
 
 Between resyncs the browser runs ahead. A drawn shape shows at once and goes out as shape:add;
 its echo, shape:added with the z the server gave it, replaces it by id. Moves carry whole
 positions, so the server's order decides: the last move it applies wins, in every browser,
-the sender's too. A move it applied earlier is lost, with no merge and no warning.
+the sender's too: one process, the board server, sends every op, and messages from one process
+arrive in the order sent. A move it applied earlier is lost, with no merge and no warning; a
+delete beats any move, and since nothing remembers a deleted id, a late add with that id brings
+it back.
 
     Write:          assets/js/resync.ts:9  (13: replace everything when sync_id changes)
-    Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:70
+    Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:75
 
 API you'll use
   - state.syncId, state.replaceAll(shapes, syncId): chapter 04's BoardState
   - SvelteHook.updated.call(hook): what LiveView runs when the hook's element changes; it reads
     data-props again, and with data-use-diff "true" sets only the keys sent, keeping the rest
   - getHooks, SvelteHook.mounted.call(hook), hook._instance: chapter 06
+  - disconnected(), reconnected(): LiveView calls these on the hook too, around a rejoin;
+    live_svelte exposes them as useLiveConnection().connected. A rejoin that fails reloads
+    the page, and then everything mounts fresh.
   - drag, pointer, placeCanvas: chapter 05; a drag with the Rectangle tool from 100, 100 to
     300, 250 draws "rectangle 200 by 150 at 100, 100"
   - rect(), ellipse(): "rectangle 200 by 100 at 100, 100" and "ellipse 200 by 100 at 400, 300";
@@ -41,18 +48,16 @@ Picture: lessons/svg/13_resync.svg
 import { expect } from "vitest"
 import { test } from "@koans/runtime"
 import { flushSync, unmount } from "svelte"
-import { fireEvent, render, screen } from "@testing-library/svelte"
+import { fireEvent, render, screen, within } from "@testing-library/svelte"
 import { getHooks } from "@koans/live_svelte_hooks"
 import Board from "../svelte/Board.svelte"
 import { BoardState } from "../js/board_state.svelte"
 import { applyProps } from "../js/resync"
-import type { Person, Shape } from "../js/types"
+import type { Shape } from "../js/types"
 import { createFakeLive, type FakeLive } from "../test/support/fake_live"
 import { drag, placeCanvas } from "../test/support/canvas"
 import { ellipse, ID_A, ID_B, line, rect } from "../test/support/fixtures"
-
-const ada: Person = { tab: "tab-ada", name: "Ada", color: "#e03131" }
-const lin: Person = { tab: "tab-lin", name: "Lin", color: "#1971c2" }
+import { ada, lin } from "../test/support/board_harness"
 
 type MountedHook = FakeLive & { el: HTMLElement; _instance?: { state: Record<string, unknown> } }
 
@@ -78,7 +83,7 @@ test("Implement applyProps, Board's resync. 1. When the props bring a sync_id ot
   expect(state.syncId).toBe(3)
 }, { exercises: "13: replace everything when sync_id changes" })
 
-test("A reconnect keeps the Board the hook mounted: LiveView calls updated, not mounted, so the same component takes the fresh mount's props and swaps in its shapes, while a later update that sends only people keeps a pushed shape.", () => {
+test("When LiveView calls updated, as it does after a reconnect, the hook keeps the Board it mounted, with the tool you picked: the same component takes the fresh mount's props and swaps in its shapes, while a later update that sends only people keeps a pushed shape.", async () => {
   const el = document.createElement("div")
   el.dataset.name = "Board"
   el.dataset.props = JSON.stringify({ shapes: [rect()], sync_id: 7, me: ada, people: [ada] })
@@ -88,15 +93,16 @@ test("A reconnect keeps the Board the hook mounted: LiveView calls updated, not 
   const { SvelteHook } = getHooks({ default: [{ default: Board }], filenames: ["../svelte/Board.svelte"] })
   try {
     SvelteHook.mounted.call(hook)
-    const mounted = hook._instance
     const canvas = el.querySelector("canvas")
     if (!canvas) throw new Error("The hook mounted no canvas")
+    await fireEvent.click(within(el).getByRole("button", { name: "Ellipse" }))
 
     el.dataset.useDiff = "true"
     el.dataset.props = JSON.stringify({ shapes: [ellipse()], sync_id: 8, me: ada, people: [ada] })
     SvelteHook.updated.call(hook)
     flushSync()
-    expect(hook._instance).toBe(mounted)
+    expect(within(el).getByRole("button", { name: "Ellipse" }).getAttribute("aria-pressed")).toBe("true")
+    expect(el.querySelector("canvas")).toBe(canvas)
     expect(described(canvas)).toEqual(["ellipse 200 by 100 at 400, 300"])
 
     hook.emit("shape:added", rect())

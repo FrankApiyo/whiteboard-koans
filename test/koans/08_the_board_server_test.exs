@@ -5,7 +5,7 @@ defmodule Koans.Ch08.TheBoardServerTest do
     - lib/easel/boards/board_server.ex: Easel.Boards.BoardServer.via/1, ensure_started/1,
       init/1, reset_idle_timer/1, call/2, handle_call/3, open_save_window/1, handle_info/2
 
-  One process per board holds its shapes. BoardServer is a GenServer named with a via tuple,
+  One process per board. BoardServer is a GenServer named with a via tuple,
   {:via, Registry, {registry, key}}, so callers reach it by slug alone. Its given supervisor,
   Easel.Boards.BoardSupervisor, sets max_restarts: 100 in max_seconds: 5 (the default is 3),
   so a few crashes on different boards don't stop every board. use GenServer, restart:

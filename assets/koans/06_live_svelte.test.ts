@@ -4,7 +4,7 @@ Files this chapter touches
     list
   - lib/easel_web/live/board_live.ex: render/1, svelte_props/1 (this chapter's Elixir koans)
 
-live_svelte puts Svelte components inside a LiveView. From the Phoenix course: mount/3 sets
+live_svelte inside a LiveView. From the Phoenix course: mount/3 sets
 assigns, render/1 turns them into HEEx, and a page renders twice, as plain HTML and then over
 the socket (chapter 10, LiveView basics); <.header> and friends are function components
 (chapter 03). On the server, <.svelte name="Board" props={...} /> writes a div whose data-props

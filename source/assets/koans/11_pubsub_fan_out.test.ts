@@ -65,7 +65,7 @@ function withFakeTimers(run: () => void): void {
   }
 }
 
-test("Implement cancel and throttled, the two halves of a throttle; the given run calls cancel first. 1. cancel clears any waiting timer and forgets the held call. 2. throttled works out how much of the window is left since lastRun. 3. When none is left, it runs this call now. 4. Otherwise it holds these arguments and, unless a timer is already waiting, starts one for what is left that runs whatever is held then.", () => {
+test("Implement cancel and throttled, the two halves of a throttle; the given run calls cancel first. 1. cancel clears any waiting timer. 2. throttled works out how much of the window is left since lastRun. 3. When none is left, it runs this call now. 4. Otherwise it holds these arguments and, unless a timer is already waiting, starts one for what is left that runs whatever is held then.", () => {
   withFakeTimers(() => {
     const calls: number[] = []
     const throttled = throttle((n: number) => calls.push(n), 50)

@@ -12,8 +12,8 @@ defmodule Koans.Ch14.TestingTheWholeThingTest do
   A helper keeps a test to its point. open_board/2 does chapter 06's two renders in two steps:
   get/2 asks for the page, a static render, and live/1 connects that conn, which mounts again
   with a socket. add_shape/2 sends shape:add as Board does, a whole rect under whatever the test
-  gives, and asserts the reply was %{ok: true}, so a refused shape fails at the helper. A helper
-  that asserts imports ExUnit.Assertions. A chat app's helper:
+  gives, its own id included, and asserts the reply was %{ok: true}, so a refused shape fails at
+  the helper. A helper that asserts imports ExUnit.Assertions. A chat app's helper:
 
       def post(view, text) do
         render_hook(view, "message:post", %{"text" => text})
@@ -23,16 +23,16 @@ defmodule Koans.Ch14.TestingTheWholeThingTest do
   board_props/1 is a given helper, not LiveView API: it reads the view's assigns through
   :sys.get_state(view.pid), LiveView's internal state, because get_svelte(view) after the join
   shows only what live_svelte last sent. Where a test can send a timer's message itself it
-  needn't wait for the timer, and :sys.get_state(pid) answers only once pid has handled the
-  messages before it. The Playwright suite (the TypeScript koans) runs the solved app with
-  MIX_ENV=e2e: config/e2e.exs gives it port 4100, a database under tmp/e2e, and board timers of
-  save_after: 200, idle_after: 2_000, so a test can wait for an idle board to stop.
+  needn't wait for the timer, and :sys.get_state(pid) answers only once pid has handled every
+  message this process sent it first. The Playwright suite runs the solved app with MIX_ENV=e2e:
+  config/e2e.exs gives it port 4100, a database under tmp/e2e, and board timers of save_after:
+  200, idle_after: 2_000, so a test can wait for an idle board to stop.
 
       Write:          test/support/board_helpers.ex:24  (EaselWeb.BoardHelpers.open_board/2)
       Exercised by:   test/koans/14_testing_the_whole_thing_test.exs:63
 
   API you'll use
-    get/2, live/1     get(conn, "/b/abc") renders the page; live(conn) connects it, {:ok, view, html}
+    get/2, live/1     get(conn, "/posts/1") renders the page; live(conn) connects it, {:ok, view, html}
     render_hook/3     chapter 09; assert_reply/2 matches the reply, failing with an
                       ExUnit.AssertionError when none matches
     Ecto.UUID.generate/0  a fresh random UUID string
@@ -70,12 +70,14 @@ defmodule Koans.Ch14.TestingTheWholeThingTest do
     assert [{_pid, _}] = Registry.lookup(Easel.Boards.Registry, board.slug)
   end
 
-  koan "Implement add_shape/2, which adds a shape as Board does and insists the server took it. 1. Lay the attrs over a whole rect: kind \"rect\", colour \"#e03131\", x 10, y 20, w 30, h 40, and a fresh Ecto.UUID as its id. 2. Send it as shape:add. 3. Assert the reply is %{ok: true}. 4. Answer the shape sent." do
+  koan "Implement add_shape/2, which adds a shape as Board does and insists the server took it. 1. Lay the attrs over a whole rect with a fresh Ecto.UUID as its id: kind \"rect\", colour \"#e03131\", x 10, y 20, w 30, h 40; anything in the attrs wins, an id too. 2. Send it as shape:add. 3. Assert the reply is %{ok: true}. 4. Answer the shape sent." do
     board = board_fixture()
     view = open_board(board, "Ada")
 
     shape = add_shape(view, %{"x" => 50})
     other = add_shape(view, %{"kind" => "ellipse"})
+    assert add_shape(view, %{"id" => @id})["id"] == @id
+    assert %{id: @id} = BoardServer.get_shape(board.slug, @id)
 
     assert Map.delete(shape, "id") == %{
              "kind" => "rect",
@@ -93,7 +95,7 @@ defmodule Koans.Ch14.TestingTheWholeThingTest do
     assert_raise ExUnit.AssertionError, fn -> add_shape(view, %{"x" => 5000}) end
   end
 
-  koan "The board server is tested with no LiveView and no waiting on its save timer: the test sends :save itself, and :sys.get_state/1 answers only once the server has handled it." do
+  koan "A board server test that isn't about the timer needn't wait for it: the test sends :save itself, and :sys.get_state/1 answers only once the server has handled it." do
     board = board_fixture()
     pid = start_supervised!({BoardServer, slug: board.slug, save_after: 60_000})
 

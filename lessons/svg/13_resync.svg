@@ -48,5 +48,5 @@
 
   <text x="20" y="262" class="small">Between resyncs, pushes change one shape at a time, in the server's order.</text>
   <text x="20" y="284" class="small">The last move the server applies wins in every browser; an earlier one is lost.</text>
-  <text x="20" y="306" class="small">A restart loads what was saved, so an op still in the save window is gone.</text>
+  <text x="20" y="306" class="small">After a :kill, the restart loads what was saved: an op in the save window is gone.</text>
 </svg>
