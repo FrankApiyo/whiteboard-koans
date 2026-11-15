@@ -19,10 +19,15 @@ defmodule Easel.Shapes.Ellipse do
     ellipse
     |> cast(attrs, @fields)
     |> validate_required(@fields)
+    |> validate_shape()
+    |> validate_extent(&extent/1)
+  end
+
+  defp validate_shape(changeset) do
+    changeset
     |> validate_inclusion(:color, Easel.Palette.colors())
     |> validate_number(:w, greater_than: 0)
     |> validate_number(:h, greater_than: 0)
-    |> validate_extent(&extent/1)
   end
 
   defp extent(%{x: x, y: y, w: w, h: h}), do: {x, y, x + w, y + h}

@@ -15,7 +15,8 @@
   let { shapes, sync_id, me, people, live }: BoardProps = $props()
 
   // Props seed these once; later shapes arrive through applyProps and the live events.
-  const board = untrack(() => new BoardState($state.snapshot(shapes), sync_id))
+  const board: BoardState =
+    untrack(() => new BoardState($state.snapshot(shapes), sync_id))
   const sendCursor = untrack(() => makeCursorSender(live))
   let cursors = $state.raw<Cursors>(new Map())
 

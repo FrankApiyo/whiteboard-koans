@@ -19,8 +19,14 @@ defmodule Easel.Shapes.Line do
     line
     |> cast(attrs, @fields)
     |> validate_required(@fields)
-    |> validate_inclusion(:color, Easel.Palette.colors())
+    |> validate_shape()
     |> validate_extent(&extent/1)
+  end
+
+  defp validate_shape(changeset) do
+    # >>> answer 07: a line's palette colour
+    validate_inclusion(changeset, :color, Easel.Palette.colors())
+    # <<<
   end
 
   defp extent(%{x: x, y: y, dx: dx, dy: dy}),

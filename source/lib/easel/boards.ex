@@ -9,22 +9,31 @@ defmodule Easel.Boards do
   def get_board_by_slug(slug), do: Repo.get_by(Board, slug: slug)
 
   def create_board(attrs) do
+    # >>> answer 07: insert a board with a fresh slug
     %Board{slug: generate_slug()}
     |> Board.changeset(attrs)
     |> Repo.insert()
+
+    # <<<
   end
 
   def generate_slug do
+    # >>> answer 07: 16 random bytes, URL-safe
     16 |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
+    # <<<
   end
 
   def list_boards(slugs) do
+    # >>> answer 07: the boards with these slugs
     Repo.all(from b in Board, where: b.slug in ^slugs, order_by: b.slug)
+    # <<<
   end
 
   def load_shapes(%Board{id: board_id}) do
+    # >>> answer 07: the board's rows, lowest z first
     from(s in Shape, where: s.board_id == ^board_id, order_by: s.z)
     |> Repo.all()
+    # <<<
     |> Enum.map(&to_map/1)
   end
 
@@ -35,7 +44,9 @@ defmodule Easel.Boards do
     rows = Enum.map(shapes, &to_row(&1, board_id))
 
     Repo.transact(fn ->
+      # >>> answer 07: delete the board's old rows
       Repo.delete_all(from s in Shape, where: s.board_id == ^board_id)
+      # <<<
       rows |> Enum.chunk_every(@rows_per_insert) |> Enum.each(&Repo.insert_all(Shape, &1))
       {:ok, length(rows)}
     end)

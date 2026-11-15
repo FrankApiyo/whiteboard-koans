@@ -18,10 +18,15 @@ defmodule Easel.Shapes.Pen do
     pen
     |> cast(attrs, @fields)
     |> validate_required(@fields)
-    |> validate_inclusion(:color, Easel.Palette.colors())
-    |> validate_length(:points, min: 1, max: 2000)
+    |> validate_shape()
     |> validate_pairs()
     |> validate_extent(&extent/1)
+  end
+
+  defp validate_shape(changeset) do
+    changeset
+    |> validate_inclusion(:color, Easel.Palette.colors())
+    |> validate_length(:points, min: 1, max: 2000)
   end
 
   defp validate_pairs(changeset) do

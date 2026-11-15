@@ -1,0 +1,106 @@
+/*
+Files this chapter touches
+  - assets/svelte/Board.svelte: seed the board state once, the toolbar, the canvas, the people
+    list
+  - lib/easel_web/live/board_live.ex: render/1, svelte_props/1 (this chapter's Elixir koans)
+
+live_svelte puts Svelte components inside a LiveView. From the Phoenix course: mount/3 sets
+assigns, render/1 turns them into HEEx, and a page renders twice, as plain HTML and then over
+the socket (chapter 10, LiveView basics); <.header> and friends are function components
+(chapter 03). On the server, <.svelte name="Board" props={...} /> writes a div whose data-props
+is the props as JSON; the static render sends sync_id 0. In the browser the hook from
+assets/js/app.js reads that div's dataset, mounts the component Vite built from
+assets/svelte/Board.svelte, and adds one prop the server never sends: live, the hook itself.
+
+Board is the root. It reads its props (given), builds the one BoardState its children share, and hands
+it down. Props go in as attributes, a callback prop is a function, and {people} is short for
+people={people}. Props are proxies, so a component that seeds state from them takes a plain
+copy, inside untrack so the seed runs once and tracks nothing:
+
+    let { zone, ticks }: ClockProps = $props()
+    const clock = untrack(() => new Clock(zone, $state.snapshot(ticks)))
+
+    <Dial {clock} />
+    <Controls state={clock} onreset={reset} />
+
+After the seed, Board's shapes change only through events and resyncs (chapters 10 and 13).
+
+    Write:          assets/svelte/Board.svelte:20  (06: seed the board state once)
+    Exercised by:   assets/koans/06_live_svelte.test.ts:81
+
+API you'll use
+  - element.dataset: div.dataset.name is the data-name attribute, "Board" on the board page
+  - JSON.parse: JSON.parse('{"zone":"UTC","ticks":0}') is { zone: "UTC", ticks: 0 }
+  - "key" in object: "zone" in { zone: "UTC" } is true, and "live" in { zone: "UTC" } is false
+  - $props: let { count, onclear }: CounterProps = $props() reads a component's props
+  - untrack: untrack(() => count * 2) reads count without making the caller depend on it
+  - $state.snapshot: $state.snapshot(list) is a plain copy of a state proxy
+  - new BoardState(shapes, syncId): chapter 04's shared state of one board
+  - createFakeLive: given in assets/test/support/fake_live.ts, a live that records pushes
+  - rerender: const { rerender } = render(Clock, props); await rerender({ zone: "CET" })
+  - placeCanvas, pointer: chapter 05's helpers; a press and release on a shape selects it
+  - rect(), ellipse(): the fixtures, described as "rectangle 200 by 100 at 100, 100" and
+    "ellipse 200 by 100 at 400, 300"
+
+Picture: lessons/svg/06_two_renders.svg
+*/
+import { expect } from "vitest"
+import { test } from "@koans/runtime"
+import { render, screen } from "@testing-library/svelte"
+import Board from "../svelte/Board.svelte"
+import type { BoardProps, Person } from "../js/types"
+import { createFakeLive } from "../test/support/fake_live"
+import { placeCanvas, pointer } from "../test/support/canvas"
+import { ellipse, rect } from "../test/support/fixtures"
+
+const ada: Person = { tab: "tab-ada", name: "Ada", color: "#e03131" }
+const lin: Person = { tab: "tab-lin", name: "Lin", color: "#1971c2" }
+
+function mountBoard(overrides: Partial<BoardProps> = {}) {
+  const props = { shapes: [rect()], sync_id: 1, me: ada, people: [ada, lin], live: createFakeLive() }
+  const view = render(Board, { ...props, ...overrides })
+  const canvas = screen.getByRole("group", { name: "Whiteboard" }).querySelector("canvas")
+  if (!canvas) throw new Error("The Whiteboard group holds no canvas element")
+  placeCanvas(canvas)
+  return { ...view, canvas }
+}
+
+const described = (canvas: HTMLCanvasElement) =>
+  [...canvas.querySelectorAll("li")].map((item) => item.textContent)
+
+test("The server writes the props as JSON in a data attribute and the hook parses them back; live is added in the browser, never sent.", () => {
+  const root = document.createElement("div")
+  root.setAttribute("data-name", "Board")
+  root.setAttribute("data-props", '{"shapes":[],"sync_id":0,"me":{"name":"Ada"},"people":[]}')
+  const props = JSON.parse(root.dataset.props ?? "{}")
+  expect(root.dataset.name).toBe(_a("Board"))
+  expect(props.sync_id).toBe(_a(0))
+  expect("live" in props).toBe(_a(false))
+})
+
+test("Fill Board.svelte's state and its canvas so the shapes from props reach the canvas, which lists each one for screen readers. 1. Seed one BoardState, once, from a plain copy of shapes and from sync_id. 2. Put a Canvas in the stage, before the cursor layer, with that state, commit for oncommit and sendCursor for oncursor.", () => {
+  const { canvas } = mountBoard({ shapes: [ellipse(), rect()] })
+  expect(described(canvas)).toEqual(["ellipse 200 by 100 at 400, 300", "rectangle 200 by 100 at 100, 100"])
+}, { exercises: "06: the canvas" })
+
+test("Fill the toolbar slot in Board.svelte with a Toolbar on the same state, and deleteSelected for ondelete: selecting the rect on the canvas enables Delete in the toolbar.", async () => {
+  const { canvas } = mountBoard()
+  const remove = screen.getByRole("button", { name: "Delete" }) as HTMLButtonElement
+  expect(remove.disabled).toBe(true)
+  await pointer(canvas, "pointerDown", 150, 130)
+  await pointer(canvas, "pointerUp", 150, 130)
+  expect(remove.disabled).toBe(false)
+}, { exercises: ["06: the toolbar", "06: the canvas"] })
+
+test("Fill the people slot in Board.svelte with a PeopleList of the people and me from props, so the list beside the board marks you.", () => {
+  mountBoard()
+  const list = screen.getByRole("list", { name: "People on this board" })
+  const names = [...list.querySelectorAll("li")].map((item) => item.textContent?.trim())
+  expect(names).toEqual(["Ada (you)", "Lin"])
+}, { exercises: ["06: the people list", "06: the canvas"] })
+
+test("Board seeds its state from props once: new shapes under the same sync_id leave the canvas as it was.", async () => {
+  const { canvas, rerender } = mountBoard({ shapes: [rect()] })
+  await rerender({ shapes: [ellipse()] })
+  expect(described(canvas)).toEqual(_a(["rectangle 200 by 100 at 100, 100"]))
+}, { exercises: "06: the canvas" })

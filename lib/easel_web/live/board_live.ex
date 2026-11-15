@@ -1,9 +1,12 @@
 defmodule EaselWeb.BoardLive do
+  # >>> course
+  import Koans, only: [__: 1, __: 2], warn: false
+  # <<< course
   use EaselWeb, :live_view
 
-  alias Easel.{Boards, Shapes}
-  alias Easel.Boards.BoardServer
-  alias EaselWeb.Presence
+  alias Easel.{Boards, Shapes}, warn: false
+  alias Easel.Boards.BoardServer, warn: false
+  alias EaselWeb.Presence, warn: false
 
   @impl true
   def mount(%{"slug" => slug}, _session, socket) do
@@ -36,13 +39,17 @@ defmodule EaselWeb.BoardLive do
     ~H"""
     <Layouts.app flash={@flash}>
       <.header>{@board.title}</.header>
-      <.svelte name="Board" props={svelte_props(assigns)} socket={@socket} />
+      <%!-- >>> 06 --%>
+      {__("06: the Board component and its props")}
+      <%!-- <<< 06 --%>
     </Layouts.app>
     """
   end
 
   def svelte_props(assigns) do
-    %{shapes: assigns.shapes, sync_id: assigns.sync_id, me: assigns.me, people: assigns.people}
+    # >>> 06
+    __("06: the four props from assigns")
+    # <<< 06
   end
 
   @impl true

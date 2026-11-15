@@ -1,30 +1,38 @@
 defmodule Easel.Boards do
-  import Ecto.Query
+  # >>> course
+  import Koans, only: [__: 1, __: 2], warn: false
+  # <<< course
+  import Ecto.Query, warn: false
 
-  alias Easel.Boards.{Board, Shape}
-  alias Easel.Repo
+  alias Easel.Boards.{Board, Shape}, warn: false
+  alias Easel.Repo, warn: false
 
   def get_board_by_slug!(slug), do: Repo.get_by!(Board, slug: slug)
 
   def get_board_by_slug(slug), do: Repo.get_by(Board, slug: slug)
 
   def create_board(attrs) do
-    %Board{slug: generate_slug()}
-    |> Board.changeset(attrs)
-    |> Repo.insert()
+    # >>> 07
+    __("07: insert a board with a fresh slug")
+    # <<< 07
   end
 
   def generate_slug do
-    16 |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
+    # >>> 07
+    __("07: 16 random bytes, URL-safe")
+    # <<< 07
   end
 
   def list_boards(slugs) do
-    Repo.all(from b in Board, where: b.slug in ^slugs, order_by: b.slug)
+    # >>> 07
+    __("07: the boards with these slugs")
+    # <<< 07
   end
 
   def load_shapes(%Board{id: board_id}) do
-    from(s in Shape, where: s.board_id == ^board_id, order_by: s.z)
-    |> Repo.all()
+    # >>> 07
+    __("07: the board's rows, lowest z first")
+    # <<< 07
     |> Enum.map(&to_map/1)
   end
 
@@ -35,7 +43,9 @@ defmodule Easel.Boards do
     rows = Enum.map(shapes, &to_row(&1, board_id))
 
     Repo.transact(fn ->
-      Repo.delete_all(from s in Shape, where: s.board_id == ^board_id)
+      # >>> 07
+      __("07: delete the board's old rows")
+      # <<< 07
       rows |> Enum.chunk_every(@rows_per_insert) |> Enum.each(&Repo.insert_all(Shape, &1))
       {:ok, length(rows)}
     end)

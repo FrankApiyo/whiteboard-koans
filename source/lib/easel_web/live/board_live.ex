@@ -36,13 +36,17 @@ defmodule EaselWeb.BoardLive do
     ~H"""
     <Layouts.app flash={@flash}>
       <.header>{@board.title}</.header>
+      <%!-- >>> answer 06: the Board component and its props --%>
       <.svelte name="Board" props={svelte_props(assigns)} socket={@socket} />
+      <%!-- <<< --%>
     </Layouts.app>
     """
   end
 
   def svelte_props(assigns) do
+    # >>> answer 06: the four props from assigns
     %{shapes: assigns.shapes, sync_id: assigns.sync_id, me: assigns.me, people: assigns.people}
+    # <<<
   end
 
   @impl true

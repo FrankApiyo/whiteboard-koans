@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 330" role="img" aria-label="Two renders: a plain GET renders the board page with an empty Board div; the browser's hook mounts Board.svelte from data-props and adds live; then the socket mount runs join and sends new props">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --server: #e8eefc; --serveredge: #3b5bdb; --client: #e6f4ea; --clientedge: #2f9e44; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --server: #26304d; --serveredge: #8aa4ff; --client: #1f3527; --clientedge: #69db7c; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .server { fill: var(--server); stroke: var(--serveredge); stroke-width: 2; }
+    .client { fill: var(--client); stroke: var(--clientedge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#a); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .head { font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="330"/>
+
+  <text x="20" y="28" class="head">One page, two renders</text>
+  <text x="110" y="58" text-anchor="middle" class="small">server</text>
+  <text x="530" y="58" text-anchor="middle" class="small">browser</text>
+
+  <rect class="server" x="20" y="70" width="180" height="70" rx="8"/>
+  <text x="110" y="96" text-anchor="middle">1. static render</text>
+  <text x="110" y="116" text-anchor="middle" class="small">GET, connected? false</text>
+  <text x="110" y="132" text-anchor="middle" class="small">render/1, svelte_props/1</text>
+
+  <rect class="client" x="440" y="70" width="180" height="70" rx="8"/>
+  <text x="530" y="96" text-anchor="middle">2. hook mounts Board</text>
+  <text x="530" y="116" text-anchor="middle" class="small">props from data-props,</text>
+  <text x="530" y="132" text-anchor="middle" class="small">plus live</text>
+
+  <path class="edge" d="M200,105 L438,105"/>
+  <text x="320" y="92" text-anchor="middle" class="small">HTML: an empty div</text>
+  <text x="320" y="126" text-anchor="middle" class="small">data-props, data-ssr="false"</text>
+
+  <rect class="server" x="20" y="220" width="180" height="70" rx="8"/>
+  <text x="110" y="246" text-anchor="middle">3. connected mount</text>
+  <text x="110" y="266" text-anchor="middle" class="small">join/2, chapters 08 to 13</text>
+  <text x="110" y="282" text-anchor="middle" class="small">shapes, sync_id, people</text>
+
+  <rect class="client" x="440" y="220" width="180" height="70" rx="8"/>
+  <text x="530" y="246" text-anchor="middle">4. Board gets new props</text>
+  <text x="530" y="266" text-anchor="middle" class="small">resync on a new sync_id</text>
+  <text x="530" y="282" text-anchor="middle" class="small">(chapter 13)</text>
+
+  <path class="edge" d="M530,140 L530,180 L110,180 L110,218"/>
+  <text x="320" y="170" text-anchor="middle" class="small">the socket connects</text>
+
+  <path class="edge" d="M200,255 L438,255"/>
+  <text x="320" y="242" text-anchor="middle" class="small">a props diff</text>
+</svg>

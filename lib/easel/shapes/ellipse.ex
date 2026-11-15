@@ -1,7 +1,10 @@
 defmodule Easel.Shapes.Ellipse do
+  # >>> course
+  import Koans, only: [__: 1, __: 2], warn: false
+  # <<< course
   use Ecto.Schema
-  import Ecto.Changeset
-  import Easel.Shapes.Validations
+  import Ecto.Changeset, warn: false
+  import Easel.Shapes.Validations, warn: false
 
   @fields [:id, :color, :x, :y, :w, :h]
 
@@ -19,10 +22,14 @@ defmodule Easel.Shapes.Ellipse do
     ellipse
     |> cast(attrs, @fields)
     |> validate_required(@fields)
-    |> validate_inclusion(:color, Easel.Palette.colors())
-    |> validate_number(:w, greater_than: 0)
-    |> validate_number(:h, greater_than: 0)
+    |> validate_shape()
     |> validate_extent(&extent/1)
+  end
+
+  defp validate_shape(changeset) do
+    # >>> 07
+    __("07: an ellipse's palette colour and positive size")
+    # <<< 07
   end
 
   defp extent(%{x: x, y: y, w: w, h: h}), do: {x, y, x + w, y + h}

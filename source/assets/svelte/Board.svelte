@@ -15,7 +15,10 @@
   let { shapes, sync_id, me, people, live }: BoardProps = $props()
 
   // Props seed these once; later shapes arrive through applyProps and the live events.
-  const board = untrack(() => new BoardState($state.snapshot(shapes), sync_id))
+  const board: BoardState =
+    // >>> answer 06: seed the board state once
+    untrack(() => new BoardState($state.snapshot(shapes), sync_id))
+    // <<<
   const sendCursor = untrack(() => makeCursorSender(live))
   let cursors = $state.raw<Cursors>(new Map())
 
@@ -52,13 +55,19 @@
 </script>
 
 <div class="board">
+  <!-- >>> answer 06: the toolbar -->
   <Toolbar state={board} ondelete={deleteSelected} />
+  <!-- <<< -->
   <div class="main">
     <div class="stage">
+      <!-- >>> answer 06: the canvas -->
       <Canvas state={board} oncommit={commit} oncursor={sendCursor} />
+      <!-- <<< -->
       <CursorLayer {cursors} {people} />
     </div>
+    <!-- >>> answer 06: the people list -->
     <PeopleList {people} {me} />
+    <!-- <<< -->
   </div>
 </div>
 
