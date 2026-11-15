@@ -108,6 +108,26 @@ defmodule Easel.ShapesTest do
     test "zero or negative size" do
       assert {:error, _} = Shapes.cast(payload("rect", %{"w" => 0, "h" => 10}))
     end
+
+    test "a payload that is not a map" do
+      assert {:error, %Ecto.Changeset{valid?: false}} = Shapes.cast([1, 2])
+      assert {:error, %Ecto.Changeset{valid?: false}} = Shapes.cast("rect")
+    end
+  end
+
+  describe "board edges at cast/1" do
+    test "an origin on the far edges is inside" do
+      assert {:ok, %{x: 1600, y: 1000}} =
+               Shapes.cast(payload("line", %{"x" => 1600, "y" => 1000, "dx" => 0, "dy" => 0}))
+    end
+
+    test "one past the far edges is outside" do
+      assert {:error, _} =
+               Shapes.cast(payload("line", %{"x" => 1601, "y" => 0, "dx" => 0, "dy" => 0}))
+
+      assert {:error, _} =
+               Shapes.cast(payload("line", %{"x" => 0, "y" => 1001, "dx" => 0, "dy" => 0}))
+    end
   end
 
   describe "ids" do
@@ -126,7 +146,21 @@ defmodule Easel.ShapesTest do
       assert {:ok, %{id: @id, x: 5, y: 6}} = Shapes.cast_move(%{"id" => @id, "x" => 5, "y" => 6})
     end
 
+    test "accepts the far edges and rejects one past them" do
+      assert {:ok, %{x: 1600, y: 1000}} =
+               Shapes.cast_move(%{"id" => @id, "x" => 1600, "y" => 1000})
+
+      assert :error = Shapes.cast_move(%{"id" => @id, "x" => 1601, "y" => 0})
+      assert :error = Shapes.cast_move(%{"id" => @id, "x" => 0, "y" => 1001})
+    end
+
+    test "a numeric string is normalised to an integer, as in cast/1" do
+      assert {:ok, %{x: 5, y: 6}} = Shapes.cast_move(%{"id" => @id, "x" => "5", "y" => 6})
+      assert :error = Shapes.cast_move(%{"id" => @id, "x" => "abc", "y" => 6})
+    end
+
     test "rejects hostile payloads" do
+      assert :error = Shapes.cast_move([1, 2])
       assert :error = Shapes.cast_move(%{"id" => "nope", "x" => 5, "y" => 6})
       assert :error = Shapes.cast_move(%{"id" => @id, "x" => 1601, "y" => 6})
       assert :error = Shapes.cast_move(%{"id" => @id, "x" => 1.5, "y" => 6})

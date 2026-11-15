@@ -1,11 +1,11 @@
 defmodule Easel.Shapes do
   import Ecto.Changeset
 
-  alias Easel.Shapes.{Ellipse, Line, Pen, Rect}
+  alias Easel.Shapes.{Ellipse, Line, Pen, Rect, Validations}
 
   @kinds %{"rect" => Rect, "ellipse" => Ellipse, "line" => Line, "pen" => Pen}
 
-  def cast(payload) do
+  def cast(payload) when is_map(payload) do
     with {:ok, %{kind: kind}} <- cast_kind(payload),
          schema = Map.fetch!(@kinds, kind),
          {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
@@ -13,9 +13,30 @@ defmodule Easel.Shapes do
     end
   end
 
-  def cast_move(%{"id" => id, "x" => x, "y" => y})
-      when is_integer(x) and is_integer(y) and x in 0..1600 and y in 0..1000 do
-    with {:ok, id} <- cast_id(%{"id" => id}), do: {:ok, %{id: id, x: x, y: y}}
+  def cast(_payload) do
+    {%{}, %{}}
+    |> change()
+    |> add_error(:payload, "must be an object")
+    |> apply_action(:cast)
+  end
+
+  def cast_move(payload) when is_map(payload) do
+    {%{}, %{id: Ecto.UUID, x: :integer, y: :integer}}
+    |> cast(payload, [:id, :x, :y])
+    |> validate_required([:id, :x, :y])
+    |> validate_number(:x,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: Validations.width()
+    )
+    |> validate_number(:y,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: Validations.height()
+    )
+    |> apply_action(:move)
+    |> case do
+      {:ok, move} -> {:ok, move}
+      {:error, _changeset} -> :error
+    end
   end
 
   def cast_move(_payload), do: :error

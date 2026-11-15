@@ -4,6 +4,9 @@ defmodule Easel.Shapes.Validations do
   @width 1600
   @height 1000
 
+  def width, do: @width
+  def height, do: @height
+
   def validate_extent(%{valid?: false} = changeset, _extent_fun), do: changeset
 
   def validate_extent(changeset, extent_fun) do
