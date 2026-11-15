@@ -1,12 +1,24 @@
 defmodule Easel.MixProject do
   use Mix.Project
 
+  # >>> course
+  @koans_lib System.get_env("KOANS_LIB", "lib")
+  @root Path.dirname(@koans_lib)
+  @partition System.get_env("MIX_TEST_PARTITION")
+  @fixture_dir if @partition == "verify", do: System.get_env("KOANS_DIR")
+  # <<< course
+
   def project do
     [
       app: :easel,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
+      # >>> course
+      test_paths: test_paths(),
+      test_load_filters: [&test_file?/1],
+      test_ignore_filters: [&ignored_test_path?/1],
+      # <<< course
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
@@ -27,19 +39,45 @@ defmodule Easel.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test]
+      preferred_envs: [precommit: :test, koans: :test]
     ]
   end
 
   # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  # >>> course
+  defp elixirc_paths(:test), do: [@koans_lib, Path.join(@root, "test/support")]
+  defp elixirc_paths(:dev), do: [@koans_lib]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp test_paths do
+    case {@partition, @fixture_dir} do
+      {"app", _} -> ["test"]
+      {"verify", nil} -> ["verify"]
+      {"verify", dir} -> [dir]
+      _ -> [Path.join(@root, "test/koans")]
+    end
+  end
+
+  defp test_file?(path), do: String.ends_with?(path, "_test.exs") and not ignored_test_path?(path)
+
+  defp ignored_test_path?(path) do
+    case @partition do
+      "app" -> String.starts_with?(path, "test/koans/")
+      "verify" -> @fixture_dir == nil and String.starts_with?(path, "verify/fixtures/")
+      _ -> false
+    end
+  end
+
+  # <<< course
 
   # Specifies your project dependencies.
   #
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # >>> course
+      {:koans, path: "course", only: [:dev, :test]},
+      # <<< course
       {:live_svelte, "~> 0.18"},
       {:phoenix, "~> 1.8.0"},
       {:phoenix_ecto, "~> 4.5"},
