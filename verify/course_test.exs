@@ -488,14 +488,30 @@ defmodule Verify.CourseTest do
     end
   end
 
+  defp multi_koan?(path), do: length(ts_koan_lines(path)) > 1
+
+  # A one-koan file passes whatever -t selects, so a selection without a
+  # multi-koan file borrows the course's first one.
+  defp multi_koan_ts_files do
+    case Enum.filter(selected_ts_files("_verify/assets/koans"), &multi_koan?/1) do
+      [] ->
+        "_verify/assets/koans" |> ts_koan_files() |> Enum.filter(&multi_koan?/1) |> Enum.take(1)
+
+      paths ->
+        paths
+    end
+  end
+
   test "nearest_name_runs_one_ts_koan" do
     :ok = Chapters.build(-1)
-    paths = selected_ts_files("_verify/assets/koans")
+    paths = multi_koan_ts_files()
     assert paths != []
 
     for path <- paths do
       relative = rel(path)
-      koan_line = path |> ts_koan_lines() |> List.last()
+      lines = ts_koan_lines(path)
+      assert length(lines) > 1, relative
+      koan_line = Enum.at(lines, div(length(lines), 2))
 
       [_, meditation] =
         Regex.run(~r/^test\("((?:[^"\\]|\\.)*)",/, learner_line(relative, koan_line))
@@ -505,9 +521,80 @@ defmodule Verify.CourseTest do
       assert Enum.map(records, &{&1["file"], &1["line"]}) == [{relative, koan_line}],
              output_tail(output)
     end
+  end
 
-    # A file may hold one koan, so also show that a name matching none runs none.
-    {output, _status, records} = npm_verify([rel(hd(paths))], ["-t", "no koan has this name"])
-    assert records == [], output_tail(output)
+  @no_koan "No koan at that line: put the cursor inside a koan, or run the file."
+
+  test "a_line_outside_any_koan_prints_the_no_koan_line" do
+    :ok = Chapters.build(-1)
+    relative = "_verify/test/koans" |> koan_files() |> hd() |> rel()
+    {output, _} = mix_verify(["test", "#{relative}:1"])
+    assert output =~ @no_koan, output_tail(output)
+    refute output =~ "koans answered", output_tail(output)
+  end
+
+  test "a_name_matching_no_ts_koan_prints_the_no_koan_line" do
+    :ok = Chapters.build(-1)
+    relative = "_verify/assets/koans" |> ts_koan_files() |> hd() |> rel()
+
+    {output, _} =
+      npm(["test", "--", relative, "-t", "no koan has this name"], [
+        {"KOANS_LIB", "_verify/lib"},
+        {"KOANS_VERIFY", nil},
+        {"KOANS_TS_DIR", nil},
+        {"KOANS_RESULTS", nil}
+      ])
+
+    assert output =~ @no_koan, output_tail(output)
+    refute output =~ "koans answered", output_tail(output)
+  end
+
+  defp first_learner_footers do
+    ex = "test/koans" |> koan_files() |> hd() |> rel()
+    ts = "assets/koans" |> ts_koan_files() |> hd() |> rel()
+
+    {ex_output, _} =
+      mix(["test", ex], [
+        {"MIX_ENV", "test"},
+        {"KOANS_LIB", nil},
+        {"MIX_TEST_PARTITION", nil},
+        {"KOANS_DIR", nil},
+        {"KOANS_VERIFY", nil}
+      ])
+
+    {ts_output, _} =
+      npm(["test", "--", ts], [
+        {"KOANS_LIB", nil},
+        {"KOANS_VERIFY", nil},
+        {"KOANS_TS_DIR", nil},
+        {"KOANS_RESULTS", nil}
+      ])
+
+    {ex_output, ts_output}
+  end
+
+  test "default_lib_footer_paths_have_no_dot_prefix" do
+    {ex, ts} = first_learner_footers()
+    assert ex =~ ~r{^(Meditate on|Exercised by:\s+) test/koans/\S+:\d+$}m, output_tail(ex)
+    assert ts =~ ~r{^(Meditate on|Exercised by:\s+) assets/koans/\S+:\d+$}m, output_tail(ts)
+    assert ts =~ ~r{^Write:\s+ assets/\S+:\d+  \(}m, output_tail(ts)
+    refute ex =~ ~r{\./(test|lib)/}, output_tail(ex)
+    refute ts =~ ~r{\./assets/}, output_tail(ts)
+  end
+
+  test "readme_shows_the_first_footer_as_it_prints" do
+    {ex, ts} = first_learner_footers()
+    readme = File.read!(Path.join(root(), "README.md"))
+
+    # The README shortens the TypeScript meditation to its first sentence.
+    [ts_footer] =
+      Regex.run(
+        ~r/^Replace __blank\(\) .+\n.+\nWrite: .+\nExercised by: .+\n    .+?\.(?= |$)/m,
+        ts
+      )
+
+    [ex_footer] = Regex.run(~r/^Replace __ .+\n.+\nMeditate on \S+\n.+$/m, ex)
+    assert readme =~ ts_footer, ts_footer
+    assert readme =~ ex_footer, ex_footer
   end
 end
