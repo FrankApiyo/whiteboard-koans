@@ -12,52 +12,16 @@
   const group = $props.id()
 </script>
 
-<fieldset class="picker">
+<fieldset class="flex gap-1">
   <legend class="sr-only">Colour</legend>
   {#each colors as color (color)}
-    <label class="swatch" style:--swatch={color}>
-      <input
-        type="radio"
-        name={group}
-        value={color}
-        checked={color === value}
-        onchange={() => onpick(color)}
-      />
-      <span class="sr-only">{color}</span>
-    </label>
+    <span
+      class="relative size-7 rounded-full outline-offset-2 has-checked:outline-3 has-checked:outline-[#212529] has-focus-visible:outline-3 has-focus-visible:outline-[#1971c2]"
+      style:background-color={color}
+    >
+      <!-- >>> 03 -->
+      {__blank("03: a radio per colour", "")}
+      <!-- <<< 03 -->
+    </span>
   {/each}
 </fieldset>
-
-<style>
-  .picker {
-    display: flex;
-    gap: 0.25rem;
-    border: 0;
-    margin: 0;
-    padding: 0;
-  }
-
-  .swatch {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 9999px;
-    background: var(--swatch);
-    cursor: pointer;
-  }
-
-  .swatch:has(input:checked) {
-    outline: 3px solid #212529;
-    outline-offset: 2px;
-  }
-
-  .swatch:has(input:focus-visible) {
-    outline: 3px solid #1971c2;
-    outline-offset: 2px;
-  }
-
-  input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-</style>

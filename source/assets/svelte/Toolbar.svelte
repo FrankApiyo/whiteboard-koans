@@ -20,6 +20,7 @@
 </script>
 
 <div class="toolbar" role="group" aria-label="Drawing tools">
+  <!-- >>> answer 04: a button per tool -->
   {#each TOOLS as { tool, label } (tool)}
     <button
       type="button"
@@ -31,9 +32,11 @@
       {label}
     </button>
   {/each}
+  <!-- <<< -->
 
   <ColorPicker colors={PALETTE} value={board.color} onpick={(color) => (board.color = color)} />
 
+  <!-- >>> answer 04: a delete button -->
   <button
     type="button"
     class="btn btn-sm btn-error"
@@ -42,6 +45,7 @@
   >
     Delete
   </button>
+  <!-- <<< -->
 </div>
 
 <style>

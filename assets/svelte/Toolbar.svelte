@@ -20,28 +20,15 @@
 </script>
 
 <div class="toolbar" role="group" aria-label="Drawing tools">
-  {#each TOOLS as { tool, label } (tool)}
-    <button
-      type="button"
-      class="btn btn-sm"
-      class:btn-primary={board.tool === tool}
-      aria-pressed={board.tool === tool}
-      onclick={() => (board.tool = tool)}
-    >
-      {label}
-    </button>
-  {/each}
+  <!-- >>> 04 -->
+  {__blank("04: a button per tool", "")}
+  <!-- <<< 04 -->
 
   <ColorPicker colors={PALETTE} value={board.color} onpick={(color) => (board.color = color)} />
 
-  <button
-    type="button"
-    class="btn btn-sm btn-error"
-    disabled={board.selectedId === null}
-    onclick={ondelete}
-  >
-    Delete
-  </button>
+  <!-- >>> 04 -->
+  {__blank("04: a delete button", "")}
+  <!-- <<< 04 -->
 </div>
 
 <style>

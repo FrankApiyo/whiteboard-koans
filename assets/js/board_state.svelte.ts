@@ -21,30 +21,38 @@ export class BoardState {
   }
 
   upsert(shape: Shape): void {
-    this.shapes = new Map(this.shapes).set(shape.id, shape)
+    // >>> 04
+    __blank("04: add or replace one");
+    // <<< 04
   }
 
   remove(id: string): void {
-    if (!this.shapes.has(id)) return
-    this.shapes = new Map([...this.shapes].filter(([key]) => key !== id))
-    if (this.selectedId === id) this.selectedId = null
+    // >>> 04
+    __blank("04: remove by id");
+    // <<< 04
   }
 
   moveShape(id: string, x: number, y: number): void {
-    const shape = this.shapes.get(id)
-    if (shape) this.upsert(moveTo(shape, x, y))
+    // >>> 04
+    __blank("04: move by id");
+    // <<< 04
   }
 
   replaceAll(shapes: Iterable<Shape>, syncId: number): void {
-    this.shapes = byId(shapes)
-    this.syncId = syncId
+    // >>> 04
+    __blank("04: replace them all");
+    // <<< 04
   }
 
   ordered(): Shape[] {
-    return [...this.shapes.values()].sort((a, b) => zRank(a) - zRank(b))
+    // >>> 04
+    __blank("04: sort by z");
+    // <<< 04
   }
 
   snapshot(): Shape[] {
-    return [...this.shapes.values()]
+    // >>> 04
+    __blank("04: copy the shapes");
+    // <<< 04
   }
 }

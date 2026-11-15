@@ -21,30 +21,42 @@ export class BoardState {
   }
 
   upsert(shape: Shape): void {
+    // >>> answer 04: add or replace one
     this.shapes = new Map(this.shapes).set(shape.id, shape)
+    // <<<
   }
 
   remove(id: string): void {
+    // >>> answer 04: remove by id
     if (!this.shapes.has(id)) return
     this.shapes = new Map([...this.shapes].filter(([key]) => key !== id))
     if (this.selectedId === id) this.selectedId = null
+    // <<<
   }
 
   moveShape(id: string, x: number, y: number): void {
+    // >>> answer 04: move by id
     const shape = this.shapes.get(id)
     if (shape) this.upsert(moveTo(shape, x, y))
+    // <<<
   }
 
   replaceAll(shapes: Iterable<Shape>, syncId: number): void {
+    // >>> answer 04: replace them all
     this.shapes = byId(shapes)
     this.syncId = syncId
+    // <<<
   }
 
   ordered(): Shape[] {
+    // >>> answer 04: sort by z
     return [...this.shapes.values()].sort((a, b) => zRank(a) - zRank(b))
+    // <<<
   }
 
   snapshot(): Shape[] {
+    // >>> answer 04: copy the shapes
     return [...this.shapes.values()]
+    // <<<
   }
 }
