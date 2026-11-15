@@ -18,14 +18,14 @@ h) outlines a box in one call, clearRect(x, y, w, h) wipes one, and an X is one 
     ctx.stroke()
 
 canvas.width sizes the bitmap and CSS sizes the box; it is sharp with devicePixelRatio bitmap
-pixels per CSS pixel (500 CSS pixels at dpr 3 want 1500). Easel's bitmap is the 1600 by 1000
-board times dpr, scaled by CSS to fit. setTransform(a, b, c, d, e, f) maps later calls: a and d
-scale x and y, b and c skew, e and f shift. Setting canvas.width resets the context, so size first.
+pixels per CSS pixel (500 CSS pixels at dpr 3 want 1500). Easel's bitmap is the 1600 by 1000 board
+times dpr, scaled by CSS to fit. setTransform(a, b, c, d, e, f) maps later calls: a and d scale x
+and y, b and c skew, e and f shift. Setting canvas.width resets the context, so size first.
 
-tools.ts is a state machine: pointerDown, pointerMove and pointerUp take a ToolState and return
-a new one. idle becomes drawing (an origin and a growing draft) or dragging (a shape id and the
-grab offset); pointerUp goes back to idle with a commit, an add or a move, or null. On down,
-setPointerCapture(event.pointerId) sends the pointer's events here until pointerup or pointercancel.
+tools.ts is a state machine: pointerDown, pointerMove and pointerUp take a ToolState and return a
+new one. idle becomes drawing (an origin and a growing draft) or dragging (a shape id and the grab
+offset); pointerUp goes back to idle with a commit, an add or a move, or null. On down,
+setPointerCapture(event.pointerId) sends its events here until pointerup or pointercancel.
 
     Write:          assets/js/render.ts:28  (05: size the canvas)
     Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119

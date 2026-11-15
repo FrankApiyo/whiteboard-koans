@@ -35,7 +35,7 @@
   <text x="170" y="68" class="small lbl">down, drawing tool</text>
 
   <path class="edge" d="M140,160 C200,200 260,220 326,218"/>
-  <text x="160" y="232" class="small lbl">down on a shape, select</text>
+  <text x="160" y="236" class="small lbl">down on a shape, select</text>
 
   <path class="edge" d="M480,70 C540,40 540,110 484,98"/>
   <text x="540" y="78" class="small lbl">move:</text>

@@ -10,24 +10,26 @@ defmodule Koans.Ch07.BoardsAndShapesInTheDatabaseTest do
       load_shapes/1, save_shapes/2
 
   Boards and shapes live in two tables. The migrations and schemas are given: a board has a
-  title and a slug with a unique index, and a shape row has board_id, client_id (the browser's
-  id), kind, color, z and data, a :map column that SQLite keeps as JSON text. JSON has no atoms,
-  so a row read back has string keys in data: data["w"], while data[:w] is nil.
+  title and a slug with a unique index, and a shape row has board_id, client_id (a UUID the
+  browser makes with crypto.randomUUID(), cast by each shape schema's Ecto.UUID id field), kind,
+  color, z and data, a :map column that SQLite keeps as JSON text. JSON has no atoms, so a row
+  read back has string keys in data: data["w"], while data[:w] is nil.
 
   Easel.Boards is the context, the one module the app calls for boards; Repo and queries stay
-  inside it. Suppose a Pin schema had a label and a board_id:
+  inside it. Suppose a Pin schema had a label, a board_id and timestamps:
 
-      def pins_for(board_id),
-        do: Repo.all(from p in Pin, where: p.board_id == ^board_id, order_by: [desc: p.id])
+      def recent_pins(limit),
+        do: Repo.all(from p in Pin, order_by: [desc: p.inserted_at], limit: ^limit)
 
   A slug is the board's address, so it must be unguessable: 16 random bytes, URL-safe base64
-  with no padding, are 22 characters. Repo.transact(fun) commits what fun did when fun returns
-  {:ok, value} and rolls it all back on {:error, reason}. Shapes from the browser are checked
-  by an embedded_schema per kind, with no table behind it: each changeset casts and requires
-  its fields, pipes them through its own private validate_shape/1, then validate_extent.
+  with no padding, are 22 characters. Repo.transact(fun), the newer form of Repo.transaction/1
+  with Repo.rollback/1, commits fun's work when fun returns {:ok, value} and rolls it all back on
+  {:error, reason}. Each shape kind is an embedded_schema with no table: its changeset casts and
+  requires its fields, then pipes them through its private validate_shape/1, Pen's
+  validate_pairs and validate_extent.
 
       Write:          lib/easel/boards/board.ex:19  (Easel.Boards.Board.changeset/2)
-      Exercised by:   test/koans/07_boards_and_shapes_in_the_database_test.exs:71
+      Exercised by:   test/koans/07_boards_and_shapes_in_the_database_test.exs:75
 
   API you'll use
     cast/3            cast(pin, %{"label" => "Door", "id" => 9}, [:label]) changes only label
@@ -36,16 +38,18 @@ defmodule Koans.Ch07.BoardsAndShapesInTheDatabaseTest do
       "should have at least 2 item(s)" and max: 5 "should have at most 5 item(s)"
     validate_number/3  validate_number(cs, :size, greater_than: 0) gives "must be greater than 0"
     validate_inclusion/3  validate_inclusion(cs, :shade, ~w(light dark)) gives "is invalid"
-    unique_constraint/2  unique_constraint(cs, :code) turns the index error into "has already been taken"
+    unique_constraint/2  unique_constraint(cs, :code) turns the index error into
+      "has already been taken"
     :crypto.strong_rand_bytes/1  :crypto.strong_rand_bytes(4) is 4 random bytes
     Base.url_encode64/2  Base.url_encode64(<<251, 255>>, padding: false) is "-_8"
     Repo.insert/1     Repo.insert(changeset) is {:ok, struct} or {:error, changeset}
-    Repo.all/1        Repo.all(from p in Pin, where: p.label in ^labels, order_by: p.label)
-    Repo.delete_all/1  Repo.delete_all(from p in Pin, where: p.board_id == ^id) is {count, nil}
+    Repo.all/1        Repo.all(from p in Pin, where: p.id in ^ids) is the pins with those ids
+    Repo.delete_all/1  Repo.delete_all(from p in Pin, where: p.label == "old") is {count, nil}
     Repo.transact/1   Repo.transact(fn -> {:ok, 1} end) is {:ok, 1}
     Easel.Palette.colors/0  the eight palette colours, "#e03131" first
     errors_on/1       errors_on(cs) is %{label: ["can't be blank"]}
-    shape_fixture/2   shape_fixture(board, z: 2) inserts a rect row, data %{x: 10, y: 10, w: 100, h: 50}
+    shape_fixture/2   shape_fixture(board, z: 2) inserts a rect row,
+      data %{x: 10, y: 10, w: 100, h: 50}
 
   Picture: none for this chapter; Easel's two tables are in priv/repo/migrations.
   """
@@ -162,7 +166,9 @@ defmodule Koans.Ch07.BoardsAndShapesInTheDatabaseTest do
     assert Rect.changeset(%Rect{}, %{box | "w" => 1}).valid?
     assert errors_on(Rect.changeset(%Rect{}, %{box | "w" => 0})) == %{w: ["must be greater than 0"]}
     assert errors_on(Rect.changeset(%Rect{}, %{box | "color" => "#000000"})) == %{color: ["is invalid"]}
-    assert errors_on(Ellipse.changeset(%Ellipse{}, %{box | "h" => -5})) == %{h: ["must be greater than 0"]}
+    assert errors_on(Rect.changeset(%Rect{}, %{box | "h" => 0})) == %{h: ["must be greater than 0"]}
+    assert errors_on(Ellipse.changeset(%Ellipse{}, %{box | "w" => 0})) == %{w: ["must be greater than 0"]}
+    assert errors_on(Ellipse.changeset(%Ellipse{}, %{box | "h" => 0})) == %{h: ["must be greater than 0"]}
     assert errors_on(Ellipse.changeset(%Ellipse{}, %{box | "color" => "red"})) == %{color: ["is invalid"]}
   end
 
