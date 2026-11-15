@@ -105,7 +105,8 @@ function hasSize(s: Shape): boolean {
   }
 }
 
-export function pointerUp(t: ToolState, p: Point): { state: ToolState; commit: Commit | null } {
+export function pointerUp(t: ToolState, point: Point): { state: ToolState; commit: Commit | null } {
+  const p = clamp(point)
   const target = dragTarget(t, p)
   if (t.mode === "dragging" && t.origin.x === p.x && t.origin.y === p.y) {
     return { state: idle, commit: null }

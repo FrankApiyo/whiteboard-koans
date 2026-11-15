@@ -118,6 +118,13 @@ describe("pointerUp", () => {
     expect(pointerUp(down, { x: 150, y: 130 }).commit).toBeNull()
   })
 
+  it("a click just off the board edge commits no move", () => {
+    const edge = rect({ x: 1500, y: 900, w: 100, h: 100 })
+    const down = pointerDown(idle, "select", { x: 1605, y: 950 }, env([edge]))
+    expect(down.mode).toBe("dragging")
+    expect(pointerUp(down, { x: 1605, y: 950 }).commit).toBeNull()
+  })
+
   it("keeps a dragged shape's origin on the board", () => {
     const dragging: ToolState = { mode: "dragging", id: ID_A, origin: { x: 100, y: 100 }, offset: { x: 50, y: 30 } }
     expect(dragTarget(dragging, { x: 10, y: 5 })).toEqual({ id: ID_A, x: 0, y: 0 })
