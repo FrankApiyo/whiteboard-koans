@@ -44,3 +44,7 @@ node_modules/
 /_verify/
 /course/_build/
 /spike/
+
+# Playwright (npm run e2e); its database lives under /tmp/
+/playwright-report/
+/test-results/

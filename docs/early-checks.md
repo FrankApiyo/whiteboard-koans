@@ -72,3 +72,32 @@ npx svelte-check --tsconfig spike/tree/assets/tsconfig.json --fail-on-warnings
   svelte-check does not report it there.
 - `svelte-check` 4.7.8 needs TypeScript `^5 || ^6`; TypeScript 7 is `latest` on npm, so
   pin `typescript@^6`.
+
+## Two-window check (automated)
+
+The manual two-window check is replaced by a Playwright suite that drives two separate
+browser sessions (Ada and Lin, each with its own session cookie) on one board in Chromium.
+
+```
+npm run e2e
+```
+
+Playwright starts the app itself with `MIX_ENV=e2e` (`config/e2e.exs`): assets built with
+`mix assets.build`, no Vite dev server, port 4100 and its own database in `tmp/e2e/`, so it
+never meets the dev server on port 4000 or the dev database. A first run compiles the `e2e`
+build (`_build/e2e`); Chromium is installed once with `npx playwright install chromium`.
+
+Result (2026-11-15): **6 passed** (about 10 s after the build; 18/18 with `--repeat-each=3`).
+
+| Check | What the test does |
+| ----- | ------------------ |
+| Shapes appear in both | Ada draws a rectangle, an ellipse, a line and a pen stroke; after each, Lin's shape list (the canvas's `describe()` text) equals Ada's. |
+| Moves appear in both | Lin drags Ada's rectangle with Select; Ada's description changes to Lin's new position. |
+| Deletes appear in both | Ada selects the ellipse and presses Delete; only the rectangle is left for Lin. |
+| Cursors carry names | Ada's pointer over the board shows Lin a cursor labelled "Ada" in Ada's colour; Ada sees no cursor of her own. |
+| People list is right | Each list shows both names with "(you)" on one's own; closing Lin's browser removes Lin and Lin's cursor from Ada's page. |
+| Board survives a reload | Ada waits past the 500 ms save window, reloads, and every shape description is unchanged. |
+
+Each check was shown to fail when its wire was cut (BoardLive not pushing `shape:added`,
+`shape:moved`, `shape:deleted` or `cursor:moved`; "(you)" on the wrong person; leavers kept
+in the people list; cursors never pruned; the join ignoring the board's snapshot).
