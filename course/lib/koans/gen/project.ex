@@ -1,7 +1,7 @@
 defmodule Koans.Gen.Project do
   @moduledoc false
 
-  alias Koans.{Gen, SourceCheck}
+  alias Koans.{Gen, SourceCheck, Ts}
 
   @generated_dirs [
     "lib",
@@ -84,13 +84,21 @@ defmodule Koans.Gen.Project do
   def check(root, files \\ nil) do
     files = files || source_files(root)
     chapters = koan_chapters(root)
+    texts = for file <- files, text?(file), into: %{}, do: {file.rel, File.read!(file.path)}
+    ts_opts = [chapters: chapters] ++ Ts.SourceCheck.context(Enum.to_list(texts))
 
     files
-    |> Enum.filter(&(Path.extname(&1.rel) in @elixir_extensions))
+    |> Enum.filter(&Map.has_key?(texts, &1.rel))
     |> Enum.flat_map(fn file ->
       path = Path.join("source", file.rel)
+      text = texts[file.rel]
 
-      case SourceCheck.check(File.read!(file.path), path, chapters: chapters) do
+      result =
+        if Path.extname(file.rel) in @elixir_extensions,
+          do: SourceCheck.check(text, path, chapters: chapters),
+          else: Ts.SourceCheck.check(text, path, ts_opts)
+
+      case result do
         :ok -> []
         {:error, errors} -> errors
       end

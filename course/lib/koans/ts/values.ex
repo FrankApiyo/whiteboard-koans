@@ -1,14 +1,28 @@
 defmodule Koans.Ts.Values do
   @moduledoc false
 
-  @regex_after ~c"(,=:[!&|?{;+-*%<>~^"
+  @regex_after ~c"(,=:[!&|?{};+-*%<>~^"
+  @regex_keyword ~r/(?<![\w$.])(?:return|typeof|case|do|else|in|of|instanceof|new|delete|void|throw|yield|await)\z/
+  @control_paren ~r/(?<![\w$.])(?:if|while|for|with)\s*\(/
 
-  def replace(text, blank), do: do_values(text, text, 0, [], blank)
+  def replace(text, blank) do
+    text
+    |> segments()
+    |> Enum.map(fn
+      {:plain, part} -> part
+      {:value, _offset, inner} -> if blank, do: "__", else: inner
+    end)
+    |> IO.iodata_to_binary()
+  end
 
-  defp do_values(text, rest, offset, acc, blank) do
+  def answers(text), do: for({:value, offset, inner} <- segments(text), do: {offset, inner})
+
+  defp segments(text), do: do_segments(text, text, 0, [])
+
+  defp do_segments(text, rest, offset, acc) do
     case find_marker(rest) do
       nil ->
-        IO.iodata_to_binary(Enum.reverse([rest | acc]))
+        Enum.reverse([{:plain, rest} | acc])
 
       start ->
         inner_start = start + 3
@@ -16,12 +30,8 @@ defmodule Koans.Ts.Values do
         before = binary_part(rest, 0, start)
         inner = binary_part(rest, inner_start, close - inner_start)
         tail = binary_part(rest, close + 1, byte_size(rest) - close - 1)
-
-        if find_marker(inner),
-          do: raise(ArgumentError, "line #{line_of(text, offset + start)}: nested _a(")
-
-        replacement = if blank, do: "__", else: inner
-        do_values(text, tail, offset + close + 1, [replacement, before | acc], blank)
+        value = {:value, offset + inner_start, inner}
+        do_segments(text, tail, offset + close + 1, [value, {:plain, before} | acc])
     end
   end
 
@@ -40,6 +50,9 @@ defmodule Koans.Ts.Values do
       {:regex, at} ->
         raise ArgumentError, "line #{line_of(text, offset + at)}: regex literal inside _a("
 
+      {:nested, at} ->
+        raise ArgumentError, "line #{line_of(text, offset + at)}: nested _a("
+
       :error ->
         raise ArgumentError,
               "line #{line_of(text, offset + start)}: _a( without a closing paren"
@@ -57,6 +70,7 @@ defmodule Koans.Ts.Values do
       q when q in [?', ?"] -> s |> skip_quoted(i + 1, q) |> continue(s, start, pair, depth)
       ?` -> s |> skip_template(i + 1, start) |> continue(s, start, pair, depth)
       ?/ -> slash(s, i, start, pair, depth)
+      ?_ -> if marker_at?(s, i), do: {:nested, i}, else: code(s, i + 1, start, pair, depth)
       ^close when depth == 1 -> {:ok, i}
       ^close -> code(s, i + 1, start, pair, depth - 1)
       ^open -> code(s, i + 1, start, pair, depth + 1)
@@ -80,13 +94,19 @@ defmodule Koans.Ts.Values do
     end
   end
 
+  defp marker_at?(s, i),
+    do:
+      binary_part(s, i, min(3, byte_size(s) - i)) == "_a(" and
+        find_marker(binary_part(s, i - 1, 4)) == 1
+
   defp regex_position?(s, i, start) do
-    s
-    |> binary_part(start, i - start)
-    |> String.trim_trailing()
-    |> case do
-      "" -> true
-      before -> :binary.last(before) in @regex_after
+    before = s |> binary_part(start, i - start) |> String.trim_trailing()
+
+    cond do
+      before == "" -> true
+      :binary.last(before) in @regex_after -> true
+      :binary.last(before) == ?) -> Regex.match?(@control_paren, before)
+      true -> Regex.match?(@regex_keyword, before)
     end
   end
 

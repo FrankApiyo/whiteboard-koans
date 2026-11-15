@@ -201,4 +201,96 @@ defmodule Verify.ApiCheckTest do
                ["01: Enum.sum not in this or an earlier lesson"]
     end
   end
+
+  describe "typescript answers" do
+    alias Koans.Ts.ApiCheck, as: TsApiCheck
+
+    defp ts_koan(lesson, body) do
+      ~s|/*\n#{lesson}\n*/\nimport { expect } from "vitest"\nimport { test } from "@koans/runtime"\n| <>
+        ~s|import { render } from "@testing-library/svelte"\n| <>
+        ~s|import { contains } from "../js/geometry"\n\n| <>
+        ~s|test("A.", () => {\n  expect(#{body}).toBe(1)\n})\n|
+    end
+
+    defp component(script_answer) do
+      """
+      <script lang="ts">
+        let { n }: { n: number } = $props()
+        function double(): number {
+          // >>> answer 03: double
+          #{script_answer}
+          // <<<
+        }
+      </script>
+      """
+    end
+
+    test "rune_in_answer_must_be_taught" do
+      source = {"assets/svelte/Counter.svelte", component("return $derived(n * 2)")}
+      untaught = [{"03", ts_koan("Runes: $state(0) holds state.", "1")}]
+      taught = [{"03", ts_koan("Runes: $derived(a * 2) follows a.", "1")}]
+
+      assert TsApiCheck.missing(untaught, [source]) ==
+               ["03: $derived not in this or an earlier lesson"]
+
+      assert TsApiCheck.missing(taught, [source]) == []
+
+      raw = {"assets/svelte/Counter.svelte", component("return $state.raw(n)")}
+
+      assert TsApiCheck.missing(taught, [raw]) == [
+               "03: $state.raw not in this or an earlier lesson"
+             ]
+    end
+
+    test "relative_import_is_exempt" do
+      koan = ts_koan("Nothing here.", "_a(contains(r, render(C), Math.max(1, 2)))")
+
+      assert TsApiCheck.missing([{"02", koan}]) == [
+               "02: Math.max not in this or an earlier lesson",
+               "02: render not in this or an earlier lesson"
+             ]
+
+      taught =
+        ts_koan(
+          "Use render(Component) and Math.max(a, b).",
+          "_a(contains(r, render(C), Math.max(1, 2)))"
+        )
+
+      assert TsApiCheck.missing([{"02", taught}]) == []
+    end
+
+    test "elixir_lesson_can_teach_a_ts_call" do
+      koan = {"06", ts_koan("Timers.", "_a(setTimeout(f, 10))")}
+      elixir = {"05", chapter("Like setTimeout(f, ms) in the browser.", "")}
+
+      assert TsApiCheck.missing([koan]) == ["06: setTimeout not in this or an earlier lesson"]
+      assert TsApiCheck.missing([elixir, koan]) == []
+      assert TsApiCheck.missing([{"07", elixir |> elem(1)}, koan]) != []
+    end
+
+    test "calls_in_comments_strings_and_outside_answers_are_ignored" do
+      koan = ts_koan("None.", ~S|_a("Math.max(" + 1 /* JSON.parse( */)|)
+      assert TsApiCheck.missing([{"02", koan <> "Math.min(1, 2)\n"}]) == []
+    end
+
+    test "ts_lesson_is_the_leading_block_comment" do
+      body = Enum.map_join(1..10, "\n", &"line #{&1}")
+
+      text =
+        "/*\n#{body}\n\nAPI you'll use\n  - render(c)\n\nPicture: none\n*/\ntest(\"A.\", f)\n"
+
+      assert TsApiCheck.lesson(text) =~ "line 1\n"
+      refute TsApiCheck.lesson(text) =~ "test("
+      assert TsApiCheck.lesson_problems(text) == []
+
+      assert TsApiCheck.lesson_problems("// x\n/*\n*/\n") == [
+               "lesson must open with /* on line 1"
+             ]
+
+      assert TsApiCheck.lesson_problems("/*\nx\n") == ["lesson block has no */ line"]
+
+      starred = String.replace(text, "line 3", " * line 3")
+      assert TsApiCheck.lesson_problems(starred) == ["lesson line 4 starts with *"]
+    end
+  end
 end

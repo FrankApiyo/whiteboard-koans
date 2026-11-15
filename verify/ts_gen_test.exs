@@ -133,6 +133,44 @@ defmodule Verify.TsGenTest do
     end
   end
 
+  test "a regex after a keyword, a closing brace or a control paren raises" do
+    for code <- ["f(() => { return /a)/.test(s) })", "() => { if (x) /a)/.test(s) }", "{} /a)/"] do
+      assert_raise ArgumentError, ~r/line 2: regex literal inside _a\(/, fn ->
+        Gen.learner("ok\nexpect(_a(#{code})).toBe(1)\n", @ts)
+      end
+    end
+
+    assert Gen.solutions("expect(_a(f(a) / 2)).toBe(1)\n", @ts) == "expect(f(a) / 2).toBe(1)\n"
+  end
+
+  test "an _a( inside a string or comment within _a( is not nested" do
+    inner = ~S|"_a(" + f(/* _a( */ 1) + `_a(`|
+    text = "expect(_a(#{inner})).toBe(1)\n"
+    assert Gen.learner(text, @ts) == "expect(__).toBe(1)\n"
+    assert Gen.solutions(text, @ts) == "expect(#{inner}).toBe(1)\n"
+
+    assert_raise ArgumentError, ~r/line 3: nested _a\(/, fn ->
+      Gen.learner("ok\nexpect(_a(1 +\n  _a(2))).toBe(3)\n", @ts)
+    end
+  end
+
+  test "nested braces inside a template interpolation" do
+    inner = ~S|`${ {a: "}"}.a }-${ `${1}` }`|
+    text = "expect(_a(#{inner})).toBe(1)\n"
+    assert Gen.learner(text, @ts) == "expect(__).toBe(1)\n"
+    assert Gen.solutions(text, @ts) == "expect(#{inner}).toBe(1)\n"
+  end
+
+  test "js files dispatch to the typescript generator" do
+    text = "export function f() {\n  // >>> answer 02: f\n  return 1\n  // <<<\n}\n"
+    js = [ext: ".js"]
+
+    assert Gen.learner(text, js) ==
+             "export function f() {\n  // >>> 02\n  __blank(\"02: f\");\n  // <<< 02\n}\n"
+
+    assert Gen.solutions(text, js) == "export function f() {\n  return 1\n}\n"
+  end
+
   test "a name ending in _a( is not a blank" do
     assert Gen.learner("data_a(1); $_a(2); o._a(3)\n", @ts) == "data_a(1); $_a(2); o._a(3)\n"
   end
@@ -289,8 +327,13 @@ defmodule Verify.TsGenTest do
 
     markup = Gen.learner(svelte_source(), @svelte)
     broken = String.replace(markup, "<!-- <<< 09 -->\n", "")
+    assert broken != markup
 
-    assert_raise ArgumentError, ~r/line \d+: <!-- >>> 09 --> never closed/, fn ->
+    [before_markup | _] = String.split(broken, "<!-- >>> 09 -->")
+    markup_line = length(String.split(before_markup, "\n"))
+    assert markup_line == 17
+
+    assert_raise ArgumentError, ~r/line #{markup_line}: <!-- >>> 09 --> never closed/, fn ->
       Gen.reblank(broken, svelte_source(), "09", @svelte)
     end
   end
@@ -345,18 +388,21 @@ defmodule Verify.TsGenTest do
     end
 
     defp ts_koan(n) do
+      markup = %{"09" => "09: badge", "10" => "10: heading"}
+
       """
       import { expect } from "vitest"
       import { test } from "@koans/runtime"
 
       test("Implement it. 1. Do it.", () => {
         expect(1).toBe(_a(#{n}))
-      })
+      }, { exercises: ["#{n}: drill #{n}", "#{markup[n]}"] })
       """
     end
 
     defp drill(n) do
-      "<!-- >>> answer #{n}: drill #{n} -->\n<p>drill</p>\n<!-- <<< -->\n"
+      ~s|<script lang="ts">\n</script>\n\n| <>
+        "<!-- >>> answer #{n}: drill #{n} -->\n<p>drill</p>\n<!-- <<< -->\n"
     end
 
     defp lib(n) do
@@ -420,6 +466,21 @@ defmodule Verify.TsGenTest do
       put(root, "assets/koans/09_t.test.ts", "// mine\n")
       assert {:ok, 14} = Gen.write_all(root, ["10"])
       assert File.read!(Path.join(root, "assets/koans/09_t.test.ts")) == "// mine\n"
+    end
+
+    test "write_all_reports_typescript_source_errors", %{root: root} do
+      seed(root)
+      put(root, "source/assets/js/bad.ts", "export const x = _a(1)\n")
+      put(root, "source/assets/svelte/Plain.svelte", "<p>plain</p>\n")
+
+      assert Gen.write_all(root) ==
+               {:error,
+                [
+                  "source/assets/js/bad.ts:1: value blank outside a test body",
+                  ~s|source/assets/svelte/Plain.svelte:1: component has no <script lang="ts">|
+                ]}
+
+      refute File.exists?(Path.join(root, "assets/js/m.ts"))
     end
 
     test "a ts answer tag counts its chapter from assets/koans", %{root: root} do
