@@ -219,7 +219,8 @@ defmodule Koans.Ch08.TheBoardServerTest do
     eventually(fn -> queued(stopping) == 1 end)
     :ok = stop_supervised(:stopping)
     assert {:shutdown, _} = Task.await(task)
-    assert Registry.lookup(Easel.Boards.Registry, other.slug) == []
+    # The Registry drops a stopped process's entry a moment after the exit, not with it.
+    eventually(fn -> Registry.lookup(Easel.Boards.Registry, other.slug) == [] end)
   end
 
   koan "An exception in a callback still runs terminate/2, which saves, and the supervisor restarts the board from the database; :kill skips terminate/2, so the ops in the open save window are lost." do
