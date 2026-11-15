@@ -28,8 +28,10 @@ defmodule Verify.CourseTest do
 
   defp own_blank?(_nn, _rel, _other), do: false
 
-  defp own_ts_blank?(nn, %{"status" => "blank", "tag" => tag}),
-    do: tag == nil or String.starts_with?(tag, nn <> ":")
+  defp own_ts_blank?(_nn, %{"status" => "blank", "tag" => nil}), do: true
+
+  defp own_ts_blank?(nn, %{"status" => "blank", "tag" => tag, "write" => %{"path" => _}}),
+    do: String.starts_with?(tag, nn <> ":")
 
   defp own_ts_blank?(_nn, _record), do: false
 
