@@ -11,25 +11,26 @@ jobs:
     env:
       MIX_ENV: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: erlef/setup-beam@v1
+        id: beam
         with:
           elixir-version: "1.19"
           otp-version: "28"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "25"
           cache: npm
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             deps
             _build
-          key: mix-test-${{ runner.os }}-${{ hashFiles('mix.lock') }}
-          restore-keys: mix-test-${{ runner.os }}-
+          key: mix-test-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-test-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
 
       # package.json installs live_svelte and phoenix from deps/, so Hex goes first.
       - run: mix deps.get
@@ -44,29 +45,41 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    env:
+      MIX_ENV: e2e
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: erlef/setup-beam@v1
+        id: beam
         with:
           elixir-version: "1.19"
           otp-version: "28"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "25"
           cache: npm
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             deps
             _build
-          key: mix-e2e-${{ runner.os }}-${{ hashFiles('mix.lock') }}
-          restore-keys: mix-e2e-${{ runner.os }}-
+          key: mix-e2e-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-e2e-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-
 
       - run: mix deps.get
       - run: npm ci
+      # Compiling here keeps the build out of Playwright's server start timeout.
+      - run: mix compile
       - run: npx playwright install --with-deps chromium
       # Playwright starts the app with MIX_ENV=e2e on port 4100 (config/e2e.exs).
       - run: npm run e2e
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

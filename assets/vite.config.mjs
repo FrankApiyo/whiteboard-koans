@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite"
 import { svelte } from "@sveltejs/vite-plugin-svelte"
 import liveSveltePlugin from "live_svelte/vitePlugin"
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "@tailwindcss/vite"
 // >>> course
 import path from "node:path"
 
@@ -23,7 +23,7 @@ export default defineConfig({
     include: ["live_svelte", "phoenix", "phoenix_html", "phoenix_live_view"],
   },
   ssr: { noExternal: process.env.NODE_ENV === "production" ? true : undefined },
-    build: {
+  build: {
     manifest: true,
     rollupOptions: {
       input: ["js/app.js", "css/app.css"],
@@ -50,6 +50,6 @@ export default defineConfig({
       // >>> course
       components: [path.join(tree, "svelte/**/*.svelte")],
       // <<< course
-    })
-  ]
-});
+    }),
+  ],
+})

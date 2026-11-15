@@ -32,7 +32,8 @@ defmodule Verify.ExportTest do
     "<!-- <<<",
     "/* >>>",
     "/* <<<",
-    "course"
+    "course",
+    "solutions"
   ]
 
   defp tmp_dir do
@@ -134,7 +135,7 @@ defmodule Verify.ExportTest do
 
   describe "refusals" do
     test "export_refuses_blanks" do
-      root = fixture_root(fn _rel -> false end)
+      root = fixture_root(&(not String.starts_with?(&1, "lib/")))
       target = Path.join(tmp_dir(), "out")
 
       assert {:error, message} = export(root, target)
@@ -164,6 +165,17 @@ defmodule Verify.ExportTest do
       assert {:error, message} = export(root, Path.join(tmp_dir(), "out"))
       assert message =~ ~s[assets/svelte/List.svelte:16  {__blank("05: rows", "")}]
       assert message =~ ~s[assets/svelte/List.svelte:9  __blank("05: count");]
+    end
+
+    test "a blank anywhere in the copied trees is refused" do
+      root = filled_fixture_root()
+      File.write!(Path.join(root, "e2e/demo.spec.ts"), ~s|test("x", () => __blank("09: e2e"))\n|)
+      File.write!(Path.join(root, "config/config.exs"), ~s|import Config\nx = __("09: key")\n|)
+
+      assert {:error, message} = export(root, Path.join(tmp_dir(), "out"))
+      assert message =~ "2 blank(s) left"
+      assert message =~ "e2e/demo.spec.ts:1"
+      assert message =~ "config/config.exs:2"
     end
 
     test "export_refuses_existing_target" do
@@ -416,7 +428,9 @@ defmodule Verify.ExportTest do
       assert package["scripts"] == scripts
       assert package["dependencies"] == %{"phoenix" => "file:./deps/phoenix"}
       assert package["devDependencies"] == %{"vitest" => "^5.1.0"}
-      assert read(target, "package.json") =~ ~s|{\n  "type": "module",\n  "scripts": {\n    "|
+      assert package["name"] == "easel"
+      assert package["private"] == true
+      assert read(target, "package.json") =~ ~s|  "type": "module",\n  "scripts": {\n    "|
 
       assert JSON.decode!(read(target, "package-lock.json"))["name"] == "easel"
 
@@ -457,9 +471,11 @@ defmodule Verify.ExportTest do
       steps = ~r/^\s+- (?:run|uses): (.+)$/m |> Regex.scan(ci) |> Enum.map(&List.last/1)
 
       for step <- [
-            "actions/checkout@v4",
+            "actions/checkout@v7",
             "erlef/setup-beam@v1",
-            "actions/setup-node@v4",
+            "actions/setup-node@v7",
+            "actions/cache@v6",
+            "actions/upload-artifact@v7",
             "mix deps.get",
             "npm ci",
             "mix compile --warnings-as-errors",
@@ -481,6 +497,20 @@ defmodule Verify.ExportTest do
       assert ci =~ ~s|otp-version: "28"|
       assert ci =~ ~s|node-version: "25"|
       assert ci =~ "  e2e:\n"
+      refute ci =~ ~r/actions\/\S+@v[1-5]\n/
+
+      for job <- ~w(test e2e) do
+        assert ci =~
+                 "key: mix-#{job}-${{ runner.os }}-otp${{ steps.beam.outputs.otp-version }}-elixir${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('mix.lock') }}"
+      end
+
+      [_test_job, e2e_job] = String.split(ci, "\n  e2e:\n")
+      e2e_steps = ~r/^\s+- (?:run|uses): (.+)$/m |> Regex.scan(e2e_job) |> Enum.map(&List.last/1)
+      e2e_index = &Enum.find_index(e2e_steps, fn step -> step == &1 end)
+      assert e2e_index.("mix compile") < e2e_index.("npm run e2e")
+      assert e2e_job =~ "      MIX_ENV: e2e\n"
+      assert e2e_job =~ ~r/- uses: actions\/upload-artifact@v7\n\s+if: failure\(\)\n/
+      assert e2e_job =~ "path: playwright-report/"
     end
 
     test "export_formats_what_it_writes", %{target: target} do
@@ -522,6 +552,16 @@ defmodule Verify.ExportTest do
       assert readme() =~ "npm run e2e"
       assert readme() =~ "<!-- Add a screenshot:"
       assert readme() =~ "keyboard"
+    end
+
+    test "the README claims no more than the code does" do
+      refute readme() =~ "trusts nothing"
+      refute readme() =~ "changes nothing"
+      assert readme() =~ "do not commute"
+      assert readme() =~ "tombstone"
+      assert readme() =~ "no per-board shape cap"
+      assert readme() =~ "server-side rate limit"
+      assert readme() =~ ~r/and because it traps exits,\s+on shutdown too/
     end
 
     test "the numbers in the README are the code's" do
@@ -625,6 +665,12 @@ defmodule Verify.ExportTest do
     File.rm_rf!(Path.join(root, "_build/test/lib/easel"))
     write_learner!(root, fn _rel -> true end)
 
+    for rel <- ~w(docs AGENTS.md), do: clone!(Path.join(@repo, rel), Path.join(root, rel))
+
+    for rel <- ~w(lib/easel/hello.ex test/easel/hello_test.exs assets/js/hello.ts
+                  assets/test/hello.test.ts docs/early-checks.md AGENTS.md),
+        do: assert(File.exists?(Path.join(root, rel)), "precondition: #{rel} is in the root")
+
     target = Path.join(tmp_dir(), "easel")
 
     env = [
@@ -652,6 +698,13 @@ defmodule Verify.ExportTest do
     for rel <- ~w(lib/easel/hello.ex test/easel/hello_test.exs assets/js/hello.ts
                   assets/test/hello.test.ts docs/early-checks.md AGENTS.md),
         do: refute(File.exists?(Path.join(target, rel)), "#{rel} was exported")
+
+    app_js = read(target, "assets/js/app.js")
+    for leftover <- ["esbuild", "--prefix assets", "user_socket"], do: refute(app_js =~ leftover)
+    vite = read(target, "assets/vite.config.mjs")
+    refute vite =~ "'"
+    refute vite =~ ";\n"
+    refute vite =~ "\n    build:"
 
     {log, 0} = System.cmd("git", ["log", "--format=%s"], cd: target, env: @git_env)
     assert String.trim(log) == "feat: easel whiteboard app"

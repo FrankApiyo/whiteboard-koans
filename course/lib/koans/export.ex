@@ -13,7 +13,6 @@ defmodule Koans.Export do
                assets/vitest.course.config.ts)
   @left_out_prefixes ~w(priv/static/ priv/svelte/ assets/koans/ assets/koans_support/
                         assets/node_modules/ assets/svelte/_build/)
-  @blank_dirs ~w(lib test/support assets/js assets/svelte assets/test)
   @blank ~r/(?<![A-Za-z0-9_$])__(?:blank)?\(/
   @templates [
     {"README.md", "README.md"},
@@ -59,12 +58,10 @@ defmodule Koans.Export do
 
   defp refuse_blanks(root) do
     found =
-      for dir <- @blank_dirs,
-          path <- root |> Path.join(dir) |> Path.join("**/*") |> Path.wildcard(match_dot: true),
-          File.regular?(path),
-          rel = Path.relative_to(path, root),
-          not left_out?(rel),
-          {line, number} <- path |> File.read!() |> String.split("\n") |> Enum.with_index(1),
+      for rel <- app_files(root),
+          text = File.read!(Path.join(root, rel)),
+          String.valid?(text),
+          {line, number} <- text |> String.split("\n") |> Enum.with_index(1),
           Regex.match?(@blank, line),
           do: "  #{rel}:#{number}  #{String.trim(line)}"
 
@@ -141,7 +138,7 @@ defmodule Koans.Export do
     format.(text)
   end
 
-  defp finish("package.json", _kind, text), do: swap_scripts(text)
+  defp finish("package.json", _kind, text), do: text |> swap_scripts() |> name_package()
   defp finish("package-lock.json", _kind, text), do: rename_package(text)
   defp finish(_rel, _kind, text), do: text
 
@@ -166,6 +163,11 @@ defmodule Koans.Export do
     if swapped == text, do: raise(ArgumentError, "package.json has no scripts object to replace")
     JSON.decode!(swapped)
     swapped
+  end
+
+  defp name_package(text) do
+    named = String.replace(text, ~r/\A\{\n/, ~s({\n  "name": "easel",\n  "private": true,\n))
+    if Map.has_key?(JSON.decode!(text), "name"), do: rename_package(text), else: named
   end
 
   defp rename_package(text),
