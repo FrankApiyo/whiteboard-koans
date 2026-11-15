@@ -28,12 +28,15 @@ defmodule Easel.Boards do
     |> Enum.map(&to_map/1)
   end
 
+  # SQLite binds at most 32_766 variables per statement, and each row binds six.
+  @rows_per_insert 1_000
+
   def save_shapes(%Board{id: board_id}, shapes) do
     rows = Enum.map(shapes, &to_row(&1, board_id))
 
     Repo.transact(fn ->
       Repo.delete_all(from s in Shape, where: s.board_id == ^board_id)
-      Repo.insert_all(Shape, rows)
+      rows |> Enum.chunk_every(@rows_per_insert) |> Enum.each(&Repo.insert_all(Shape, &1))
       {:ok, length(rows)}
     end)
   end

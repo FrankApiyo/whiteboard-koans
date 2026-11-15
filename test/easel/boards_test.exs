@@ -60,6 +60,23 @@ defmodule Easel.BoardsTest do
       assert Repo.aggregate(Shape, :count) == 1
     end
 
+    # A pen's points bind as one JSON value, so a row binds one variable per column.
+    test "save_shapes saves more shapes than one insert can bind" do
+      board = board_fixture()
+      columns_per_row = 6
+      count = div(32_766, columns_per_row) + 1
+      points = Enum.map(1..50, &[&1, &1])
+
+      pens =
+        for z <- 1..count do
+          %{id: "pen-#{z}", kind: "pen", color: "#2f9e44", z: z, x: 0, y: 0, points: points}
+        end
+
+      assert count * columns_per_row > 32_766
+      assert {:ok, ^count} = Boards.save_shapes(board, pens)
+      assert length(Boards.load_shapes(board)) == count
+    end
+
     test "save_shapes leaves other boards alone" do
       board = board_fixture()
       other = board_fixture()
