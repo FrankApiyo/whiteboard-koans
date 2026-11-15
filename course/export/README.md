@@ -58,8 +58,8 @@ on demand under `Easel.Boards.BoardSupervisor`, a DynamicSupervisor. On start it
 board's shapes into a map and broadcasts `:board_restarted`. It applies operations one at a
 time, gives each new shape the next z-order, and broadcasts every applied operation on the
 PubSub topic `"board:<slug>"`. It saves within 500 ms of the first unsaved change and stops
-itself after five idle minutes. It traps exits, so `terminate/2` saves on an idle stop and on
-shutdown too. A board can stop between finding it and calling it, so the public functions
+itself after five idle minutes. `terminate/2` saves on an idle stop, and because it traps exits,
+on shutdown too. A board can stop between finding it and calling it, so the public functions
 start it again and retry once.
 
 **LiveView and the Svelte component.** `EaselWeb.BoardLive` renders one Svelte component,
@@ -67,8 +67,7 @@ start it again and retry once.
 before the browser runs, and Node stays out of the server. The board process starts only on
 the connected mount. There the LiveView starts the board, subscribes to its topic, tracks the
 tab in Presence and only then takes the snapshot, so no operation falls between subscribing
-and the snapshot. The component's props are that snapshot, `sync_id`, the viewer's own name
-and colour, and the people on the board.
+and the snapshot.
 
 **Client to server.** Geometry, hit testing, the pointer-tool state machine and canvas drawing
 are plain TypeScript modules with no DOM, so Vitest tests them directly; drawing is tested
@@ -100,12 +99,13 @@ change rather than wrapped in a deep proxy, since a pen stroke alone can hold 20
 - **A process per board.** One GenServer owns a board's shapes, so a board's operations are
   applied in one order without locks, and the database gets one batched write per save window
   instead of one per pointer-up. The cost: a crash that skips `terminate/2` loses at most one
-  save window, and the restarted process sends `:board_restarted` so every viewer resyncs.
-- **Whole-value operations, idempotent by id.** `add` sends the whole shape, `move` the shape's
-  new position (never a delta), `delete` the id. Adding a known id overwrites it and keeps its
-  z-order; moving or deleting an unknown id does nothing, so a late move never brings back a
-  deleted shape. A retried or duplicated message changes nothing. Every client, the sender
-  included, applies the server's broadcasts, so all of them end up in the server's order.
+  save window.
+- **Whole-value operations.** `add` sends the whole shape, `move` the shape's new position
+  (never a delta), `delete` the id. Adding a known id overwrites it and keeps its z-order;
+  moving or deleting an unknown id does nothing, so a late move never brings back a deleted
+  shape. Applying the same operation twice in a row gives the same board, so a retry is
+  harmless, but operations do not commute: their order matters. The board process sets that
+  order, and every client, the sender included, applies the server's broadcasts in it.
 - **Props for state, events for operations.** Props carry state that changes rarely: the
   snapshot, `sync_id`, the viewer and the people list. Shapes in props change only on a resync.
   Operations and cursors travel as events, so a move sends one shape's position rather than
@@ -119,9 +119,9 @@ change rather than wrapped in a deep proxy, since a pen stroke alone can hold 20
   A client ignores incoming operations for the shape it is dragging, and its pointer-up sends
   the final position. That is cheap and predictable for shapes, which one person usually
   handles at a time; it would not do for shared text.
-- **The server trusts nothing from the browser.** It never stores a shape it has not cast and
-  validated. A hostile payload gets `ok: false` and leaves the LiveView and the board process
-  running.
+- **The server validates every payload.** Casting happens in the LiveView, so the board
+  process only ever sees valid shapes, and a hostile payload gets `ok: false` while the LiveView
+  and the board process keep running.
 - **SQLite for zero setup.** One file and no database server, so `mix setup` is the whole
   install. Each save replaces a board's shape rows in one transaction, with the kind-specific
   fields in a JSON `data` column.
@@ -158,6 +158,11 @@ on port 4100 with its own database under `tmp/e2e/`, so it never meets the dev s
   movement yet.
 - No resizing, text, undo, zoom or pan, and the board has a fixed size.
 - A board's operations go through one process on one node (see "In a cluster").
+- Deletes leave no tombstone, so an `add` for a shape that arrives after its delete brings the
+  shape back. One socket delivers a client's messages in order, so it takes a client that
+  resends an old `add`.
+- There is no per-board shape cap and no server-side rate limit. The client sends its cursor at
+  most 20 times a second, but the server does not enforce that.
 
 ## Working on it
 
