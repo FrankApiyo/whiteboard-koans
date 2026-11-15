@@ -12,37 +12,43 @@ later, in a timer or after an await, is not tracked. fn may return a cleanup fun
 before the next run and when the component is destroyed, so what an effect starts it also stops:
 
     $effect(() => {
-      const id = setTimeout(() => (saved = true), 500)
+      const id = setTimeout(() => (saved = true), delay)
       return () => clearTimeout(id)
     })
 
 bind:value={name} ties an input to state both ways: typing sets name, and setting name changes
 the field. bind:this={field} stores the element once it is mounted, so read it in an effect.
-let name = $state(initial) reads the prop initial once, and Svelte warns that this only captures
-its initial value. When a one-time seed is what you mean, say so: $state(untrack(() => initial)).
+let name = $state(initial) reads initial once, and svelte-check warns state_referenced_locally.
+When a one-time seed is what you mean, say so: $state(untrack(() => initial)).
 
-$state on an object or array makes a deep proxy that sees a push inside it. $state.raw keeps the
-value as given, so only assigning a new value is seen: cheaper for BoardState's map of shapes,
-which is always replaced, never changed in place. $state.snapshot(x) is a plain copy of a proxy,
-for logging or structuredClone. In a koan, $effect.root(fn) hosts effects outside a component.
+$state proxies a plain object or array deeply, so a push inside it is seen. A Map, Set or
+class instance is not proxied, so its .set is never seen (svelte/reactivity has SvelteMap).
+$state.raw never proxies: only assigning a new value is seen. BoardState holds its shapes as
+a raw ReadonlyMap and always assigns a new one. $state.snapshot(x) is a plain copy of a
+proxy, for logging or structuredClone. In a koan, $effect.root(fn) hosts effects.
 
     Write:          assets/js/board_state.svelte.ts:25  (04: add or replace one)
-    Exercised by:   assets/koans/04_effects_bindings_and_the_toolbar.svelte.test.ts:154
+    Exercised by:   assets/koans/04_effects_bindings_and_the_toolbar.svelte.test.ts:160
 
 API you'll use
-  - window.addEventListener: window.addEventListener("keydown", onKey) calls onKey on each key
+  - window.addEventListener: window.addEventListener("keydown", onKey) calls
+    onKey(event: KeyboardEvent) on each key; <svelte:window onkeydown={onKey} /> does the same
+    in markup, and Svelte removes that listener itself
   - window.removeEventListener: window.removeEventListener("keydown", onKey), the same function
   - event.key: "Escape" for the Escape key, "a" for the A key
   - unmount: const { unmount } = render(Drill) and unmount() destroys it, running its cleanups
   - screen.getByLabelText: screen.getByLabelText("Name") is the field labelled Name
   - fireEvent.input: await fireEvent.input(field, { target: { value: "Lin" } }) types Lin
-  - new Map: new Map(old).set(id, shape) is a copy of old with one entry added or replaced
-  - .values: [...map.values()] is a new array of a Map's values, in insertion order
-  - .filter: [...map].filter(([key]) => key !== id) keeps the [key, value] pairs that pass
+  - new Map: new Map(scores).set("ada", 3) is a copy of scores with ada's entry set
+  - .values: Math.max(...scores.values()) spreads a Map's values; insertion order is kept
+  - .filter: [...scores].filter(([, n]) => n > 0) keeps the [key, value] pairs that pass
+  - .has, .get: m.has(k) is true when k is a key; m.get(k) is its value or undefined
   - .sort: xs.sort((a, b) => rank(a) - rank(b)) sorts xs itself, so sort a copy
   - byId, zRank: given in board_state.svelte.ts: a Map by id, and z with no z ranked last
   - moveTo: moveTo(shape, x, y) from chapter 02 is a moved copy
-  - class:name={cond} adds the class while cond is true; aria-pressed={cond} sets the attribute
+  - class:name={cond} adds the class while cond is true; aria-pressed={cond} sets the attribute;
+    Toolbar buttons use daisyUI: "btn btn-sm", plus btn-primary for the current tool and
+    btn-error for Delete
   - vi.useFakeTimers: then vi.advanceTimersByTime(10) runs timers due in the next 10 ms
 
 Picture: lessons/svg/04_effect_lifecycle.svg
@@ -151,7 +157,7 @@ test("A state array is a deep proxy that sees a push; a raw state array sees onl
   }
 })
 
-test("Implement upsert and replaceAll in assets/js/board_state.svelte.ts so each assigns shapes a new Map: upsert adds or replaces one shape by id, and replaceAll swaps every shape and the sync id. shapes is raw state, so the old map stays as it was.", () => {
+test("Implement upsert and replaceAll in assets/js/board_state.svelte.ts so each assigns shapes a new Map: upsert adds or replaces one shape by id, and replaceAll swaps every shape and the sync id. shapes is only ever replaced, never changed, so the old map stays as it was.", () => {
   const state = new BoardState([], 1)
   const before = state.shapes
   state.upsert(rect())

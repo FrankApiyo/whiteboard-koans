@@ -1,7 +1,7 @@
 /*
 Files this chapter touches
-  - assets/koans/drills/03_counter.svelte: a button that counts
-  - assets/svelte/PeopleList.svelte: a row per person, just you
+  - assets/koans/drills/03_counter.svelte: count as state, a button that counts
+  - assets/svelte/PeopleList.svelte: count of people, a row per person, just you
   - assets/svelte/ColorPicker.svelte: a radio per colour
   - assets/koans/drills/03_greeting.svelte: name, excited (given; read it)
 
@@ -13,21 +13,22 @@ Props arrive through $props(), typed by an interface, and a default fills one le
     <h1>Hello, {name}{excited ? "!" : "."}</h1>
 
 That is the greeting drill: given name "Ada" it shows Hello, Ada. and excited: true ends it in !.
-$state(0) makes a value the markup follows: assign to it and the page updates. $derived(expr) is
-computed from the state and props it reads, and is current whenever it is read. Don't copy one
-value into another from an $effect: the effect runs later, so the copy is stale until then. Runes
-also work as class fields in .svelte.ts files; assets/js/board_state.svelte.ts keeps the board so.
+let open = $state(false) is state the markup follows: assign to it and the page updates.
+$derived(expr) is computed from what it reads and always current; a copy made in an $effect lags
+until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 had export
+let, $:, on:click, slots and createEventDispatcher; Svelte 5 has runes, snippets, callback props.
 
-{#if cond}...{:else}...{/if} shows markup on a condition. {#each items as item (item.id)} repeats
-it, and the key in brackets lets Svelte move an item's element when the list is reordered instead
-of rewriting every row. Attributes take expressions, checked={on}, and an event attribute takes a
-function: <button onclick={() => (open = !open)}>Toggle</button>. A child calls a callback prop
-such as onpick to tell its parent, and never assigns to its own props. Svelte batches DOM updates:
-right after a click the counter drill, which starts at Clicked 0 times, still shows the old text,
-until flushSync() applies the update.
+{#if cond}...{:else}...{/if} shows markup on a condition, and {#each items as item (item.id)}
+repeats it: the key in parentheses, (item.id), moves an item's element when the list is reordered.
+Svelte drops spaces at the start and end of a block's content, so {#if open} (open){/if} loses its
+space; keep it in a string: {" (open)"}. An event attribute takes a function, as in
+<button onclick={() => (open = !open)}>Toggle</button>. A child calls a callback prop such as
+onpick to tell its parent; reassigning a prop only overrides it locally, and a bound one is
+declared with $bindable(). Svelte batches DOM updates: right after a click the counter drill, at
+Clicked 0 times, still shows the old text until flushSync() applies the update.
 
-    Write:          assets/koans/drills/03_counter.svelte:12  (03: a button that counts)
-    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:86
+    Write:          assets/koans/drills/03_counter.svelte:10  (03: count as state)
+    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:89
 
 API you'll use
   - render: const { rerender } = render(Greeting, { name: "Ada" }) mounts it in the page
@@ -40,7 +41,9 @@ API you'll use
   - $effect.root: const stop = $effect.root(() => { ... }) hosts effects outside a component
   - style:background-color={c} sets one inline style; data-color={c} sets an attribute
   - aria-label={c} names an element, so screen.getByRole("radio", { name: c }) finds it
-  - $derived: PeopleList shows {count} here, count = $derived(Math.max(people.length, 1))
+  - Math.max: Math.max(a, b) is the larger of a and b
+  - classes the blanks use: the radio "absolute inset-0 size-full cursor-pointer appearance-none
+    opacity-0", invisible over its swatch; each dot "mr-1.5 inline-block size-2.5 rounded-full"
 
 Picture: none for this chapter; the lesson is on lessons/index.html too.
 */
@@ -83,7 +86,7 @@ test("A component takes typed props, a prop with a default may be left out, and 
   expect(heading.textContent).toBe(__)
 })
 
-test("Fill the counter drill's button so each click adds step to count, and its label reads Clicked, the count, then times. 1. Open the drill on the Write: line. 2. Replace the __blank line with a button element whose onclick adds step to count, and keep the marker lines.", async () => {
+test("Fill the counter drill so each click adds step to count, and its label reads Clicked, the count, then times. 1. In the script, make count state that starts at 0. 2. Replace the __blank line in the markup with a button element whose onclick adds step to count, and keep the marker lines.", async () => {
   render(Counter, { step: 2 })
   const button = screen.getByRole("button")
   await fireEvent.click(button)
@@ -126,7 +129,7 @@ test("A value copied in an effect lags: until effects run it holds the old copy,
   }
 })
 
-test("PeopleList's count is derived from people, so its heading follows each new list and never says fewer than 1.", async () => {
+test("Write PeopleList's count as a value derived from people: how many there are, but never fewer than 1, so its heading follows each new list.", async () => {
   const { rerender } = render(PeopleList, { people: [ada, lin], me })
   const heading = screen.getByRole("heading")
   expect(heading.textContent).toBe(__)

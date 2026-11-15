@@ -22,7 +22,7 @@
       <!-- >>> answer 03: a radio per colour -->
       <input
         type="radio"
-        class="absolute inset-0 cursor-pointer opacity-0"
+        class="absolute inset-0 size-full cursor-pointer appearance-none opacity-0"
         aria-label={color}
         name={group}
         value={color}

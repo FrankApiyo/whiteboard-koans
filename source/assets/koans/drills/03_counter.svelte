@@ -5,7 +5,10 @@
 
   let { step = 1 }: Props = $props()
 
-  let count = $state(0)
+  let count =
+    // >>> answer 03: count as state
+    $state(0)
+    // <<<
 </script>
 
 <!-- >>> answer 03: a button that counts -->

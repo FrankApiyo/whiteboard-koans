@@ -8,7 +8,10 @@
 
   let { people, me }: Props = $props()
 
-  const count = $derived(Math.max(people.length, 1))
+  const count =
+    // >>> 03
+    __blank("03: count of people");
+    // <<< 03
 </script>
 
 <section class="text-sm">

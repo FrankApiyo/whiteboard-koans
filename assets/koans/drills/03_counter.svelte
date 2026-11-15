@@ -5,7 +5,10 @@
 
   let { step = 1 }: Props = $props()
 
-  let count = $state(0)
+  let count =
+    // >>> 03
+    __blank("03: count as state");
+    // <<< 03
 </script>
 
 <!-- >>> 03 -->
