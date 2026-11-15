@@ -51,17 +51,20 @@ function emptyDraft(tool: Exclude<Tool, "select">, p: Point, env: ToolEnv): Shap
 }
 
 export function pointerDown(_t: ToolState, tool: Tool, point: Point, env: ToolEnv): ToolState {
+  // >>> answer 05: start a draft or a drag
   const p = clamp(point)
   if (tool !== "select") return { mode: "drawing", origin: p, draft: emptyDraft(tool, p, env) }
 
   const hit = topmostAt(env.shapes, p)
   return hit ? { mode: "dragging", id: hit.id, origin: p, offset: { x: p.x - hit.x, y: p.y - hit.y } } : idle
+  // <<<
 }
 
 function stretch(draft: Shape, origin: Point, p: Point): Shape {
   switch (draft.kind) {
     case "rect":
     case "ellipse":
+      // >>> answer 05: stretch a box
       return {
         ...draft,
         x: Math.min(origin.x, p.x),
@@ -69,6 +72,7 @@ function stretch(draft: Shape, origin: Point, p: Point): Shape {
         w: Math.abs(p.x - origin.x),
         h: Math.abs(p.y - origin.y),
       }
+      // <<<
     case "line":
       return { ...draft, dx: p.x - origin.x, dy: p.y - origin.y }
     case "pen":
@@ -81,8 +85,10 @@ function stretch(draft: Shape, origin: Point, p: Point): Shape {
 }
 
 export function pointerMove(t: ToolState, point: Point): ToolState {
+  // >>> answer 05: move while drawing
   if (t.mode !== "drawing") return t
   return { ...t, draft: stretch(t.draft, t.origin, clamp(point)) }
+  // <<<
 }
 
 export function dragTarget(t: ToolState, p: Point): { id: string; x: number; y: number } | null {
@@ -106,6 +112,7 @@ function hasSize(s: Shape): boolean {
 }
 
 export function pointerUp(t: ToolState, point: Point): { state: ToolState; commit: Commit | null } {
+  // >>> answer 05: finish the gesture
   const p = clamp(point)
   const target = dragTarget(t, p)
   if (t.mode === "dragging" && t.origin.x === p.x && t.origin.y === p.y) {
@@ -118,4 +125,5 @@ export function pointerUp(t: ToolState, point: Point): { state: ToolState; commi
     return { state: idle, commit: { kind: "add", shape: finished.draft } }
   }
   return { state: idle, commit: null }
+  // <<<
 }

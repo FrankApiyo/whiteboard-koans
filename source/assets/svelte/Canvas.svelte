@@ -34,12 +34,14 @@
   })
 
   $effect(() => {
+    // >>> answer 05: redraw in the next frame | default: undefined
     const ctx = canvas?.getContext("2d")
     if (!ctx) return
     const toDraw = drawn
     const selectedId = board.selectedId
     const frame = requestAnimationFrame(() => drawBoard(ctx, toDraw, selectedId))
     return () => cancelAnimationFrame(frame)
+    // <<<
   })
 
   type CanvasPointerEvent = PointerEvent & { currentTarget: HTMLCanvasElement }
@@ -50,9 +52,15 @@
 
   function down(event: CanvasPointerEvent) {
     if (!event.isPrimary || event.button !== 0) return
+    // >>> answer 05: capture and start
     event.currentTarget.setPointerCapture(event.pointerId)
     const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
     tool = pointerDown(tool, board.tool, boardPoint(event), env)
+    // <<<
+    holdGrabbed()
+  }
+
+  function holdGrabbed() {
     const grabbed = tool.mode === "dragging" ? tool.id : null
     board.draggingId = grabbed
     dragStart = grabbed ? board.shapes.get(grabbed) : undefined
@@ -62,14 +70,18 @@
   function move(event: CanvasPointerEvent) {
     if (!event.isPrimary) return
     const point = boardPoint(event)
-    oncursor?.(point)
-    tool = pointerMove(tool, point)
     dropAt = dragTarget(tool, point)
     if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+    // >>> answer 05: follow the pointer
+    oncursor?.(point)
+    tool = pointerMove(tool, point)
+    // <<<
   }
 
   function up(event: CanvasPointerEvent) {
+    // >>> answer 05: finish on pointer up
     if (event.isPrimary) finish(pointerUp(tool, boardPoint(event)).commit)
+    // <<<
   }
 
   function cancel(event: PointerEvent) {
@@ -87,6 +99,7 @@
 </script>
 
 <div role="group" aria-label="Whiteboard">
+  <!-- >>> answer 05: the canvas element -->
   <canvas
     bind:this={canvas}
     style:aspect-ratio="{BOARD_WIDTH} / {BOARD_HEIGHT}"
@@ -101,10 +114,11 @@
       {/each}
     </ul>
   </canvas>
+  <!-- <<< -->
 </div>
 
 <style>
-  canvas {
+  div > :global(canvas) {
     display: block;
     width: 100%;
     height: auto;

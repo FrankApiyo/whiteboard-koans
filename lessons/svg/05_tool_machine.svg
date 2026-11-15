@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" role="img" aria-label="The tool machine: pointer down turns idle into drawing or dragging, pointer move stretches the draft, and pointer up returns to idle with an add, a move or nothing">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --state: #e8eefc; --stateedge: #3b5bdb; --rest: #eef1f4; --restedge: #8a919e; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --state: #26304d; --stateedge: #8aa4ff; --rest: #2a2e38; --restedge: #6b7280; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .state { fill: var(--state); stroke: var(--stateedge); stroke-width: 2; }
+    .rest { fill: var(--rest); stroke: var(--restedge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#a); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="300"/>
+
+  <text x="20" y="28">The tool machine: each pointer event returns a new ToolState</text>
+
+  <rect class="rest" x="30" y="125" width="110" height="50" rx="25"/>
+  <text x="85" y="155" text-anchor="middle">idle</text>
+
+  <rect class="state" x="330" y="55" width="150" height="56" rx="8"/>
+  <text x="405" y="79" text-anchor="middle">drawing</text>
+  <text x="405" y="98" text-anchor="middle" class="small">origin, draft</text>
+
+  <rect class="state" x="330" y="190" width="150" height="56" rx="8"/>
+  <text x="405" y="214" text-anchor="middle">dragging</text>
+  <text x="405" y="233" text-anchor="middle" class="small">id, origin, offset</text>
+
+  <path class="edge" d="M140,140 C200,100 260,80 326,80"/>
+  <text x="170" y="86" class="small">down, drawing tool</text>
+
+  <path class="edge" d="M140,160 C200,200 260,220 326,218"/>
+  <text x="160" y="232" class="small">down on a shape, select</text>
+
+  <path class="edge" d="M480,70 C540,40 540,110 484,98"/>
+  <text x="540" y="78" class="small">move:</text>
+  <text x="540" y="94" class="small">stretch draft</text>
+
+  <path class="edge" d="M330,100 C260,120 200,135 144,148"/>
+  <text x="200" y="126" class="small">up: add, or null</text>
+
+  <path class="edge" d="M330,205 C260,180 200,170 144,158"/>
+  <text x="196" y="182" class="small">up: move, or null</text>
+
+  <text x="20" y="274" class="small">Select over empty board stays idle. A draft with no size and a drag released</text>
+  <text x="20" y="292" class="small">on its origin, a click, both end with null: nothing to commit.</text>
+</svg>

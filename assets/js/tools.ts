@@ -51,24 +51,18 @@ function emptyDraft(tool: Exclude<Tool, "select">, p: Point, env: ToolEnv): Shap
 }
 
 export function pointerDown(_t: ToolState, tool: Tool, point: Point, env: ToolEnv): ToolState {
-  const p = clamp(point)
-  if (tool !== "select") return { mode: "drawing", origin: p, draft: emptyDraft(tool, p, env) }
-
-  const hit = topmostAt(env.shapes, p)
-  return hit ? { mode: "dragging", id: hit.id, origin: p, offset: { x: p.x - hit.x, y: p.y - hit.y } } : idle
+  // >>> 05
+  __blank("05: start a draft or a drag");
+  // <<< 05
 }
 
 function stretch(draft: Shape, origin: Point, p: Point): Shape {
   switch (draft.kind) {
     case "rect":
     case "ellipse":
-      return {
-        ...draft,
-        x: Math.min(origin.x, p.x),
-        y: Math.min(origin.y, p.y),
-        w: Math.abs(p.x - origin.x),
-        h: Math.abs(p.y - origin.y),
-      }
+      // >>> 05
+      __blank("05: stretch a box");
+      // <<< 05
     case "line":
       return { ...draft, dx: p.x - origin.x, dy: p.y - origin.y }
     case "pen":
@@ -81,8 +75,9 @@ function stretch(draft: Shape, origin: Point, p: Point): Shape {
 }
 
 export function pointerMove(t: ToolState, point: Point): ToolState {
-  if (t.mode !== "drawing") return t
-  return { ...t, draft: stretch(t.draft, t.origin, clamp(point)) }
+  // >>> 05
+  __blank("05: move while drawing");
+  // <<< 05
 }
 
 export function dragTarget(t: ToolState, p: Point): { id: string; x: number; y: number } | null {
@@ -106,16 +101,7 @@ function hasSize(s: Shape): boolean {
 }
 
 export function pointerUp(t: ToolState, point: Point): { state: ToolState; commit: Commit | null } {
-  const p = clamp(point)
-  const target = dragTarget(t, p)
-  if (t.mode === "dragging" && t.origin.x === p.x && t.origin.y === p.y) {
-    return { state: idle, commit: null }
-  }
-  if (target) return { state: idle, commit: { kind: "move", ...target } }
-
-  const finished = pointerMove(t, p)
-  if (finished.mode === "drawing" && hasSize(finished.draft)) {
-    return { state: idle, commit: { kind: "add", shape: finished.draft } }
-  }
-  return { state: idle, commit: null }
+  // >>> 05
+  __blank("05: finish the gesture");
+  // <<< 05
 }

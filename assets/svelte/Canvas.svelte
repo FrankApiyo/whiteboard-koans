@@ -34,12 +34,9 @@
   })
 
   $effect(() => {
-    const ctx = canvas?.getContext("2d")
-    if (!ctx) return
-    const toDraw = drawn
-    const selectedId = board.selectedId
-    const frame = requestAnimationFrame(() => drawBoard(ctx, toDraw, selectedId))
-    return () => cancelAnimationFrame(frame)
+    // >>> 05
+    return __blank("05: redraw in the next frame", undefined);
+    // <<< 05
   })
 
   type CanvasPointerEvent = PointerEvent & { currentTarget: HTMLCanvasElement }
@@ -50,9 +47,13 @@
 
   function down(event: CanvasPointerEvent) {
     if (!event.isPrimary || event.button !== 0) return
-    event.currentTarget.setPointerCapture(event.pointerId)
-    const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
-    tool = pointerDown(tool, board.tool, boardPoint(event), env)
+    // >>> 05
+    __blank("05: capture and start");
+    // <<< 05
+    holdGrabbed()
+  }
+
+  function holdGrabbed() {
     const grabbed = tool.mode === "dragging" ? tool.id : null
     board.draggingId = grabbed
     dragStart = grabbed ? board.shapes.get(grabbed) : undefined
@@ -62,14 +63,17 @@
   function move(event: CanvasPointerEvent) {
     if (!event.isPrimary) return
     const point = boardPoint(event)
-    oncursor?.(point)
-    tool = pointerMove(tool, point)
     dropAt = dragTarget(tool, point)
     if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+    // >>> 05
+    __blank("05: follow the pointer");
+    // <<< 05
   }
 
   function up(event: CanvasPointerEvent) {
-    if (event.isPrimary) finish(pointerUp(tool, boardPoint(event)).commit)
+    // >>> 05
+    __blank("05: finish on pointer up");
+    // <<< 05
   }
 
   function cancel(event: PointerEvent) {
@@ -87,24 +91,13 @@
 </script>
 
 <div role="group" aria-label="Whiteboard">
-  <canvas
-    bind:this={canvas}
-    style:aspect-ratio="{BOARD_WIDTH} / {BOARD_HEIGHT}"
-    onpointerdown={down}
-    onpointermove={move}
-    onpointerup={up}
-    onpointercancel={cancel}
-  >
-    <ul>
-      {#each shapes as shape (shape.id)}
-        <li>{describe(shape)}</li>
-      {/each}
-    </ul>
-  </canvas>
+  <!-- >>> 05 -->
+  {__blank("05: the canvas element", "")}
+  <!-- <<< 05 -->
 </div>
 
 <style>
-  canvas {
+  div > :global(canvas) {
     display: block;
     width: 100%;
     height: auto;

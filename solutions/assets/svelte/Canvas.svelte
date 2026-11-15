@@ -53,6 +53,10 @@
     event.currentTarget.setPointerCapture(event.pointerId)
     const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
     tool = pointerDown(tool, board.tool, boardPoint(event), env)
+    holdGrabbed()
+  }
+
+  function holdGrabbed() {
     const grabbed = tool.mode === "dragging" ? tool.id : null
     board.draggingId = grabbed
     dragStart = grabbed ? board.shapes.get(grabbed) : undefined
@@ -62,10 +66,10 @@
   function move(event: CanvasPointerEvent) {
     if (!event.isPrimary) return
     const point = boardPoint(event)
-    oncursor?.(point)
-    tool = pointerMove(tool, point)
     dropAt = dragTarget(tool, point)
     if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+    oncursor?.(point)
+    tool = pointerMove(tool, point)
   }
 
   function up(event: CanvasPointerEvent) {
@@ -104,7 +108,7 @@
 </div>
 
 <style>
-  canvas {
+  div > :global(canvas) {
     display: block;
     width: 100%;
     height: auto;

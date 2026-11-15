@@ -61,8 +61,10 @@ export function drawShape(ctx: Ctx, s: Shape): void {
   }
 }
 
-function drawSelection(ctx: Ctx, s: Shape): void {
-  const { x, y, w, h } = bounds(s)
+function drawSelection(ctx: Ctx, shapes: readonly Shape[], selectedId: string | null): void {
+  const selected = shapes.find((s) => s.id === selectedId)
+  if (!selected) return
+  const { x, y, w, h } = bounds(selected)
   ctx.save()
   ctx.strokeStyle = "#868e96"
   ctx.lineWidth = 1
@@ -79,6 +81,5 @@ function drawSelection(ctx: Ctx, s: Shape): void {
 export function drawBoard(ctx: Ctx, shapes: readonly Shape[], selectedId: string | null): void {
   ctx.clearRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT)
   for (const shape of shapes) drawShape(ctx, shape)
-  const selected = shapes.find((s) => s.id === selectedId)
-  if (selected) drawSelection(ctx, selected)
+  drawSelection(ctx, shapes, selectedId)
 }
