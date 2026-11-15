@@ -1,17 +1,25 @@
 import { PALETTE, type Color } from "./types"
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+  // >>> 01
+  __blank("01: plain object check");
+  // <<< 01
 }
 
 export function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value)
+  // >>> 01
+  __blank("01: finite number check");
+  // <<< 01
 }
 
 export function isString(value: unknown): value is string {
-  return typeof value === "string"
+  // >>> 01
+  __blank("01: string check");
+  // <<< 01
 }
 
 export function isColor(value: unknown): value is Color {
-  return PALETTE.some((color) => color === value)
+  // >>> 01
+  __blank("01: palette check");
+  // <<< 01
 }

@@ -19,9 +19,13 @@ export function bounds(s: Shape): Box {
   switch (s.kind) {
     case "rect":
     case "ellipse":
-      return { x: s.x, y: s.y, w: s.w, h: s.h }
+      // >>> 02
+      __blank("02: box of a rect");
+      // <<< 02
     case "line":
-      return boxAround([s, { x: s.x + s.dx, y: s.y + s.dy }])
+      // >>> 02
+      __blank("02: box of a line");
+      // <<< 02
     case "pen":
       return boxAround([s, ...s.points.map(([dx, dy]) => ({ x: s.x + dx, y: s.y + dy }))])
     default:
@@ -51,12 +55,9 @@ function insideEllipse(s: { x: number; y: number; w: number; h: number }, p: Poi
 export function hitTest(s: Shape, p: Point, tolerance = 6): boolean {
   switch (s.kind) {
     case "rect":
-      return (
-        p.x >= s.x - tolerance &&
-        p.x <= s.x + s.w + tolerance &&
-        p.y >= s.y - tolerance &&
-        p.y <= s.y + s.h + tolerance
-      )
+      // >>> 02
+      __blank("02: hit a rect");
+      // <<< 02
     case "ellipse":
       return insideEllipse(s, p, tolerance)
     case "line":
@@ -73,7 +74,9 @@ export function hitTest(s: Shape, p: Point, tolerance = 6): boolean {
 }
 
 export function moveTo(s: Shape, x: number, y: number): Shape {
-  return { ...s, x, y }
+  // >>> 02
+  __blank("02: moved copy");
+  // <<< 02
 }
 
 export function toBoard(
@@ -81,27 +84,19 @@ export function toBoard(
   clientY: number,
   rect: { left: number; top: number; width: number; height: number },
 ): Point {
-  return {
-    x: Math.round(((clientX - rect.left) / rect.width) * BOARD_WIDTH),
-    y: Math.round(((clientY - rect.top) / rect.height) * BOARD_HEIGHT),
-  }
+  // >>> 02
+  __blank("02: client to board");
+  // <<< 02
 }
 
 export function topmostAt(shapes: readonly Shape[], p: Point): Shape | null {
-  return [...shapes].reverse().find((s) => hitTest(s, p)) ?? null
+  // >>> 02
+  __blank("02: topmost shape at a point");
+  // <<< 02
 }
 
 export function describe(s: Shape): string {
-  switch (s.kind) {
-    case "rect":
-      return `rectangle ${s.w} by ${s.h} at ${s.x}, ${s.y}`
-    case "ellipse":
-      return `ellipse ${s.w} by ${s.h} at ${s.x}, ${s.y}`
-    case "line":
-      return `line from ${s.x}, ${s.y} to ${s.x + s.dx}, ${s.y + s.dy}`
-    case "pen":
-      return `pen stroke of ${s.points.length} points from ${s.x}, ${s.y}`
-    default:
-      return assertNever(s)
-  }
+  // >>> 02
+  __blank("02: describe each kind");
+  // <<< 02
 }

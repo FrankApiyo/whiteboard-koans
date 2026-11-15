@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img" aria-label="A line's bounding box starts at its top left corner; toBoard scales a pointer from the canvas on the page to the 1600 by 1000 board">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --box: #e8eefc; --edge: #3b5bdb; --alt: #fff0d6; --altedge: #d9822b; --shape: #2f9e44; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --box: #26304d; --edge: #8aa4ff; --alt: #4a3820; --altedge: #f0a860; --shape: #69db7c; }
+    }
+    .bg { fill: var(--bg); }
+    .frame { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+    .box { fill: var(--box); stroke: var(--edge); stroke-width: 2; }
+    .alt { fill: var(--alt); stroke: var(--altedge); stroke-width: 2; }
+    .dashed { fill: none; stroke: var(--edge); stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .shape { stroke: var(--shape); stroke-width: 3; fill: none; stroke-linecap: round; }
+    .dot { fill: var(--altedge); }
+    .start { fill: var(--shape); }
+    .arrow { stroke: var(--edge); stroke-width: 2; fill: none; marker-end: url(#a); }
+    .tip { fill: var(--edge); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="280"/>
+
+  <text x="20" y="28">bounds: the box around a shape</text>
+  <rect class="dashed" x="60" y="70" width="200" height="100"/>
+  <line class="shape" x1="260" y1="170" x2="60" y2="70"/>
+  <circle class="start" cx="260" cy="170" r="5"/>
+  <text x="196" y="196" class="small">x, y = 150, 150</text>
+  <text x="196" y="212" class="small">dx = -100, dy = -50</text>
+  <circle class="dot" cx="60" cy="70" r="5"/>
+  <text x="20" y="60" class="small">box x, y = 50, 100</text>
+  <text x="130" y="88" class="small">w = 100</text>
+  <text x="268" y="124" class="small">h = 50</text>
+  <text x="20" y="250" class="small">The box starts at the smallest x and y,</text>
+  <text x="20" y="266" class="small">so w and h are never negative.</text>
+
+  <line x1="330" y1="16" x2="330" y2="266" class="frame"/>
+
+  <text x="350" y="28">toBoard: page to board</text>
+  <rect class="frame" x="350" y="44" width="130" height="150"/>
+  <text x="356" y="62" class="small">page</text>
+  <rect class="alt" x="372" y="84" width="96" height="60"/>
+  <text x="378" y="160" class="small">left, top, width,</text>
+  <text x="378" y="176" class="small">height of the canvas</text>
+  <circle class="dot" cx="420" cy="114" r="5"/>
+  <text x="428" y="110" class="small">clientX,</text>
+  <text x="428" y="126" class="small">clientY</text>
+  <line x1="486" y1="114" x2="510" y2="114" class="arrow"/>
+  <rect class="box" x="516" y="74" width="110" height="80"/>
+  <text x="524" y="94" class="small">board</text>
+  <text x="524" y="146" class="small">1600 by 1000</text>
+  <circle class="dot" cx="571" cy="114" r="5"/>
+  <text x="350" y="234" class="small">The point keeps its place in the canvas,</text>
+  <text x="350" y="250" class="small">whatever size the canvas has on the page.</text>
+</svg>
