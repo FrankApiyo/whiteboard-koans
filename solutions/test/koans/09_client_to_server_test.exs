@@ -10,7 +10,8 @@ defmodule Koans.Ch09.ClientToServerTest do
   stands in for a struct, so cast/3 and the validations work with no schema module. Then the
   kind's embedded schema (chapter 07) runs. apply_action/2 ends both without a database:
   {:ok, data} or {:error, changeset}. An :integer field casts "5" to 5 and refuses 10.5, and
-  Ecto.UUID.cast/1 checks the id the browser made. A vote, for one:
+  Ecto.UUID.cast/1 checks the id the browser made. cast/3 keeps only the listed keys; the rest
+  fall away. A vote, for one:
 
       {%{}, %{choice: :integer}}
       |> cast(params, [:choice])
@@ -26,7 +27,7 @@ defmodule Koans.Ch09.ClientToServerTest do
   BoardServer.snapshot/1 shows what landed: [] for an empty board.
 
       Write:          lib/easel/shapes.ex:38  (Easel.Shapes.cast_shape/3)
-      Exercised by:   test/koans/09_client_to_server_test.exs:75
+      Exercised by:   test/koans/09_client_to_server_test.exs:76
 
   API you'll use
     struct/1          struct(Vote) is an empty %Vote{}
@@ -81,6 +82,7 @@ defmodule Koans.Ch09.ClientToServerTest do
     assert {:error, %Ecto.Changeset{}} = Shapes.cast(%{@rect | "x" => 10.5})
     assert {:error, %Ecto.Changeset{}} = Shapes.cast(%{@rect | "kind" => "hexagon"})
     assert {:error, %Ecto.Changeset{}} = Shapes.cast([1, 2])
+    assert Shapes.cast(Map.merge(@rect, %{"z" => 99, "owner" => "mallory"})) == Shapes.cast(@rect)
   end
 
   koan "Implement cast_move/1 and cast_id/1, the checks for shape:move and shape:delete. 1. cast_move/1: a schemaless changeset with id as Ecto.UUID and x and y as :integer, all three required, x from 0 to 1600 and y from 0 to 1000 with the edges allowed, then apply_action/2; turn {:error, _changeset} into :error. 2. cast_id/1: Ecto.UUID.cast/1 of a string id, and :error for any other payload." do
@@ -95,6 +97,8 @@ defmodule Koans.Ch09.ClientToServerTest do
     assert Shapes.cast_move(%{"id" => @id, "x" => 1.5, "y" => 0}) == :error
     assert Shapes.cast_move(%{"id" => "not-a-uuid", "x" => 1, "y" => 1}) == :error
     assert Shapes.cast_move(%{"id" => @id, "x" => 1}) == :error
+    assert Shapes.cast_move(%{"x" => 1, "y" => 1}) == :error
+    assert Shapes.cast_move(%{"id" => @id, "y" => 1}) == :error
 
     assert Shapes.cast_id(%{"id" => @id}) == {:ok, @id}
     assert Shapes.cast_id(%{"id" => "not-a-uuid"}) == :error
@@ -118,6 +122,14 @@ defmodule Koans.Ch09.ClientToServerTest do
           %{@rect | "id" => @other, "kind" => "hexagon"},
           %{@rect | "id" => @other, "x" => 1590},
           Map.delete(%{@rect | "id" => @other}, "w"),
+          %{
+            "id" => @other,
+            "kind" => "pen",
+            "color" => "#e03131",
+            "x" => 0,
+            "y" => 0,
+            "points" => List.duplicate([1, 1], 2001)
+          },
           [1, 2]
         ] do
       render_hook(view, "shape:add", payload)
@@ -138,6 +150,8 @@ defmodule Koans.Ch09.ClientToServerTest do
     render_hook(view, "shape:move", %{"id" => @id, "x" => 5000, "y" => 60})
     assert_reply view, %{ok: false, shape: %{id: @id, x: 50, y: 60}}
     render_hook(view, "shape:move", %{"id" => @other, "x" => 1, "y" => 1})
+    assert_reply view, %{ok: false, shape: nil}
+    render_hook(view, "shape:move", %{"x" => 1, "y" => 1})
     assert_reply view, %{ok: false, shape: nil}
 
     render_hook(view, "shape:delete", %{"id" => @id})

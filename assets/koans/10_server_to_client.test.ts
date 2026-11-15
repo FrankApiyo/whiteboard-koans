@@ -135,7 +135,7 @@ test("Implement listen so the board hears the three shape pushes until it stops.
   expect(state.shapes.size).toBe(0)
 }, { exercises: "10: handle the three shape events, and stop" })
 
-test("On the Board, another viewer's shape arrives as a push and is drawn, while a push about the shape being dragged is ignored and the drag's own move goes to the server on pointer up.", async () => {
+test("On the Board, another viewer's shape arrives as a push and is drawn, while a push about the shape being dragged is ignored, the drag's own move goes to the server on pointer up, and a malformed reply puts it back where the drag began.", async () => {
   const live = createFakeLive()
   const { canvas, described, unmount } = mountBoard(live)
   try {
@@ -152,6 +152,10 @@ test("On the Board, another viewer's shape arrives as a push and is drawn, while
     await pointer(canvas, "pointerUp", 250, 230)
     const moves = live.pushed.filter((p) => p.event === "shape:move")
     expect(moves.map((p) => p.payload)).toEqual([{ id: ID_A, x: 200, y: 200 }])
+
+    moves[0].onReply?.(undefined)
+    flushSync()
+    expect(described()[0]).toBe("rectangle 200 by 100 at 100, 100")
   } finally {
     unmount()
   }
@@ -160,7 +164,13 @@ test("On the Board, another viewer's shape arrives as a push and is drawn, while
 test("Board's cleanup removes its shape listeners when it unmounts.", () => {
   const live = createFakeLive()
   const { unmount } = mountBoard(live)
-  expect(live.listenerCount("shape:added")).toBe(__)
-  unmount()
-  expect(live.listenerCount("shape:added")).toBe(__)
+  let mounted = true
+  try {
+    expect(live.listenerCount("shape:added")).toBe(__)
+    unmount()
+    mounted = false
+    expect(live.listenerCount("shape:added")).toBe(__)
+  } finally {
+    if (mounted) unmount()
+  }
 }, { exercises: "10: handle the three shape events, and stop" })

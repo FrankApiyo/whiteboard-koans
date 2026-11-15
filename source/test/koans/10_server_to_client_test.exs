@@ -44,7 +44,7 @@ defmodule Koans.Ch10.ServerToClientTest do
 
   @id "6f1c2d3e-4a5b-4c6d-8e7f-0123456789ab"
 
-  koan "Implement the {:board_op, event, payload} clause of handle_info/2 so each op the board server broadcasts goes to this view's browser as a push with the same event and payload. Answer {:noreply, socket} with push_event/3 applied." do
+  koan "Implement the {:board_op, event, payload} clause of handle_info/2 so each op the board server broadcasts goes to this view's browser as a push with the same event and payload." do
     board = board_fixture()
     {:ok, view, _html} = live(with_identity(build_conn(), "Ada"), ~p"/b/#{board.slug}")
 

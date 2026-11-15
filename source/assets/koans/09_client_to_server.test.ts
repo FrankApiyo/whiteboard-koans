@@ -2,7 +2,8 @@
 Files this chapter touches
   - assets/js/payloads.ts: isShape, isReply
   - assets/js/outbox.ts: onReply, sendAdd, sendMove, sendDelete
-  - lib/easel_web/live/board_live.ex: handle_event/3, with lib/easel/shapes.ex (Elixir koans)
+  - lib/easel_web/live/board_live.ex (this chapter's Elixir koans)
+  - lib/easel/shapes.ex (this chapter's Elixir koans)
 
 The browser sends each change to the server and hears back. From the Phoenix course:
 handle_event/3 runs for each event the browser sends (chapter 10, LiveView basics), and a
@@ -11,13 +12,12 @@ live.pushEvent(event, payload, onReply) pushes it, and the server's {:reply, map
 arrives as the handler's first argument. JSON carries no types, so the reply is unknown.
 
 Easel draws first and asks second. sendAdd, sendMove and sendDelete change BoardState at once,
-so nothing waits on the network, then push the change with a handler from onReply. The server
-answers { ok: true }, or { ok: false, shape } with its copy of the shape, or shape null when it
-has none. The handler keeps the change, puts the server's copy back, or removes the shape. A
-reply that is neither, from a bug or a proxy, rolls back to before: the shape as it was before
-the change, or nothing for an add. A drag has moved the shape on screen by the time the pointer
-comes up, so Canvas passes the shape from before the drag as sendMove's before; leave it out
-and the default reads the state.
+then push the change with a handler from onReply. The server answers { ok: true }, or
+{ ok: false, shape } with its copy, or shape null when it has none; the handler keeps the
+change, puts the server's copy back, or removes the shape. Anything else rolls back to before,
+the shape as it was, or nothing for an add: a clause that answers {:noreply, socket} reaches
+the handler as undefined. A push that fails or times out never calls it; on a timeout LiveView
+reloads the page. A drag passes the shape from before the drag as sendMove's before.
 
 A guard turns unknown into a type: once isReply passes, reply.ok and reply.shape type-check.
 One for a note that may carry a page number:
@@ -63,7 +63,7 @@ const ada: Person = { tab: "tab-ada", name: "Ada", color: "#e03131" }
 
 const shapePushes = (live: FakeLive) => live.pushed.filter((p) => p.event.startsWith("shape:"))
 
-test("Finish isShape, the guard for a shape that came over the wire: past the kind's own fields, checked above the blank, it needs a string id, a palette colour, finite x and y, and a z that is missing or a finite number.", () => {
+test("Finish isShape, the guard for a shape that came over the wire: besides the kind's own fields, which the given line above the blank checks, it needs a string id, a palette colour, finite x and y, and a z that is missing or a finite number.", () => {
   expect(isShape(rect())).toBe(true)
   expect(isShape(rect({ z: 3 }))).toBe(true)
   expect(isShape({ ...rect(), z: "3" })).toBe(false)
@@ -92,7 +92,7 @@ test("Implement the handler onReply returns. 1. An ok reply keeps the local chan
   expect(state.shapes.get(ID_A)?.x).toBe(300)
   onReply(state, ID_A, rect())({ ok: false, shape: rect({ x: 42 }) })
   expect(state.shapes.get(ID_A)?.x).toBe(42)
-  onReply(state, ID_A, rect())("timeout")
+  onReply(state, ID_A, rect())(undefined)
   expect(state.shapes.get(ID_A)?.x).toBe(100)
   onReply(state, ID_A, rect())({ ok: false, shape: null })
   expect(state.shapes.has(ID_A)).toBe(false)
@@ -111,7 +111,7 @@ test("Implement sendAdd so a new shape shows at once and the server hears about 
   expect(live.pushed.map((p) => p.event)).toEqual(["shape:add"])
   expect(live.pushed[0].payload).toEqual(ellipse())
 
-  live.pushed[0].onReply?.("timeout")
+  live.pushed[0].onReply?.(undefined)
   expect(state.shapes.has(ID_B)).toBe(false)
 })
 
@@ -123,16 +123,16 @@ test("Implement sendMove: move the shape now, then push shape:move with only id,
   expect(dragged.shapes.get(ID_A)).toMatchObject({ x: 320, y: 210 })
   expect(live.pushed[0].event).toBe("shape:move")
   expect(live.pushed[0].payload).toEqual({ id: ID_A, x: 320, y: 210 })
-  live.pushed[0].onReply?.("timeout")
+  live.pushed[0].onReply?.(undefined)
   expect(dragged.shapes.get(ID_A)?.x).toBe(_a(100))
 
   const still = new BoardState([rect()], 1)
   sendMove(live, still, ID_A, 5, 6)
-  live.pushed[1].onReply?.("timeout")
+  live.pushed[1].onReply?.(undefined)
   expect(still.shapes.get(ID_A)?.x).toBe(_a(100))
 })
 
-test("Implement sendDelete so a shape disappears at once and the server hears shape:delete with just its id, and a malformed reply brings it back. On the Board, drawing a rectangle pushes shape:add and selecting it and pressing Delete pushes shape:delete, so Board's commit and deleteSelected reach the canvas and the toolbar.", async () => {
+test("Implement sendDelete so a shape disappears at once and the server hears shape:delete with just its id, and a malformed reply brings it back. On the Board, drawing a rectangle pushes shape:add and selecting it and pressing Delete pushes shape:delete, so Board passes commit to the canvas and deleteSelected to the toolbar.", async () => {
   const live = createFakeLive()
   const { unmount } = render(Board, { shapes: [], sync_id: 1, me: ada, people: [ada], live })
   const canvas = screen.getByRole("group", { name: "Whiteboard" }).querySelector("canvas")
@@ -155,7 +155,7 @@ test("Implement sendDelete so a shape disappears at once and the server hears sh
     expect(pushes[1].payload).toEqual({ id: (add.payload as Shape).id })
     expect(described()).toEqual([])
 
-    pushes[1].onReply?.("timeout")
+    pushes[1].onReply?.(undefined)
     flushSync()
     expect(described()).toEqual(["rectangle 200 by 150 at 100, 100"])
   } finally {

@@ -121,7 +121,7 @@ defmodule Koans.Ch08.TheBoardServerTest do
     assert Ops.apply(gone, {:delete, @a}) == {:ignored, gone}
   end
 
-  koan "init/1 is a plain function, so a koan can call it: the koan's process then traps exits, holds the board's state, and receives the idle timer's message, which carries a fresh ref. Trapping turns a linked process's exit into a message, which the catch-all then ignores. 1. At the top of init/1, set the process flag that traps exits. 2. In reset_idle_timer/1, make a ref, start a timer that sends {:idle, ref} to self() after idle_after milliseconds, and keep them as idle_ref and idle_timer." do
+  koan "init/1 is a plain function, so a koan can call it: the koan's process then traps exits, holds the board's state, and receives the idle timer's message, which carries a fresh ref. Trapping turns a linked process's exit into a message, which a catch-all clause then ignores. 1. At the top of init/1, set the process flag that traps exits. 2. In reset_idle_timer/1, make a ref, start a timer that sends {:idle, ref} to self() after idle_after milliseconds, and keep them as idle_ref and idle_timer." do
     board = board_fixture()
     shape_fixture(board, z: 4)
 
