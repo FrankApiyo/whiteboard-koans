@@ -26,14 +26,6 @@ defmodule Easel.Boards.BoardServer do
 
   def apply_op(slug, op), do: call(slug, {:apply_op, op})
 
-  defp call(slug, request) do
-    GenServer.call(via(slug), request)
-  catch
-    :exit, {:noproc, _} ->
-      {:ok, _pid} = ensure_started(slug)
-      GenServer.call(via(slug), request)
-  end
-
   def announce_restart(slug), do: Boards.broadcast_op(slug, :board_restarted)
 
   @impl true
@@ -50,6 +42,7 @@ defmodule Easel.Boards.BoardServer do
       dirty?: false,
       save_after: Keyword.fetch!(opts, :save_after),
       idle_after: Keyword.fetch!(opts, :idle_after),
+      idle_ref: nil,
       idle_timer: nil
     }
 
@@ -70,7 +63,7 @@ defmodule Easel.Boards.BoardServer do
     case Ops.apply(state, op) do
       {:applied, state, event, payload} ->
         :ok = Boards.broadcast_op(state.board.slug, {:board_op, event, payload})
-        {:reply, :ok, state |> schedule_save() |> reset_idle_timer()}
+        {:reply, :ok, state |> open_save_window() |> reset_idle_timer()}
 
       {:ignored, state} ->
         {:reply, :ignored, reset_idle_timer(state)}
@@ -80,17 +73,30 @@ defmodule Easel.Boards.BoardServer do
   @impl true
   def handle_info(:save, state), do: {:noreply, save(state)}
 
-  def handle_info(:idle, state), do: {:stop, :normal, state}
+  def handle_info({:idle, ref}, %{idle_ref: ref} = state), do: {:stop, :normal, state}
+
+  def handle_info(_stale_or_stray, state), do: {:noreply, state}
 
   @impl true
   def terminate(_reason, state), do: save(state)
 
+  # :noproc means the board had already stopped; :normal means it stopped for
+  # idleness while this call waited. Retrying on :shutdown would restart boards
+  # while the app or a test is stopping them.
+  defp call(slug, request) do
+    GenServer.call(via(slug), request)
+  catch
+    :exit, {reason, _} when reason in [:noproc, :normal] ->
+      {:ok, _pid} = ensure_started(slug)
+      GenServer.call(via(slug), request)
+  end
+
   defp next_z([]), do: 0
   defp next_z(shapes), do: Enum.max_by(shapes, & &1.z).z + 1
 
-  defp schedule_save(%{dirty?: true} = state), do: state
+  defp open_save_window(%{dirty?: true} = state), do: state
 
-  defp schedule_save(state) do
+  defp open_save_window(state) do
     Process.send_after(self(), :save, state.save_after)
     %{state | dirty?: true}
   end
@@ -104,14 +110,8 @@ defmodule Easel.Boards.BoardServer do
 
   defp reset_idle_timer(state) do
     if state.idle_timer, do: Process.cancel_timer(state.idle_timer)
-
-    # A timer that already fired has left :idle in the mailbox.
-    receive do
-      :idle -> :ok
-    after
-      0 -> :ok
-    end
-
-    %{state | idle_timer: Process.send_after(self(), :idle, state.idle_after)}
+    ref = make_ref()
+    timer = Process.send_after(self(), {:idle, ref}, state.idle_after)
+    %{state | idle_ref: ref, idle_timer: timer}
   end
 end

@@ -66,7 +66,7 @@ defmodule Easel.Boards.BoardServerTest do
     assert BoardServer.get_shape(board.slug, Ecto.UUID.generate()) == nil
   end
 
-  test "saves after the debounce, not at once", %{board: board} do
+  test "saves when the save window ends, not at once", %{board: board} do
     start_supervised!({BoardServer, slug: board.slug, save_after: 100})
 
     :ok = BoardServer.apply_op(board.slug, {:add, rect()})
@@ -85,6 +85,17 @@ defmodule Easel.Boards.BoardServerTest do
     assert [%{id: @id}] = Boards.load_shapes(board)
   end
 
+  test "an op postpones the idle stop", %{board: board} do
+    pid = start_supervised!({BoardServer, slug: board.slug, idle_after: 300})
+    ref = Process.monitor(pid)
+    Process.sleep(200)
+
+    :ok = BoardServer.apply_op(board.slug, {:add, rect()})
+
+    refute_receive {:DOWN, ^ref, _, _, _}, 200
+    assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 1_000
+  end
+
   test "a call after the server stopped starts a new one", %{board: board} do
     {:ok, pid} = BoardServer.ensure_started(board.slug)
     :ok = BoardServer.apply_op(board.slug, {:add, rect()})
@@ -93,6 +104,31 @@ defmodule Easel.Boards.BoardServerTest do
     assert [%{id: @id}] = BoardServer.snapshot(board.slug)
     assert {:ok, new_pid} = BoardServer.ensure_started(board.slug)
     refute new_pid == pid
+  end
+
+  test "a call that lands while the server stops for idleness is retried", %{board: board} do
+    shape_fixture(board, client_id: "a")
+    pid = start_supervised!({BoardServer, slug: board.slug, idle_after: 50})
+    queued = fn -> Process.info(pid, :message_queue_len) end
+    :ok = :sys.suspend(pid)
+    eventually(fn -> queued.() == {:message_queue_len, 1} end)
+
+    task = Task.async(fn -> BoardServer.snapshot(board.slug) end)
+    eventually(fn -> queued.() == {:message_queue_len, 2} end)
+    :ok = :sys.resume(pid)
+
+    assert [%{id: "a"}] = Task.await(task)
+    refute Process.alive?(pid)
+  end
+
+  test "stray and stale messages are ignored", %{board: board} do
+    {:ok, pid} = BoardServer.ensure_started(board.slug)
+
+    send(pid, :stray)
+    send(pid, {:idle, make_ref()})
+
+    assert BoardServer.snapshot(board.slug) == []
+    assert Process.alive?(pid)
   end
 
   test "a killed server restarts from the database", %{board: board} do
