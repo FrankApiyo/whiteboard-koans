@@ -10,10 +10,11 @@
   import { makeCursorSender, sendAdd, sendDelete, sendMove } from "../js/outbox"
   import { applyProps } from "../js/resync"
   import type { Commit } from "../js/tools"
-  import { assertNever, type BoardProps } from "../js/types"
+  import { assertNever, type BoardProps, type Shape } from "../js/types"
 
   let { shapes, sync_id, me, people, live }: BoardProps = $props()
 
+  // Props seed these once; later shapes arrive through applyProps and the live events.
   const board = untrack(() => new BoardState($state.snapshot(shapes), sync_id))
   const sendCursor = untrack(() => makeCursorSender(live))
   let cursors = $state.raw<Cursors>(new Map())
@@ -34,12 +35,12 @@
     }
   })
 
-  function commit(change: Commit) {
+  function commit(change: Commit, before?: Shape) {
     switch (change.kind) {
       case "add":
         return sendAdd(live, board, change.shape)
       case "move":
-        return sendMove(live, board, change.id, change.x, change.y)
+        return sendMove(live, board, change.id, change.x, change.y, before)
       default:
         return assertNever(change)
     }

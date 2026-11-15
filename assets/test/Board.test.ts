@@ -21,7 +21,7 @@ function renderBoard(overrides: Partial<BoardProps> = {}) {
   const live = createFakeLive()
   const props = propsFor(live, overrides)
   const view = render(Board, props)
-  const canvas = screen.getByLabelText("Whiteboard") as HTMLCanvasElement
+  const canvas = screen.getByRole("group", { name: "Whiteboard" }).querySelector("canvas") as HTMLCanvasElement
   placeCanvas(canvas)
   return { ...view, live, props, canvas }
 }
@@ -36,7 +36,7 @@ afterEach(() => {
 describe("Board composition", () => {
   it("renders the toolbar, the shapes from props and the people", () => {
     renderBoard()
-    expect(screen.getByRole("toolbar", { name: "Drawing tools" })).toBeTruthy()
+    expect(screen.getByRole("group", { name: "Drawing tools" })).toBeTruthy()
     expect(shown(RECT_TEXT)).toBe(true)
     expect(screen.getByRole("list", { name: "People on this board" }).textContent).toContain("Lin")
   })
@@ -101,6 +101,15 @@ describe("Board sending", () => {
     add.onReply?.({ ok: false, shape: null })
     flushSync()
     expect(shown("ellipse 100 by 60 at 500, 500")).toBe(false)
+  })
+
+  it("a malformed reply to a drag restores the position from before the drag", async () => {
+    const { live, canvas } = renderBoard()
+    await drag(canvas, [150, 130], [250, 230])
+    const [move] = pushedNamed(live, "shape:move")
+    move.onReply?.("garbage")
+    flushSync()
+    expect(shown(RECT_TEXT)).toBe(true)
   })
 })
 

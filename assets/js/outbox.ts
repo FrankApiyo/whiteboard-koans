@@ -22,8 +22,14 @@ export function sendAdd(live: Live, state: BoardState, shape: Shape): void {
   live.pushEvent("shape:add", shape, onReply(state, shape.id, null))
 }
 
-export function sendMove(live: Live, state: BoardState, id: string, x: number, y: number): void {
-  const before = state.shapes.get(id) ?? null
+export function sendMove(
+  live: Live,
+  state: BoardState,
+  id: string,
+  x: number,
+  y: number,
+  before: Shape | null = state.shapes.get(id) ?? null,
+): void {
   state.moveShape(id, x, y)
   live.pushEvent("shape:move", { id, x, y }, onReply(state, id, before))
 }

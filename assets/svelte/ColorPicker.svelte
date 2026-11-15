@@ -8,6 +8,8 @@
   }
 
   let { colors, value, onpick }: Props = $props()
+
+  const group = $props.id()
 </script>
 
 <fieldset class="picker">
@@ -16,7 +18,7 @@
     <label class="swatch" style:--swatch={color}>
       <input
         type="radio"
-        name="colour"
+        name={group}
         value={color}
         checked={color === value}
         onchange={() => onpick(color)}

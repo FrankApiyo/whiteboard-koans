@@ -13,7 +13,7 @@ function setup(tool: Tool = "select", shapes = [rect()]) {
   const oncommit = vi.fn()
   const oncursor = vi.fn()
   render(Canvas, { state, oncommit, oncursor })
-  const canvas = screen.getByLabelText("Whiteboard") as HTMLCanvasElement
+  const canvas = screen.getByRole("group", { name: "Whiteboard" }).querySelector("canvas") as HTMLCanvasElement
   placeCanvas(canvas, { left: 0, top: 0, width: 800, height: 500 })
   return { state, oncommit, oncursor, canvas }
 }
@@ -66,7 +66,7 @@ describe("Canvas pointer tools", () => {
     expect(oncommit).toHaveBeenCalledExactlyOnceWith({
       kind: "add",
       shape: expect.objectContaining({ kind: "rect", color: state.color, x: 200, y: 200, w: 400, h: 300 }),
-    })
+    }, undefined)
   })
 
   it("draws the draft while the pointer is down without adding it", async () => {
@@ -88,7 +88,49 @@ describe("Canvas pointer tools", () => {
     expect(state.shapes.get(ID_A)).toMatchObject({ x: 200, y: 200 })
     await pointer(canvas, "pointerUp", 125, 115)
     expect(state.draggingId).toBeNull()
-    expect(oncommit).toHaveBeenCalledExactlyOnceWith({ kind: "move", id: ID_A, x: 200, y: 200 })
+    expect(oncommit).toHaveBeenCalledExactlyOnceWith({ kind: "move", id: ID_A, x: 200, y: 200 }, rect())
+  })
+
+  it("a cancelled drag is dropped where it was last dragged", async () => {
+    const { state, oncommit, canvas } = setup()
+    await pointer(canvas, "pointerDown", 75, 65)
+    await pointer(canvas, "pointerMove", 125, 115)
+    await pointer(canvas, "pointerCancel", 0, 0)
+    expect(state.draggingId).toBeNull()
+    expect(oncommit).toHaveBeenCalledExactlyOnceWith({ kind: "move", id: ID_A, x: 200, y: 200 }, rect())
+  })
+
+  it("a cancelled press that never moved commits nothing", async () => {
+    const { state, oncommit, canvas } = setup()
+    await pointer(canvas, "pointerDown", 75, 65)
+    await pointer(canvas, "pointerCancel", 0, 0)
+    expect(state.draggingId).toBeNull()
+    expect(oncommit).not.toHaveBeenCalled()
+  })
+
+  it("ignores buttons other than the main one", async () => {
+    const { oncommit, canvas } = setup("rect", [])
+    const capture = vi.spyOn(canvas, "setPointerCapture")
+    await pointer(canvas, "pointerDown", 100, 100, { button: 2 })
+    await pointer(canvas, "pointerMove", 300, 250)
+    await pointer(canvas, "pointerUp", 300, 250, { button: 2 })
+    expect(capture).not.toHaveBeenCalled()
+    expect(oncommit).not.toHaveBeenCalled()
+  })
+
+  it("a second touch does not take over a drag", async () => {
+    const { state, oncommit, canvas } = setup()
+    await pointer(canvas, "pointerDown", 75, 65)
+    await pointer(canvas, "pointerDown", 700, 450, { pointerId: 2, isPrimary: false })
+    await pointer(canvas, "pointerMove", 10, 10, { pointerId: 2, isPrimary: false })
+    await pointer(canvas, "pointerUp", 10, 10, { pointerId: 2, isPrimary: false })
+    await pointer(canvas, "pointerCancel", 10, 10, { pointerId: 2, isPrimary: false })
+    expect(state.draggingId).toBe(ID_A)
+    expect(state.selectedId).toBe(ID_A)
+    expect(state.shapes.get(ID_A)).toEqual(rect())
+    await pointer(canvas, "pointerMove", 125, 115)
+    await pointer(canvas, "pointerUp", 125, 115)
+    expect(oncommit).toHaveBeenCalledExactlyOnceWith({ kind: "move", id: ID_A, x: 200, y: 200 }, rect())
   })
 
   it("a click on a shape selects it and commits nothing", async () => {

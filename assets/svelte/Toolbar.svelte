@@ -19,7 +19,7 @@
   ]
 </script>
 
-<div class="toolbar" role="toolbar" aria-label="Drawing tools">
+<div class="toolbar" role="group" aria-label="Drawing tools">
   {#each TOOLS as { tool, label } (tool)}
     <button
       type="button"

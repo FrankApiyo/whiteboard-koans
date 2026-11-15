@@ -22,6 +22,14 @@ describe("sendMove", () => {
     expect(state.shapes.get(ID_A)).toMatchObject({ x: 5, y: 6 })
     expect(live.pushed[0]).toMatchObject({ event: "shape:move", payload: { id: ID_A, x: 5, y: 6 } })
   })
+
+  it("rolls back to the given shape when the move was already shown locally", () => {
+    const live = createFakeLive()
+    const state = new BoardState([rect({ x: 300 })], 1)
+    sendMove(live, state, ID_A, 300, 100, rect())
+    live.pushed[0].onReply?.("garbage")
+    expect(state.shapes.get(ID_A)).toEqual(rect())
+  })
 })
 
 describe("sendDelete", () => {

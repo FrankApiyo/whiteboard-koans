@@ -11,7 +11,8 @@ const button = (name: string) => screen.getByRole("button", { name }) as HTMLBut
 describe("Toolbar", () => {
   it("has a pressed-state button for each tool", () => {
     render(Toolbar, { state: new BoardState([], 1), ondelete: () => {} })
-    expect(screen.getByRole("toolbar", { name: "Drawing tools" })).toBeTruthy()
+    expect(screen.getByRole("group", { name: "Drawing tools" })).toBeTruthy()
+    expect(screen.queryByRole("toolbar")).toBeNull()
     const pressed = ["Select", "Rectangle", "Ellipse", "Line", "Pen"].map(
       (name) => button(name).getAttribute("aria-pressed"),
     )

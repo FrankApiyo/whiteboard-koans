@@ -10,11 +10,11 @@
     type Commit,
     type ToolState,
   } from "../js/tools"
-  import { BOARD_HEIGHT, BOARD_WIDTH, type Point } from "../js/types"
+  import { BOARD_HEIGHT, BOARD_WIDTH, type Point, type Shape } from "../js/types"
 
   interface Props {
     state: BoardState
-    oncommit: (commit: Commit) => void
+    oncommit: (commit: Commit, before?: Shape) => void
     oncursor?: (point: Point) => void
   }
 
@@ -22,6 +22,8 @@
 
   let canvas = $state<HTMLCanvasElement>()
   let tool = $state.raw<ToolState>({ mode: "idle" })
+  let dragStart: Shape | undefined
+  let dropAt: { id: string; x: number; y: number } | null = null
 
   const shapes = $derived(board.ordered())
   const drawn = $derived(tool.mode === "drawing" ? [...shapes, tool.draft] : shapes)
@@ -47,50 +49,59 @@
   }
 
   function down(event: CanvasPointerEvent) {
+    if (!event.isPrimary || event.button !== 0) return
     event.currentTarget.setPointerCapture(event.pointerId)
     const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
     tool = pointerDown(tool, board.tool, boardPoint(event), env)
     const grabbed = tool.mode === "dragging" ? tool.id : null
     board.draggingId = grabbed
+    dragStart = grabbed ? board.shapes.get(grabbed) : undefined
     if (board.tool === "select") board.selectedId = grabbed
   }
 
   function move(event: CanvasPointerEvent) {
+    if (!event.isPrimary) return
     const point = boardPoint(event)
     oncursor?.(point)
     tool = pointerMove(tool, point)
-    const target = dragTarget(tool, point)
-    if (target) board.moveShape(target.id, target.x, target.y)
+    dropAt = dragTarget(tool, point)
+    if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
   }
 
   function up(event: CanvasPointerEvent) {
-    const { state: next, commit } = pointerUp(tool, boardPoint(event))
-    tool = next
-    board.draggingId = null
-    if (commit) oncommit(commit)
+    if (event.isPrimary) finish(pointerUp(tool, boardPoint(event)).commit)
   }
 
-  function cancel() {
+  function cancel(event: PointerEvent) {
+    if (event.isPrimary) finish(dropAt && { kind: "move", ...dropAt })
+  }
+
+  function finish(commit: Commit | null) {
+    const before = dragStart
     tool = { mode: "idle" }
     board.draggingId = null
+    dragStart = undefined
+    dropAt = null
+    if (commit) oncommit(commit, before)
   }
 </script>
 
-<canvas
-  bind:this={canvas}
-  aria-label="Whiteboard"
-  style:aspect-ratio="{BOARD_WIDTH} / {BOARD_HEIGHT}"
-  onpointerdown={down}
-  onpointermove={move}
-  onpointerup={up}
-  onpointercancel={cancel}
->
-  <ul>
-    {#each shapes as shape (shape.id)}
-      <li>{describe(shape)}</li>
-    {/each}
-  </ul>
-</canvas>
+<div role="group" aria-label="Whiteboard">
+  <canvas
+    bind:this={canvas}
+    style:aspect-ratio="{BOARD_WIDTH} / {BOARD_HEIGHT}"
+    onpointerdown={down}
+    onpointermove={move}
+    onpointerup={up}
+    onpointercancel={cancel}
+  >
+    <ul>
+      {#each shapes as shape (shape.id)}
+        <li>{describe(shape)}</li>
+      {/each}
+    </ul>
+  </canvas>
+</div>
 
 <style>
   canvas {

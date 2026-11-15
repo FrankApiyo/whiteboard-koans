@@ -30,15 +30,22 @@ export function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()))
 }
 
-type PointerKind = "pointerDown" | "pointerMove" | "pointerUp"
+type PointerKind = "pointerDown" | "pointerMove" | "pointerUp" | "pointerCancel"
+
+export interface PointerOptions {
+  pointerId?: number
+  isPrimary?: boolean
+  button?: number
+}
 
 export async function pointer(
   canvas: HTMLCanvasElement,
   kind: PointerKind,
   clientX: number,
   clientY: number,
+  options: PointerOptions = {},
 ): Promise<void> {
-  await fireEvent[kind](canvas, { clientX, clientY, pointerId: 1 })
+  await fireEvent[kind](canvas, { clientX, clientY, pointerId: 1, isPrimary: true, button: 0, ...options })
 }
 
 export async function drag(canvas: HTMLCanvasElement, from: [number, number], to: [number, number]) {
