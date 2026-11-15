@@ -20,8 +20,6 @@ defmodule EaselWeb.Router do
 
   scope "/", EaselWeb do
     pipe_through :browser
-    live "/svelte_demo", SvelteDemoLive
-
     get "/name", IdentityController, :new
     post "/name", IdentityController, :create
   end
