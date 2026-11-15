@@ -7,9 +7,9 @@ Files this chapter touches
   - assets/svelte/Toolbar.svelte: a button per tool, a delete button
 
 Effects, bindings and the toolbar. $effect(fn) runs fn after the component mounts, then again
-after any state that fn read while it ran changes. Only synchronous reads count: a value read
-later, in a timer or after an await, is not tracked. fn may return a cleanup function, which runs
-before the next run and when the component is destroyed, so what an effect starts it also stops:
+after any state fn read while it ran changes; only synchronous reads count, not one in a timer or
+after an await. fn may return a cleanup, run before the next run and on destroy. Below, delay is
+state: a new delay clears the old timer before the effect starts another, and destroy clears it:
 
     $effect(() => {
       const id = setTimeout(() => (saved = true), delay)

@@ -15,8 +15,8 @@ Props arrive through $props(), typed by an interface, and a default fills one le
 That is the greeting drill: given name "Ada" it shows Hello, Ada. and excited: true ends it in !.
 let open = $state(false) is state the markup follows: assign to it and the page updates.
 $derived(expr) is computed from what it reads and always current; a copy made in an $effect lags
-until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 had export
-let, $:, on:click, slots and createEventDispatcher; Svelte 5 has runes, snippets, callback props.
+until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 used export
+let, $:, on:click (now deprecated), slots and createEventDispatcher; Svelte 5 has runes, snippets.
 
 {#if cond}...{:else}...{/if} shows markup on a condition, and {#each items as item (item.id)}
 repeats it: the key in parentheses, (item.id), moves an item's element when the list is reordered.

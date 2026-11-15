@@ -7,8 +7,8 @@ Files this chapter touches
 
 Drawing on a canvas. A canvas is pixels painted through its 2D context, canvas.getContext("2d").
 ctx.strokeStyle = color picks the ink, beginPath() starts a path, moveTo(x, y) lifts the pen to a
-point, lineTo(x, y) draws on to the next and stroke() inks the path. strokeRect(x, y, w, h)
-outlines a box in one call, and clearRect(x, y, w, h) wipes one. An X is a path with two strokes:
+point, lineTo(x, y) adds a line to the next point and stroke() inks the path. strokeRect(x, y, w,
+h) outlines a box in one call, clearRect(x, y, w, h) wipes one, and an X is one path of two lines:
 
     ctx.beginPath()
     ctx.moveTo(0, 0)
@@ -17,18 +17,18 @@ outlines a box in one call, and clearRect(x, y, w, h) wipes one. An X is a path 
     ctx.lineTo(0, 8)
     ctx.stroke()
 
-The board is 1600 by 1000 units on any screen; where devicePixelRatio is 3, a CSS pixel is 3 by
-3 device pixels, so a sharp canvas.width is 4800. setTransform(a, b, c, d, e, f) maps every later
-call: a and d scale x and y, b and c skew, e and f shift, so setTransform(1, 0, 0, 1, 50, 0) draws
-everything 50 to the right. Setting canvas.width resets the transform, so size first.
+canvas.width sizes the bitmap and CSS sizes the box; it is sharp with devicePixelRatio bitmap
+pixels per CSS pixel (500 CSS pixels at dpr 3 want 1500). Easel's bitmap is the 1600 by 1000
+board times dpr, scaled by CSS to fit. setTransform(a, b, c, d, e, f) maps later calls: a and d
+scale x and y, b and c skew, e and f shift. Setting canvas.width resets the context, so size first.
 
-tools.ts is a state machine. pointerDown, pointerMove and pointerUp take a ToolState and return a
-new one: idle turns into drawing, a draft grown from its origin, or dragging, a shape id and the
-grab offset; pointerUp goes back to idle with a commit, an add or a move, or null. On pointer
-down, setPointerCapture(event.pointerId) keeps the moves coming when the pointer leaves.
+tools.ts is a state machine: pointerDown, pointerMove and pointerUp take a ToolState and return
+a new one. idle becomes drawing (an origin and a growing draft) or dragging (a shape id and the
+grab offset); pointerUp goes back to idle with a commit, an add or a move, or null. On down,
+setPointerCapture(event.pointerId) sends the pointer's events here until pointerup or pointercancel.
 
     Write:          assets/js/render.ts:28  (05: size the canvas)
-    Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:116
+    Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119
 
 API you'll use
   - ctx.lineWidth, lineCap, lineJoin: lineCap is "butt", "round" or "square", lineJoin is
@@ -45,13 +45,16 @@ API you'll use
   - clamp, emptyDraft: given in tools.ts; clamp keeps a point on the board, and
     emptyDraft(tool, p, env) is a new shape of that tool at p with no size yet
   - hasSize, dragTarget: given in tools.ts; hasSize(shape) is false for a box with no width or
-    height and a line or pen that never left its start, and dragTarget(t, p) is the id with
-    the pointer minus the grab offset while dragging, else null
+    height and a line or pen that never left its start; dragTarget(t, p) is { id, x, y }, where
+    the shape goes: the pointer minus the grab offset, clamped; null unless dragging
   - topmostAt: topmostAt(shapes, p) from chapter 02 is the shape on top at p, or null
-  - drawSelection, holdGrabbed: given; drawSelection(ctx, shapes, selectedId) boxes the
-    selected shape in dashes, and holdGrabbed() marks the shape a drag holds, and selects it
-  - crypto.randomUUID: crypto.randomUUID() is a new random id like the fixtures' ID_A
-  - event.currentTarget: the element whose handler is running, here the canvas
+  - drawSelection, holdGrabbed, followDrag: given; drawSelection(ctx, shapes, selectedId) boxes
+    the selected shape in dashes; holdGrabbed() marks the shape a drag holds and makes it the
+    selection, or none over empty board; followDrag(point) moves a dragged shape with the pointer
+  - crypto.randomUUID: crypto.randomUUID() is a new random id like the fixtures' ID_A; a method
+    passed on bare, like list.push, loses its object, so wrap it in an arrow
+  - event.currentTarget: the element whose handler is running, here the canvas; an optional
+    callback is called as onpick?.(color), which does nothing when onpick is undefined
   - style:aspect-ratio="{w} / {h}" keeps an element's shape; onpointerdown={press} hands an
     element a handler, and onpointermove, onpointerup and onpointercancel work the same way
   - requestAnimationFrame: const id = requestAnimationFrame(cb) runs cb before the next paint,
@@ -121,10 +124,11 @@ test("Implement fitCanvas so the canvas holds dpr device pixels per board unit w
   expect(ctx.calls).toEqual([["setTransform", 1.5, 0, 0, 1.5, 0, 0]])
 })
 
-test("Implement drawShape so every shape is stroked in its own colour, STROKE_WIDTH wide with round caps and joins. 1. Set the four stroke properties. 2. Switch on s.kind: one strokeRect for a rect; a path round the centre of its box for an ellipse; a path from the start to the far end for a line; a path from the start through each point for a pen. 3. End with a default that returns assertNever of s.", () => {
+test("Implement drawShape so every shape is stroked in its own colour, STROKE_WIDTH wide with round caps and joins. Without beginPath, each stroke would ink every earlier path again, in the new colour. 1. Set the four stroke properties. 2. Switch on s.kind: one strokeRect for a rect; a path round the centre of its box for an ellipse; a path from the start to the far end for a line; a path from the start through each point for a pen. 3. End with a default that returns assertNever of s.", () => {
   expect(style(drawn(rect()))).toEqual({ strokeStyle: "#e03131", lineWidth: 3, lineCap: "round", lineJoin: "round" })
   expect(style(drawn(ellipse())).strokeStyle).toBe("#1971c2")
   expect(path(drawn(rect()))).toEqual([["strokeRect", 100, 100, 200, 100]])
+  expect(drawn(rect()).calls.at(-1)?.[0]).toBe("strokeRect")
   expect(path(drawn(ellipse()))).toEqual([["beginPath"], ["ellipse", 500, 350, 100, 50, 0, 0, Math.PI * 2], ["stroke"]])
   expect(path(drawn(line({ dx: -40, dy: 30 })))).toEqual([["beginPath"], ["moveTo", 50, 50], ["lineTo", 10, 80], ["stroke"]])
   expect(path(drawn(pen()))).toEqual([["beginPath"], ["moveTo", 20, 20], ["lineTo", 30, 20], ["lineTo", 30, 30], ["stroke"]])
@@ -164,6 +168,7 @@ test("Implement pointerMove and the box case of stretch so a rect or ellipse dra
   const left = pointerMove(down, { x: 60, y: 130 })
   expect(left).toMatchObject({ draft: { x: 60, y: 100, w: 40, h: 30 } })
   expect(pointerMove(left, { x: 150, y: 160 })).toMatchObject({ draft: { x: 100, y: 100, w: 50, h: 60 } })
+  expect(pointerMove(down, { x: 130, y: 40 })).toMatchObject({ draft: { x: 100, y: 40, w: 30, h: 60 } })
   expect(pointerMove(down, { x: 2000, y: 100 })).toMatchObject({ draft: { x: 100, w: 1500, h: 0 } })
   expect(down).toMatchObject({ draft: { w: 0, h: 0 } })
   expect(pointerMove(idle, { x: 1, y: 1 })).toBe(idle)
@@ -175,19 +180,25 @@ test("Implement pointerUp so every gesture ends back at idle with its commit. 1.
     state: { mode: "idle" },
     commit: { kind: "add", shape: { kind: "rect", id: ID_B, color: "#1098ad", x: 10, y: 10, w: 50, h: 30 } },
   })
-  expect(pointerUp(pointerDown(idle, "ellipse", { x: 10, y: 10 }, env), { x: 10, y: 40 }).commit).toBeNull()
+  expect(pointerUp(pointerDown(idle, "ellipse", { x: 10, y: 10 }, env), { x: 10, y: 40 })).toEqual({
+    state: { mode: "idle" },
+    commit: null,
+  })
   expect(pointerUp(pointerDown(idle, "pen", { x: 10, y: 10 }, env), { x: 12, y: 14 }).commit).toEqual({
     kind: "add",
     shape: { kind: "pen", id: ID_B, color: "#1098ad", x: 10, y: 10, points: [[2, 4]] },
   })
   const grab = pointerDown(idle, "select", { x: 150, y: 130 }, env)
   expect(pointerUp(grab, { x: 150, y: 130 })).toEqual({ state: { mode: "idle" }, commit: null })
-  expect(pointerUp(grab, { x: 151, y: 130 }).commit).toEqual({ kind: "move", id: ID_A, x: 101, y: 100 })
+  expect(pointerUp(grab, { x: 151, y: 130 })).toEqual({
+    state: { mode: "idle" },
+    commit: { kind: "move", id: ID_A, x: 101, y: 100 },
+  })
   const corner = { ...env, shapes: [rect({ x: 1500, y: 900, w: 100, h: 100 })] }
   expect(pointerUp(pointerDown(idle, "select", { x: 1605, y: 950 }, corner), { x: 1605, y: 950 }).commit).toBeNull()
 })
 
-test("Fill the canvas element in Canvas.svelte: bound to canvas, so the given effect fits it to the screen, shaped like the board, with each shape's description listed inside it for screen readers. Its pointer handlers are tried in the last koan. 1. Use bind:this and style:aspect-ratio with BOARD_WIDTH and BOARD_HEIGHT. 2. Hand it down, move, up and cancel. 3. Inside, an each over shapes keyed by id, a list item per shape.", () => {
+test("Fill the canvas element in Canvas.svelte: bound to canvas, so the given effect fits it to the screen, shaped like the board, with each shape's description listed inside it for screen readers. Its pointer handlers are tried in the last koan. 1. Use bind:this and style:aspect-ratio with BOARD_WIDTH and BOARD_HEIGHT. 2. Hand it down, move, up and cancel. 3. Inside, a list with an item per shape, from an each over shapes keyed by id.", () => {
   vi.stubGlobal("devicePixelRatio", 2)
   try {
     const { canvas } = mountCanvas("select", [ellipse(), rect()])
@@ -222,7 +233,7 @@ test("Implement the redraw effect in Canvas.svelte: it draws nothing until the n
   expect(recorded(canvas).calls.at(-1)?.name).toBe("restore")
 }, { exercises: ["05: the canvas element", "05: redraw in the next frame"] })
 
-test("Implement the pointer handlers in Canvas.svelte so a drag with the rectangle tool shows its draft while the button is down and commits it as an add on release. 1. In down, capture the pointer, then step the tool with pointerDown at the board point, with the board's colour, crypto.randomUUID for ids, and the shapes. 2. In move, report the point to oncursor, then step the tool with pointerMove. 3. In up, finish with the commit pointerUp returns.", async () => {
+test("Implement the pointer handlers in Canvas.svelte so a drag with the rectangle tool shows its draft while the button is down and commits it as an add on release, while a cancelled gesture commits nothing. The given guards skip a second finger, where isPrimary is false, and down skips any button but the main one, 0. 1. In down, capture the pointer, then step the tool with pointerDown at the board point, with the board's colour, crypto.randomUUID for ids, and the shapes. 2. In move, report the point to oncursor, then step the tool with pointerMove. 3. In up, finish with the commit pointerUp returns. 4. A cancelled gesture commits nothing, even if an up follows. The browser sends pointercancel instead of pointerup when it takes the pointer for itself, as for a touch scroll, so a gesture ends on either; touch-action: none in the style keeps touch drags on the canvas.", async () => {
   const { state, oncommit, oncursor, canvas } = mountCanvas("rect", [])
   state.color = "#1971c2"
   const capture = vi.spyOn(canvas, "setPointerCapture")
@@ -242,6 +253,10 @@ test("Implement the pointer handlers in Canvas.svelte so a drag with the rectang
     },
     undefined,
   )
+  await pointer(canvas, "pointerDown", 400, 300, { pointerId: 8 })
+  await pointer(canvas, "pointerCancel", 400, 300, { pointerId: 8 })
+  await pointer(canvas, "pointerUp", 450, 350, { pointerId: 8 })
+  expect(oncommit).toHaveBeenCalledOnce()
 }, {
   exercises: [
     "05: the canvas element",

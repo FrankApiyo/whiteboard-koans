@@ -63,14 +63,19 @@
   function move(event: CanvasPointerEvent) {
     if (!event.isPrimary) return
     const point = boardPoint(event)
-    dropAt = dragTarget(tool, point)
-    if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
     // >>> 05
     __blank("05: follow the pointer");
     // <<< 05
+    followDrag(point)
+  }
+
+  function followDrag(point: Point) {
+    dropAt = dragTarget(tool, point)
+    if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
   }
 
   function up(event: CanvasPointerEvent) {
+    if (!event.isPrimary) return
     // >>> 05
     __blank("05: finish on pointer up");
     // <<< 05

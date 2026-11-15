@@ -10,6 +10,7 @@
     .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#a); }
     .tip { fill: var(--arrow); }
     text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .lbl { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
     .small { font-size: 13px; fill: var(--muted); }
   </style>
   <defs>
@@ -31,20 +32,20 @@
   <text x="405" y="233" text-anchor="middle" class="small">id, origin, offset</text>
 
   <path class="edge" d="M140,140 C200,100 260,80 326,80"/>
-  <text x="170" y="86" class="small">down, drawing tool</text>
+  <text x="170" y="68" class="small lbl">down, drawing tool</text>
 
   <path class="edge" d="M140,160 C200,200 260,220 326,218"/>
-  <text x="160" y="232" class="small">down on a shape, select</text>
+  <text x="160" y="232" class="small lbl">down on a shape, select</text>
 
   <path class="edge" d="M480,70 C540,40 540,110 484,98"/>
-  <text x="540" y="78" class="small">move:</text>
-  <text x="540" y="94" class="small">stretch draft</text>
+  <text x="540" y="78" class="small lbl">move:</text>
+  <text x="540" y="94" class="small lbl">stretch draft</text>
 
   <path class="edge" d="M330,100 C260,120 200,135 144,148"/>
-  <text x="200" y="126" class="small">up: add, or null</text>
+  <text x="222" y="150" class="small lbl">up: add, or null</text>
 
   <path class="edge" d="M330,205 C260,180 200,170 144,158"/>
-  <text x="196" y="182" class="small">up: move, or null</text>
+  <text x="226" y="166" class="small lbl">up: move, or null</text>
 
   <text x="20" y="274" class="small">Select over empty board stays idle. A draft with no size and a drag released</text>
   <text x="20" y="292" class="small">on its origin, a click, both end with null: nothing to commit.</text>
