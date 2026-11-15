@@ -94,16 +94,25 @@ defmodule EaselWeb.BoardLiveTest do
 
     test "subscribe_before_snapshot", %{conn: conn, board: board} do
       {:ok, server} = BoardServer.ensure_started(board.slug)
-      :ok = :sys.suspend(server)
       shape = %{id: @id, kind: "rect", color: "#e03131", x: 1, y: 1, w: 5, h: 5, z: 0}
 
-      spawn_link(fn ->
-        eventually(fn -> Process.info(server, :message_queue_len) == {:message_queue_len, 1} end)
-        Boards.broadcast_op(board.slug, {:board_op, "shape:added", shape})
-        :sys.resume(server)
-      end)
+      # Broadcast when the snapshot call reaches the suspended server (seen through a
+      # receive trace): only a LiveView that subscribed before the snapshot gets the op.
+      barrier =
+        spawn_link(fn ->
+          receive do
+            {:trace, ^server, :receive, {:"$gen_call", _from, :snapshot}} -> :ok
+          end
+
+          Boards.broadcast_op(board.slug, {:board_op, "shape:added", shape})
+          :sys.resume(server)
+        end)
+
+      :ok = :sys.suspend(server)
+      1 = :erlang.trace(server, true, [:receive, {:tracer, barrier}])
 
       view = open(conn, board, "Ada")
+      _ = render(view)
 
       assert_push_event view, "shape:added", %{id: @id}
     end
