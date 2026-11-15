@@ -1,0 +1,17 @@
+{
+  "passed": 3,
+  "total": 9,
+  "ran": 9,
+  "scope": "typescript",
+  "failure": {
+    "path": "assets/koans/02_geometry.test.ts",
+    "line": 9,
+    "meditation": "a point inside hits",
+    "diff": "Replace __blank() with the code the meditation describes.",
+    "write": {
+      "path": "assets/js/geometry.ts",
+      "line": 42,
+      "where": "02: hit test"
+    }
+  }
+}

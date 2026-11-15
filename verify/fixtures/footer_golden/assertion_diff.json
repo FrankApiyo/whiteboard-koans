@@ -1,0 +1,13 @@
+{
+  "passed": 0,
+  "total": 4,
+  "ran": 4,
+  "scope": "typescript",
+  "failure": {
+    "path": "assets/koans/01_x.test.ts",
+    "line": 11,
+    "meditation": "an async koan\nchecks after it awaits",
+    "diff": "expected: 2\nreceived: 1",
+    "write": null
+  }
+}

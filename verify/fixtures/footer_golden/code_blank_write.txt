@@ -1,0 +1,6 @@
+Replace __blank() with the code the meditation describes.
+------------------------------- The master says --------------------------------
+Write:          assets/js/geometry.ts:42  (02: hit test)
+Exercised by:   assets/koans/02_geometry.test.ts:9
+    a point inside hits
+3 of 9 TypeScript koans answered.

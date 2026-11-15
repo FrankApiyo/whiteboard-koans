@@ -1,0 +1,13 @@
+{
+  "passed": 1,
+  "total": 2,
+  "ran": 2,
+  "scope": "typescript",
+  "failure": {
+    "path": "assets/koans/00_x.test.ts",
+    "line": 5,
+    "meditation": "fails quietly",
+    "diff": null,
+    "write": null
+  }
+}

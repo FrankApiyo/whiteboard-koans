@@ -1,0 +1,13 @@
+{
+  "passed": 2,
+  "total": 7,
+  "ran": 7,
+  "scope": "typescript",
+  "failure": {
+    "path": "verify/fixtures/ts/tree/assets/koans/00_values.test.ts",
+    "line": 11,
+    "meditation": "an area is a number you can name",
+    "diff": "Replace __ with the value that makes this true.",
+    "write": null
+  }
+}

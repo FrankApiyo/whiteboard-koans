@@ -1,0 +1,4 @@
+------------------------------- The master says --------------------------------
+Meditate on assets/koans/00_x.test.ts:5
+    fails quietly
+1 of 2 TypeScript koans answered.

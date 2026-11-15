@@ -7,6 +7,8 @@ defmodule Verify.FooterTest do
   alias Verify.CourseRunner
 
   @fixtures Path.expand("fixtures/footer", __DIR__)
+  @goldens Path.expand("fixtures/footer_golden", __DIR__)
+  @ts_koans Path.expand("fixtures/ts/tree/assets/koans", __DIR__)
 
   defp run_fixture(case_name) do
     dir = Path.join(@fixtures, case_name)
@@ -343,5 +345,69 @@ defmodule Verify.FooterTest do
 
     all_ok = Koans.Results.footer([ok], 1)
     assert all_ok =~ "All 1 koans pass. Start again with: mix koans.reset all"
+  end
+
+  test "footer_goldens_render_identically" do
+    cases = @goldens |> Path.join("*.json") |> Path.wildcard() |> Enum.sort()
+    assert length(cases) >= 7
+
+    for json <- cases do
+      input = json |> File.read!() |> JSON.decode!() |> golden_input()
+      text = json |> String.replace_suffix(".json", ".txt") |> File.read!()
+
+      assert Footer.render(input) == String.replace_suffix(text, "\n", ""),
+             "golden #{Path.basename(json)}"
+    end
+  end
+
+  defp golden_input(map) do
+    %{
+      passed: map["passed"],
+      total: map["total"],
+      ran: map["ran"],
+      scope: String.to_existing_atom(map["scope"]),
+      failure: golden_failure(map["failure"])
+    }
+  end
+
+  defp golden_failure(nil), do: nil
+
+  defp golden_failure(failure) do
+    %{
+      path: failure["path"],
+      line: failure["line"],
+      meditation: failure["meditation"],
+      diff: failure["diff"],
+      write: golden_write(failure["write"])
+    }
+  end
+
+  defp golden_write(nil), do: nil
+  defp golden_write(write), do: %{path: write["path"], line: write["line"], where: write["where"]}
+
+  test "typescript_total_counts_top_level_test_lines" do
+    assert Footer.ts_total(@ts_koans) == 7
+    assert Footer.ts_total(Path.join(@fixtures, "counts")) == 0
+  end
+
+  test "results_read_returns_both_files" do
+    dir = Path.join(CourseRunner.root(), "tmp/koans_results_read")
+    File.mkdir_p!(dir)
+    File.write!(Path.join(dir, "ex.jsonl"), ~s({"kind":"ex","line":3}\n))
+    File.write!(Path.join(dir, "ts.jsonl"), ~s({"kind":"ts","line":5}\n{"kind":"ts","line":9}\n))
+
+    assert Koans.Results.read(dir) == [
+             %{"kind" => "ex", "line" => 3},
+             %{"kind" => "ts", "line" => 5},
+             %{"kind" => "ts", "line" => 9}
+           ]
+  end
+
+  test "results_earliest_skips_passing_koans" do
+    ok = %{"kind" => "ts", "chapter" => "00", "status" => "ok", "file" => "a", "line" => 1}
+    fail = %{"kind" => "ex", "chapter" => "03", "status" => "fail", "file" => "b", "line" => 7}
+
+    assert Koans.Results.earliest([ok, fail]) == fail
+    assert Koans.Results.earliest([ok]) == nil
   end
 end

@@ -1,5 +1,11 @@
 {
   "type": "module",
+  "scripts": {
+    "test": "vitest run --config assets/vitest.config.ts",
+    "test:app": "vitest run --config assets/vitest.app.config.ts",
+    "test:course": "vitest run --config assets/vitest.course.config.ts",
+    "check": "svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings"
+  },
   "dependencies": {
     "live_svelte": "file:./deps/live_svelte",
     "phoenix": "file:./deps/phoenix",

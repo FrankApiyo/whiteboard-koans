@@ -1,0 +1,7 @@
+expected: 2
+received: 1
+------------------------------- The master says --------------------------------
+Meditate on assets/koans/01_x.test.ts:11
+    an async koan
+    checks after it awaits
+0 of 4 TypeScript koans answered.

@@ -1,0 +1,1 @@
+2 of 7 TypeScript koans answered. Run the whole suite for the rest.

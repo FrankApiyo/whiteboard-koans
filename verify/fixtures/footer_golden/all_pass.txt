@@ -1,0 +1,1 @@
+All 3 TypeScript koans pass. Run mix koans for the whole course.

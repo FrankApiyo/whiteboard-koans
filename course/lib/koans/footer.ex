@@ -50,6 +50,14 @@ defmodule Koans.Footer do
     |> Enum.sum()
   end
 
+  def ts_total(dir) do
+    dir
+    |> Path.join("**/*.test.ts")
+    |> Path.wildcard()
+    |> Enum.map(fn file -> ~r/^test\("/m |> Regex.scan(File.read!(file)) |> length() end)
+    |> Enum.sum()
+  end
+
   def kind(_kind, %ExUnit.TimeoutError{}), do: "timeout"
 
   def kind(kind, reason) do

@@ -1,0 +1,4 @@
+{
+  "extends": "../../../../../assets/tsconfig.json",
+  "include": ["js/**/*.ts", "svelte/**/*", "koans/**/*", "../../../../../assets/koans_support/**/*"]
+}

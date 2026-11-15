@@ -10,7 +10,20 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true
+    "noImplicitReturns": true,
+    // >>> course
+    "allowUnreachableCode": true,
+    "allowImportingTsExtensions": true,
+    "paths": { "@koans/*": ["./koans_support/*"] }
+    // <<< course
   },
-  "include": ["js/**/*.ts", "svelte/**/*", "koans/**/*", "test/**/*", "koans_support/**/*"]
+  "include": [
+    "js/**/*.ts",
+    "svelte/**/*",
+    "koans/**/*",
+    "test/**/*",
+    // >>> course
+    "koans_support/**/*"
+    // <<< course
+  ]
 }
