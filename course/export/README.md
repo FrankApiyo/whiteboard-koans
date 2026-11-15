@@ -74,10 +74,10 @@ are plain TypeScript modules with no DOM, so Vitest tests them directly; drawing
 against a recording fake of the canvas 2D context, and the Svelte components stay thin. A
 finished shape is drawn at once with an id from `crypto.randomUUID()` and sent as `shape:add`
 through `live.pushEvent`; moves and deletes send `shape:move` and `shape:delete`. The server
-casts every payload through an Ecto embedded-schema changeset per kind: a UUID id, coordinates
-inside the 1600 by 1000 board, a palette colour, at most 2000 points in a pen stroke. It
-replies `%{ok: true}`, or `%{ok: false, shape: ...}` with its own copy of the shape (or `nil`),
-and the reply callback restores that copy or removes the local one.
+casts every shape payload through an Ecto embedded-schema changeset per kind: a UUID id,
+coordinates inside the 1600 by 1000 board, a palette colour, at most 2000 points in a pen
+stroke. It replies `%{ok: true}`, or `%{ok: false, shape: ...}` with its own copy of the shape
+(or `nil`), and the reply callback restores that copy or removes the local one.
 
 **Server to client.** Each LiveView turns every broadcast into `push_event`. The component
 listens with `live.handleEvent`, checks each payload with a type guard (they arrive as
@@ -119,7 +119,7 @@ change rather than wrapped in a deep proxy, since a pen stroke alone can hold 20
   A client ignores incoming operations for the shape it is dragging, and its pointer-up sends
   the final position. That is cheap and predictable for shapes, which one person usually
   handles at a time; it would not do for shared text.
-- **The server validates every payload.** Casting happens in the LiveView, so the board
+- **The server validates every shape payload.** Casting happens in the LiveView, so the board
   process only ever sees valid shapes, and a hostile payload gets `ok: false` while the LiveView
   and the board process keep running.
 - **SQLite for zero setup.** One file and no database server, so `mix setup` is the whole

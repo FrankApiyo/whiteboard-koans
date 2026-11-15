@@ -557,6 +557,8 @@ defmodule Verify.ExportTest do
     test "the README claims no more than the code does" do
       refute readme() =~ "trusts nothing"
       refute readme() =~ "changes nothing"
+      refute readme() =~ "every payload"
+      assert readme() =~ "validates every shape payload"
       assert readme() =~ "do not commute"
       assert readme() =~ "tombstone"
       assert readme() =~ "no per-board shape cap"

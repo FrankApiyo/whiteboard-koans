@@ -8,7 +8,7 @@ Fill the blanks, run, read the next meditation. When the last koan passes you ha
 Easel, and `mix easel.export` turns it into a clean repo of your own that you can show
 employers.
 
-There are TBD koans in 15 chapters, planned as six mornings of two hours: TypeScript for this
+There are 145 koans in 15 chapters, planned as six mornings of two hours: TypeScript for this
 app, Svelte, the board on the server (live_svelte, the database, a GenServer per board),
 talking to the browser, many people at once (PubSub, Presence, cursors), and finishing
 (reconnects and the app's own tests).
@@ -51,7 +51,7 @@ Replace __blank() with the code the meditation describes.
 Write:          assets/js/hello.ts:3  (00: greet)
 Exercised by:   assets/koans/00_about_koans.test.ts:35
     Implement greet in assets/js/hello.ts so it returns Hello, the name and an exclamation mark. ...
-0 of TBD koans answered.
+0 of 145 koans answered.
 ```
 
 `Write:` is the file and line to edit, with the blank's tag. `Exercised by:` is the koan that
@@ -64,7 +64,7 @@ Replace __ with the value that makes this true.
 ------------------------------- The master says --------------------------------
 Meditate on test/koans/00_about_koans_test.exs:42
     A blank's tag starts with its chapter number, which is what :vimgrep /__("07\|__blank("07/ finds.
-1 of TBD koans answered.
+1 of 145 koans answered.
 ```
 
 If your code gave a wrong answer, the diff appears above the footer: Elixir prints `left:`
@@ -78,7 +78,7 @@ A typo stops the run before any koan, and no footer appears. In Elixir the compi
 
 `mix koans` runs both languages. From a koan file, vim-test runs only that file's language:
 `mix test` for the Elixir koans and Vitest for the TypeScript ones. Each prints its own footer
-and counts only its own kind, as in `2 of 40 Elixir koans answered.`
+and counts only its own kind, as in `2 of 52 Elixir koans answered.`
 
 | Keys         | Runs                                                 |
 | ------------ | ---------------------------------------------------- |
@@ -166,12 +166,12 @@ Chapter 00 teaches all of this with two tiny functions, one per language.
 
 | Morning | Chapters (koans) | Koans |
 | ------- | ---------------- | ----- |
-| 1 | 00 about koans (3), 01 typescript basics (TBD), 02 modelling shapes (TBD) | TBD |
-| 2 | 03 components and runes (TBD), 04 effects bindings and the toolbar (TBD), 05 drawing on a canvas (TBD) | TBD |
-| 3 | 06 live svelte (TBD), 07 boards and shapes in the database (TBD), 08 the board server (TBD) | TBD |
-| 4 | 09 client to server (TBD), 10 server to client (TBD) | TBD |
-| 5 | 11 pubsub fan out (TBD), 12 presence and cursors (TBD) | TBD |
-| 6 | 13 reconnects and consistency (TBD), 14 testing the whole thing (TBD) | TBD |
+| 1 | 00 about koans (3), 01 typescript basics (12), 02 modelling shapes (10) | 25 |
+| 2 | 03 components and runes (12), 04 effects bindings and the toolbar (10), 05 drawing on a canvas (10) | 32 |
+| 3 | 06 live svelte (10), 07 boards and shapes in the database (10), 08 the board server (12) | 32 |
+| 4 | 09 client to server (10), 10 server to client (8) | 18 |
+| 5 | 11 pubsub fan out (10), 12 presence and cursors (10) | 20 |
+| 6 | 13 reconnects and consistency (8), 14 testing the whole thing (10) | 18 |
 
 Value koans take about a minute. Code koans take five to fifteen. If a morning runs long, stop at
 a chapter boundary. At most six of a morning's code blanks, counting both languages, are larger

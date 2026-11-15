@@ -1,1 +1,1 @@
-ExUnit.start(exclude: [:export_full, :readme_counts])
+ExUnit.start(exclude: [:export_full])

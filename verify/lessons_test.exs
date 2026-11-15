@@ -229,7 +229,6 @@ defmodule Verify.LessonsTest do
       end
     end
 
-    @tag :readme_counts
     test "every total in the README is the number of koans" do
       total = koan_counts() |> Map.values() |> Enum.sum()
       assert total > 0
@@ -238,14 +237,23 @@ defmodule Verify.LessonsTest do
       assert Enum.uniq(for [_, n] <- stated, do: String.to_integer(n)) == [total]
     end
 
-    @tag :readme_counts
+    test "a one-language count in the README is that language's number of koans" do
+      ex = ex_sources() |> Enum.map(&length(Regex.scan(@ex_koan, File.read!(&1)))) |> Enum.sum()
+      ts = ts_sources() |> Enum.map(&length(Regex.scan(@ts_koan, File.read!(&1)))) |> Enum.sum()
+      stated = Regex.scan(~r/of (\d+) (Elixir|TypeScript) koans/, readme())
+      assert stated != []
+
+      for [_, n, kind] <- stated do
+        assert String.to_integer(n) == if(kind == "Elixir", do: ex, else: ts), "#{n} #{kind}"
+      end
+    end
+
     test "the README names the number of chapters" do
       assert Regex.scan(~r/(\d+) chapters/, readme()) == [
                ["#{length(chapters())} chapters", "#{length(chapters())}"]
              ]
     end
 
-    @tag :readme_counts
     test "the mornings table counts every chapter's koans" do
       rows = morning_rows()
       assert length(rows) == 6
