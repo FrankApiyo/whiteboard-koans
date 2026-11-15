@@ -12,4 +12,7 @@ config :easel, EaselWeb.Endpoint,
   secret_key_base: "/gy7I1UTddcHCGtnZt8kLsSWn97R/jF1sqctmjAWFRfhezMmXvDiVmvNH6JKAXaj",
   server: true
 
+# Short enough that a test can wait for an idle board to stop and reload from the database.
+config :easel, :board_server, save_after: 200, idle_after: 2_000
+
 config :logger, level: :warning

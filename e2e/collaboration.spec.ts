@@ -6,6 +6,7 @@ import {
   drag,
   expectSameShapes,
   hover,
+  joinBoard,
   people,
   person,
   pickTool,
@@ -116,10 +117,24 @@ test("every shape is still there after a reload", async () => {
   const [ada, lin] = visitors
   const described = await drawOneOfEach(ada, lin)
 
-  // The board saves in a 500 ms window after a change; waiting past it matches the manual check.
+  // The board saves in a 200 ms window after a change; waiting past it matches the manual check.
   await ada.page.waitForTimeout(1_000)
   await ada.page.reload()
 
   await expect(shapes(ada.page)).toHaveText(described)
   await expect(people(ada.page)).toHaveCount(2)
+})
+
+test("a board left idle stops and comes back from the database with every shape", async ({ browser }) => {
+  const [ada, lin] = visitors
+  const described = await drawOneOfEach(ada, lin)
+  const boardPath = new URL(ada.page.url()).pathname
+
+  await Promise.all(visitors.map((visitor) => visitor.context.close()))
+  // config/e2e.exs stops a board 2 s after its last change; the margin lets it stop and save.
+  await new Promise((resolve) => setTimeout(resolve, 3_500))
+
+  const mo = await joinBoard(browser, "Mo", boardPath)
+  visitors = [...visitors, mo]
+  await expect(shapes(mo.page)).toHaveText(described)
 })

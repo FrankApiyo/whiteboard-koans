@@ -84,10 +84,11 @@ npm run e2e
 
 Playwright starts the app itself with `MIX_ENV=e2e` (`config/e2e.exs`): assets built with
 `mix assets.build`, no Vite dev server, port 4100 and its own database in `tmp/e2e/`, so it
-never meets the dev server on port 4000 or the dev database. A first run compiles the `e2e`
+never meets the dev server on port 4000 or the dev database. Its boards save 200 ms after a
+change and stop after 2 s without one, so a test can watch a board come back from SQLite. A first run compiles the `e2e`
 build (`_build/e2e`); Chromium is installed once with `npx playwright install chromium`.
 
-Result (2026-11-15): **6 passed** (about 10 s after the build; 18/18 with `--repeat-each=3`).
+Result (2026-11-15): **7 passed** (about 16 s after the build; 21/21 with `--repeat-each=3`).
 
 | Check | What the test does |
 | ----- | ------------------ |
@@ -96,8 +97,9 @@ Result (2026-11-15): **6 passed** (about 10 s after the build; 18/18 with `--rep
 | Deletes appear in both | Ada selects the ellipse and presses Delete; only the rectangle is left for Lin. |
 | Cursors carry names | Ada's pointer over the board shows Lin a cursor labelled "Ada" in Ada's colour; Ada sees no cursor of her own. |
 | People list is right | Each list shows both names with "(you)" on one's own; closing Lin's browser removes Lin and Lin's cursor from Ada's page. |
-| Board survives a reload | Ada waits past the 500 ms save window, reloads, and every shape description is unchanged. |
+| Board survives a reload | Ada waits past the save window, reloads, and every shape description is unchanged. |
+| Board survives its server stopping | Ada and Lin close their browsers; after the idle stop a new visitor opens the board and sees every shape, now loaded from SQLite. |
 
 Each check was shown to fail when its wire was cut (BoardLive not pushing `shape:added`,
 `shape:moved`, `shape:deleted` or `cursor:moved`; "(you)" on the wrong person; leavers kept
-in the people list; cursors never pruned; the join ignoring the board's snapshot).
+in the people list; cursors never pruned; the join ignoring the board's snapshot; `save_shapes` writing nothing).
