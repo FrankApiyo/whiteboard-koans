@@ -1,7 +1,7 @@
 import type { BoardState } from "./board_state.svelte"
 import type { Live } from "./live"
 import { isReply } from "./payloads"
-import { throttle } from "./throttle"
+import { throttle, type Throttled } from "./throttle"
 import type { Point, Shape } from "./types"
 
 export function onReply(
@@ -34,6 +34,9 @@ export function sendDelete(live: Live, state: BoardState, id: string): void {
   live.pushEvent("shape:delete", { id }, onReply(state, id, before))
 }
 
-export function makeCursorSender(live: Live, ms = 50): (p: Point) => void {
-  return throttle((p: Point) => live.pushEvent("cursor:move", { x: p.x, y: p.y }), ms)
+export function makeCursorSender(live: Live, ms = 50): Throttled<[Point]> {
+  return throttle(
+    (p: Point) => live.pushEvent("cursor:move", { x: Math.round(p.x), y: Math.round(p.y) }),
+    ms,
+  )
 }

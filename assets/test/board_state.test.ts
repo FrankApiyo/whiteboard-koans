@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { BoardState } from "../js/board_state.svelte"
+import { PALETTE } from "../js/types"
 import { ellipse, ID_A, ID_B, rect } from "./support/fixtures"
 
 describe("BoardState", () => {
@@ -8,7 +9,7 @@ describe("BoardState", () => {
     expect(state.syncId).toBe(7)
     expect(state.shapes.get(ID_A)).toEqual(rect())
     expect([state.selectedId, state.tool, state.draggingId]).toEqual([null, "select", null])
-    expect(state.color).toBe("#e03131")
+    expect(state.color).toBe(PALETTE[0])
   })
 
   it("upsert adds, then replaces by id, without mutating the old map", () => {

@@ -38,6 +38,29 @@ describe("throttle", () => {
     expect(fn.mock.calls).toEqual([[1], [2]])
   })
 
+  it("a leading call discards stale held args so they never fire after newer ones", () => {
+    let t = 0
+    const fn = vi.fn()
+    const throttled = throttle(fn, 50, () => t)
+    throttled("first")
+    t = 10
+    throttled("stale")
+    t = 60
+    throttled("fresh")
+    vi.advanceTimersByTime(100)
+    expect(fn.mock.calls).toEqual([["first"], ["fresh"]])
+  })
+
+  it("cancel drops the held call", () => {
+    const fn = vi.fn()
+    const throttled = throttle(fn, 100)
+    throttled(1)
+    throttled(2)
+    throttled.cancel()
+    vi.advanceTimersByTime(200)
+    expect(fn.mock.calls).toEqual([[1]])
+  })
+
   it("reads time from the injected clock", () => {
     let t = 1000
     const fn = vi.fn()

@@ -1,4 +1,5 @@
 import {
+  assertNever,
   BOARD_HEIGHT,
   BOARD_WIDTH,
   MAX_PEN_POINTS,
@@ -12,7 +13,7 @@ import { topmostAt } from "./geometry"
 export type ToolState =
   | { mode: "idle" }
   | { mode: "drawing"; origin: Point; draft: Shape }
-  | { mode: "dragging"; id: string; offset: Point }
+  | { mode: "dragging"; id: string; origin: Point; offset: Point }
 
 export type Commit =
   | { kind: "add"; shape: Shape }
@@ -44,6 +45,8 @@ function emptyDraft(tool: Exclude<Tool, "select">, p: Point, env: ToolEnv): Shap
       return { ...base, kind: "line", dx: 0, dy: 0 }
     case "pen":
       return { ...base, kind: "pen", points: [] }
+    default:
+      return assertNever(tool)
   }
 }
 
@@ -52,7 +55,7 @@ export function pointerDown(_t: ToolState, tool: Tool, point: Point, env: ToolEn
   if (tool !== "select") return { mode: "drawing", origin: p, draft: emptyDraft(tool, p, env) }
 
   const hit = topmostAt(env.shapes, p)
-  return hit ? { mode: "dragging", id: hit.id, offset: { x: p.x - hit.x, y: p.y - hit.y } } : idle
+  return hit ? { mode: "dragging", id: hit.id, origin: p, offset: { x: p.x - hit.x, y: p.y - hit.y } } : idle
 }
 
 function stretch(draft: Shape, origin: Point, p: Point): Shape {
@@ -72,6 +75,8 @@ function stretch(draft: Shape, origin: Point, p: Point): Shape {
       return draft.points.length >= MAX_PEN_POINTS
         ? draft
         : { ...draft, points: [...draft.points, [p.x - origin.x, p.y - origin.y]] }
+    default:
+      return assertNever(draft)
   }
 }
 
@@ -81,7 +86,9 @@ export function pointerMove(t: ToolState, point: Point): ToolState {
 }
 
 export function dragTarget(t: ToolState, p: Point): { id: string; x: number; y: number } | null {
-  return t.mode === "dragging" ? { id: t.id, x: p.x - t.offset.x, y: p.y - t.offset.y } : null
+  if (t.mode !== "dragging") return null
+  const { x, y } = clamp({ x: p.x - t.offset.x, y: p.y - t.offset.y })
+  return { id: t.id, x, y }
 }
 
 function hasSize(s: Shape): boolean {
@@ -93,11 +100,16 @@ function hasSize(s: Shape): boolean {
       return s.dx !== 0 || s.dy !== 0
     case "pen":
       return s.points.some(([dx, dy]) => dx !== 0 || dy !== 0)
+    default:
+      return assertNever(s)
   }
 }
 
 export function pointerUp(t: ToolState, p: Point): { state: ToolState; commit: Commit | null } {
   const target = dragTarget(t, p)
+  if (t.mode === "dragging" && t.origin.x === p.x && t.origin.y === p.y) {
+    return { state: idle, commit: null }
+  }
   if (target) return { state: idle, commit: { kind: "move", ...target } }
 
   const finished = pointerMove(t, p)

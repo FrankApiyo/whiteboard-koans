@@ -1,15 +1,17 @@
 import { moveTo } from "./geometry"
-import type { Color, Shape, Tool } from "./types"
+import { PALETTE, type Color, type Shape, type Tool } from "./types"
 
 function byId(shapes: Iterable<Shape>): ReadonlyMap<string, Shape> {
   return new Map([...shapes].map((s) => [s.id, s]))
 }
 
+const zRank = (s: Shape): number => s.z ?? Number.MAX_SAFE_INTEGER
+
 export class BoardState {
   shapes = $state.raw<ReadonlyMap<string, Shape>>(new Map())
   selectedId = $state<string | null>(null)
   tool = $state<Tool>("select")
-  color = $state<Color>("#e03131")
+  color = $state<Color>(PALETTE[0])
   draggingId = $state<string | null>(null)
   syncId = $state(0)
 
@@ -39,9 +41,7 @@ export class BoardState {
   }
 
   ordered(): Shape[] {
-    return [...this.shapes.values()].sort(
-      (a, b) => (a.z ?? Infinity) - (b.z ?? Infinity) || 0,
-    )
+    return [...this.shapes.values()].sort((a, b) => zRank(a) - zRank(b))
   }
 
   snapshot(): Shape[] {

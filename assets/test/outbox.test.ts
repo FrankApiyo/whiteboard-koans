@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { BoardState } from "../js/board_state.svelte"
 import { makeCursorSender, onReply, sendAdd, sendDelete, sendMove } from "../js/outbox"
 import { createFakeLive } from "./support/fake_live"
@@ -40,8 +40,8 @@ describe("replies", () => {
     const state = new BoardState([rect()], 1)
 
     sendMove(live, state, ID_A, 900, 900)
-    live.pushed[0].onReply?.({ ok: false, shape: rect() })
-    expect(state.shapes.get(ID_A)).toEqual(rect())
+    live.pushed[0].onReply?.({ ok: false, shape: rect({ x: 42 }) })
+    expect(state.shapes.get(ID_A)).toEqual(rect({ x: 42 }))
 
     sendAdd(live, state, ellipse())
     live.pushed[1].onReply?.({ ok: false, shape: null })
@@ -66,8 +66,10 @@ describe("replies", () => {
 })
 
 describe("makeCursorSender", () => {
-  it("pushes cursor:move with integers, at most once per interval, trailing last", () => {
-    vi.useFakeTimers()
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  it("pushes cursor:move at most once per interval, trailing last", () => {
     const live = createFakeLive()
     const send = makeCursorSender(live, 50)
     send({ x: 1, y: 1 })
@@ -77,6 +79,21 @@ describe("makeCursorSender", () => {
     vi.advanceTimersByTime(50)
     expect(live.pushed.map((p) => p.payload)).toEqual([{ x: 1, y: 1 }, { x: 3, y: 3 }])
     expect(live.pushed.every((p) => p.event === "cursor:move")).toBe(true)
-    vi.useRealTimers()
+  })
+
+  it("rounds coordinates to integers", () => {
+    const live = createFakeLive()
+    makeCursorSender(live)({ x: 1.6, y: 2.4 })
+    expect(live.pushed[0].payload).toEqual({ x: 2, y: 2 })
+  })
+
+  it("cancel drops a held trailing push", () => {
+    const live = createFakeLive()
+    const send = makeCursorSender(live, 50)
+    send({ x: 1, y: 1 })
+    send({ x: 2, y: 2 })
+    send.cancel()
+    vi.advanceTimersByTime(100)
+    expect(live.pushed).toHaveLength(1)
   })
 })

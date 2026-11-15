@@ -22,6 +22,7 @@ describe("pointerDown", () => {
     expect(pointerDown(idle, "select", { x: 150, y: 130 }, env())).toEqual({
       mode: "dragging",
       id: ID_A,
+      origin: { x: 150, y: 130 },
       offset: { x: 50, y: 30 },
     })
   })
@@ -75,7 +76,7 @@ describe("pointerMove", () => {
 
 describe("dragTarget", () => {
   it("is the pointer minus the grab offset while dragging, else null", () => {
-    const dragging: ToolState = { mode: "dragging", id: ID_A, offset: { x: 50, y: 30 } }
+    const dragging: ToolState = { mode: "dragging", id: ID_A, origin: { x: 100, y: 100 }, offset: { x: 50, y: 30 } }
     expect(dragTarget(dragging, { x: 200, y: 200 })).toEqual({ id: ID_A, x: 150, y: 170 })
     expect(dragTarget(idle, { x: 1, y: 1 })).toBeNull()
   })
@@ -105,11 +106,22 @@ describe("pointerUp", () => {
   })
 
   it("commits a drag as a move to the pointer minus the offset", () => {
-    const dragging: ToolState = { mode: "dragging", id: ID_A, offset: { x: 50, y: 30 } }
+    const dragging: ToolState = { mode: "dragging", id: ID_A, origin: { x: 100, y: 100 }, offset: { x: 50, y: 30 } }
     expect(pointerUp(dragging, { x: 200, y: 200 })).toEqual({
       state: idle,
       commit: { kind: "move", id: ID_A, x: 150, y: 170 },
     })
+  })
+
+  it("a plain click on a shape commits no move", () => {
+    const down = pointerDown(idle, "select", { x: 150, y: 130 }, env())
+    expect(pointerUp(down, { x: 150, y: 130 }).commit).toBeNull()
+  })
+
+  it("keeps a dragged shape's origin on the board", () => {
+    const dragging: ToolState = { mode: "dragging", id: ID_A, origin: { x: 100, y: 100 }, offset: { x: 50, y: 30 } }
+    expect(dragTarget(dragging, { x: 10, y: 5 })).toEqual({ id: ID_A, x: 0, y: 0 })
+    expect(dragTarget(dragging, { x: 1600, y: 1000 })).toEqual({ id: ID_A, x: 1550, y: 970 })
   })
 
   it("commits nothing from idle", () => {

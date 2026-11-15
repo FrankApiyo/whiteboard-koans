@@ -16,6 +16,7 @@ describe("isShape", () => {
     expect(isShape({ ...rect(), w: undefined })).toBe(false)
     expect(isShape({ ...rect(), x: "1" })).toBe(false)
     expect(isShape({ ...rect(), id: 4 })).toBe(false)
+    expect(isShape({ ...rect(), z: "high" })).toBe(false)
     expect(isShape(null)).toBe(false)
   })
 

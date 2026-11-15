@@ -8,7 +8,7 @@ import {
   type Shape,
 } from "./types"
 
-function isPoints(value: unknown): boolean {
+function isPoints(value: unknown): value is [number, number][] {
   return (
     Array.isArray(value) &&
     value.length <= MAX_PEN_POINTS &&
@@ -40,6 +40,7 @@ export function isShape(value: unknown): value is Shape {
     isString(value.id) &&
     isColor(value.color) &&
     hasNumbers(value, ["x", "y"]) &&
+    (value.z === undefined || isFiniteNumber(value.z)) &&
     kindFieldsValid(value)
   )
 }
