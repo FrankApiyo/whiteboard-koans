@@ -25,8 +25,8 @@ Props and events split the work: props seed Board and replace everything on a re
       return () => live.removeHandleEvent(ref)
     }
 
-    Write:          assets/js/inbox.ts:9  (10: apply each event by id, skipping the dragged shape)
-    Exercised by:   assets/koans/10_server_to_client.test.ts:94
+    Write:          assets/js/payloads.ts:46  (10: a move payload)
+    Exercised by:   assets/koans/10_server_to_client.test.ts:72
 
 API you'll use
   - live.handleEvent: live.handleEvent("bell", (payload) => ring(payload)) is a ref
