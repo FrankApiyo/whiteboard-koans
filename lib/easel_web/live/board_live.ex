@@ -19,9 +19,9 @@ defmodule EaselWeb.BoardLive do
 
   defp join(socket, slug) do
     me = Map.put(socket.assigns.me, :tab, tab_id())
+    {:ok, _pid} = BoardServer.ensure_started(slug)
     :ok = Boards.subscribe(slug)
     :ok = track_presence(slug, me)
-    {:ok, _pid} = BoardServer.ensure_started(slug)
 
     assign(socket,
       me: me,

@@ -83,6 +83,15 @@ defmodule EaselWeb.BoardLiveTest do
       assert props["people"] == [props["me"]]
     end
 
+    test "the first viewer's join does not resync", %{conn: conn, board: board} do
+      view = open(conn, board, "Ada")
+
+      sent = get_svelte(view).props
+
+      assert Map.has_key?(sent, "shapes")
+      assert sent["sync_id"] == board_props(view)["sync_id"]
+    end
+
     test "subscribe_before_snapshot", %{conn: conn, board: board} do
       {:ok, server} = BoardServer.ensure_started(board.slug)
       :ok = :sys.suspend(server)
