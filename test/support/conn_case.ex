@@ -45,4 +45,16 @@ defmodule EaselWeb.ConnCase do
   def with_identity(conn, name) do
     Plug.Test.init_test_session(conn, %{"name" => name, "color" => hd(Easel.Palette.colors())})
   end
+
+  @doc """
+  The Board component's whole props, as JSON gives them to the client.
+
+  After the first render live_svelte sends only the props that changed, so
+  `LiveSvelte.Test.get_svelte/1` shows a partial map; this reads the view's
+  assigns instead.
+  """
+  def board_props(view) do
+    %{socket: socket} = :sys.get_state(view.pid)
+    socket.assigns |> EaselWeb.BoardLive.svelte_props() |> Jason.encode!() |> Jason.decode!()
+  end
 end

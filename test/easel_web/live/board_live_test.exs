@@ -28,7 +28,7 @@ defmodule EaselWeb.BoardLiveTest do
     view
   end
 
-  defp props(view), do: get_svelte(view).props
+  defp props(view), do: board_props(view)
 
   defp server(board) do
     [{pid, _}] = Registry.lookup(Easel.Boards.Registry, board.slug)
@@ -159,7 +159,10 @@ defmodule EaselWeb.BoardLiveTest do
         {"shape:move", %{"id" => "not-a-uuid", "x" => 1, "y" => 1}},
         {"shape:delete", %{"id" => unknown}},
         {"shape:delete", %{"id" => "not-a-uuid"}},
-        {"shape:delete", %{}}
+        {"shape:delete", %{}},
+        {"shape:add", [1, 2]},
+        {"shape:move", [1, 2]},
+        {"shape:delete", [1, 2]}
       ]
 
       for {event, payload} <- hostile do
@@ -219,6 +222,19 @@ defmodule EaselWeb.BoardLiveTest do
 
       refute_push_event bob, "cursor:moved", %{}
       assert Process.alive?(ada.pid)
+    end
+
+    test "a presence change sends people but not the shapes", %{conn: conn, board: board} do
+      shape_fixture(board)
+      ada = open(conn, board, "Ada")
+      assert [_shape] = props(ada)["shapes"]
+
+      open(conn, board, "Bob")
+
+      eventually(fn -> length(props(ada)["people"]) == 2 end)
+      sent = get_svelte(ada).props
+      assert Map.has_key?(sent, "people")
+      refute Map.has_key?(sent, "shapes")
     end
 
     test "people lists every tab, and a tab that leaves drops out", %{conn: conn, board: board} do

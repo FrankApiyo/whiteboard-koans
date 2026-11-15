@@ -36,7 +36,7 @@ defmodule EaselWeb.BoardLive do
     ~H"""
     <Layouts.app flash={@flash}>
       <.header>{@board.title}</.header>
-      <.svelte name="Board" props={svelte_props(assigns)} diff={false} socket={@socket} />
+      <.svelte name="Board" props={svelte_props(assigns)} socket={@socket} />
     </Layouts.app>
     """
   end
