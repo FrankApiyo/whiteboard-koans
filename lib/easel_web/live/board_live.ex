@@ -54,17 +54,15 @@ defmodule EaselWeb.BoardLive do
 
   @impl true
   def handle_event("shape:add", payload, socket) do
-    case Shapes.cast(payload) do
-      {:ok, shape} -> {:reply, run_op(socket, {:add, shape}, shape.id), socket}
-      {:error, _changeset} -> {:reply, rejected(socket, payload), socket}
-    end
+    # >>> 09
+    __("09: cast the shape, apply the add, reply")
+    # <<< 09
   end
 
   def handle_event("shape:move", payload, socket) do
-    case Shapes.cast_move(payload) do
-      {:ok, %{id: id, x: x, y: y}} -> {:reply, run_op(socket, {:move, id, x, y}, id), socket}
-      :error -> {:reply, rejected(socket, payload), socket}
-    end
+    # >>> 09
+    __("09: cast the move, apply it, reply")
+    # <<< 09
   end
 
   def handle_event("shape:delete", payload, socket) do
@@ -86,7 +84,9 @@ defmodule EaselWeb.BoardLive do
 
   @impl true
   def handle_info({:board_op, event, payload}, socket) do
-    {:noreply, push_event(socket, event, payload)}
+    # >>> 10
+    __("10: push the op to this view's client", {:noreply, socket})
+    # <<< 10
   end
 
   def handle_info({:cursor, cursor}, socket) do

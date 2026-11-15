@@ -1,15 +1,16 @@
 defmodule Easel.Shapes do
-  import Ecto.Changeset
+  # >>> course
+  import Koans, only: [__: 1, __: 2], warn: false
+  # <<< course
+  import Ecto.Changeset, warn: false
 
-  alias Easel.Shapes.{Ellipse, Line, Pen, Rect, Validations}
+  alias Easel.Shapes.{Ellipse, Line, Pen, Rect, Validations}, warn: false
 
   @kinds %{"rect" => Rect, "ellipse" => Ellipse, "line" => Line, "pen" => Pen}
 
   def cast(payload) when is_map(payload) do
-    with {:ok, %{kind: kind}} <- cast_kind(payload),
-         schema = Map.fetch!(@kinds, kind),
-         {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
-      {:ok, shape |> Map.from_struct() |> Map.put(:kind, kind)}
+    with {:ok, %{kind: kind}} <- cast_kind(payload) do
+      cast_shape(Map.fetch!(@kinds, kind), kind, payload)
     end
   end
 
@@ -21,27 +22,22 @@ defmodule Easel.Shapes do
   end
 
   def cast_move(payload) when is_map(payload) do
-    move =
-      {%{}, %{id: Ecto.UUID, x: :integer, y: :integer}}
-      |> cast(payload, [:id, :x, :y])
-      |> validate_required([:id, :x, :y])
-      |> validate_number(:x,
-        greater_than_or_equal_to: 0,
-        less_than_or_equal_to: Validations.width()
-      )
-      |> validate_number(:y,
-        greater_than_or_equal_to: 0,
-        less_than_or_equal_to: Validations.height()
-      )
-      |> apply_action(:move)
-
-    with {:error, _changeset} <- move, do: :error
+    # >>> 09
+    __("09: cast id, x and y onto the board, or :error")
+    # <<< 09
   end
 
   def cast_move(_payload), do: :error
 
-  def cast_id(%{"id" => id}) when is_binary(id), do: Ecto.UUID.cast(id)
-  def cast_id(_payload), do: :error
+  # >>> 09
+  def cast_id(_payload), do: __("09: cast the id of any payload, or :error")
+  # <<< 09
+
+  defp cast_shape(schema, kind, payload) do
+    # >>> 09
+    __("09: the kind's changeset, applied, with the kind put back")
+    # <<< 09
+  end
 
   defp cast_kind(payload) do
     {%{}, %{kind: :string}}

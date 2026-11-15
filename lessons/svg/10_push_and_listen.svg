@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Server to client: the board server broadcasts each applied op; every BoardLive turns it into push_event; in each browser handleEvent hears it, a guard checks the payload and applyIncoming updates the board by id, skipping the shape being dragged">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --client: #1f3326; --clientedge: #69db7c; --server: #26304d; --serveredge: #8aa4ff; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .client { fill: var(--client); stroke: var(--clientedge); stroke-width: 2; }
+    .server { fill: var(--server); stroke: var(--serveredge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#a); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .head { font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="360"/>
+
+  <text x="20" y="30" class="head">Every op reaches every browser</text>
+
+  <rect class="server" x="20" y="60" width="180" height="70" rx="8"/>
+  <text x="110" y="88" text-anchor="middle">BoardServer</text>
+  <text x="110" y="110" text-anchor="middle" class="small">applies the op</text>
+
+  <rect class="server" x="20" y="200" width="180" height="70" rx="8"/>
+  <text x="110" y="228" text-anchor="middle">BoardLive, per viewer</text>
+  <text x="110" y="250" text-anchor="middle" class="small">handle_info/2, push_event/3</text>
+
+  <rect class="client" x="380" y="170" width="240" height="130" rx="8"/>
+  <text x="500" y="196" text-anchor="middle">Board in the browser</text>
+  <text x="396" y="222" class="small">live.handleEvent hears phx:event</text>
+  <text x="396" y="244" class="small">a guard checks the unknown payload</text>
+  <text x="396" y="266" class="small">applyIncoming by id, but not</text>
+  <text x="396" y="286" class="small">the shape being dragged</text>
+
+  <path class="edge" d="M110,130 L110,198"/>
+  <text x="122" y="160" class="small">{:board_op, event, payload}</text>
+  <text x="122" y="178" class="small">on the board's topic</text>
+
+  <path class="edge" d="M200,235 L378,235"/>
+  <text x="290" y="223" text-anchor="middle" class="small">push, as JSON</text>
+
+  <text x="20" y="322" class="small">Pushes change the browser's copy, never the props; props change only on a resync.</text>
+  <text x="20" y="342" class="small">The sender's browser gets its own op back too, a harmless repeat.</text>
+</svg>

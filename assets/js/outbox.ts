@@ -10,16 +10,16 @@ export function onReply(
   before: Shape | null,
 ): (reply: unknown) => void {
   return (reply) => {
-    if (isReply(reply) && reply.ok) return
-    const restored = isReply(reply) && !reply.ok ? reply.shape : before
-    if (restored) state.upsert(restored)
-    else state.remove(id)
+    // >>> 09
+    __blank("09: keep, restore the server's shape, roll back or remove");
+    // <<< 09
   }
 }
 
 export function sendAdd(live: Live, state: BoardState, shape: Shape): void {
-  state.upsert(shape)
-  live.pushEvent("shape:add", shape, onReply(state, shape.id, null))
+  // >>> 09
+  __blank("09: draw it now, push shape:add");
+  // <<< 09
 }
 
 export function sendMove(
@@ -30,14 +30,15 @@ export function sendMove(
   y: number,
   before: Shape | null = state.shapes.get(id) ?? null,
 ): void {
-  state.moveShape(id, x, y)
-  live.pushEvent("shape:move", { id, x, y }, onReply(state, id, before))
+  // >>> 09
+  __blank("09: move it now, push shape:move");
+  // <<< 09
 }
 
 export function sendDelete(live: Live, state: BoardState, id: string): void {
-  const before = state.shapes.get(id) ?? null
-  state.remove(id)
-  live.pushEvent("shape:delete", { id }, onReply(state, id, before))
+  // >>> 09
+  __blank("09: remove it now, push shape:delete");
+  // <<< 09
 }
 
 export function makeCursorSender(live: Live, ms = 50): Throttled<[Point]> {

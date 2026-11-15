@@ -35,36 +35,32 @@ function kindFieldsValid(value: Record<string, unknown>): boolean {
 }
 
 export function isShape(value: unknown): value is Shape {
-  return (
-    isRecord(value) &&
-    isString(value.id) &&
-    isColor(value.color) &&
-    hasNumbers(value, ["x", "y"]) &&
-    (value.z === undefined || isFiniteNumber(value.z)) &&
-    kindFieldsValid(value)
-  )
+  if (!isRecord(value) || !kindFieldsValid(value)) return false
+  // >>> 09
+  __blank("09: the fields every kind shares");
+  // <<< 09
 }
 
 export function isMovePayload(value: unknown): value is MovePayload {
-  return isRecord(value) && isString(value.id) && hasNumbers(value, ["x", "y"])
+  // >>> 10
+  __blank("10: a move payload");
+  // <<< 10
 }
 
 export function isDeletePayload(value: unknown): value is DeletePayload {
-  return isRecord(value) && isString(value.id)
+  // >>> 10
+  __blank("10: a delete payload");
+  // <<< 10
 }
 
 export function isCursorPayload(value: unknown): value is CursorPayload {
-  return (
-    isRecord(value) &&
-    isString(value.tab) &&
-    isString(value.name) &&
-    isColor(value.color) &&
-    hasNumbers(value, ["x", "y"])
-  )
+  // >>> 10
+  __blank("10: a cursor payload");
+  // <<< 10
 }
 
 export function isReply(value: unknown): value is Reply {
-  if (!isRecord(value)) return false
-  if (value.ok === true) return true
-  return value.ok === false && (value.shape === null || isShape(value.shape))
+  // >>> 09
+  __blank("09: a reply, ok or with the server's shape");
+  // <<< 09
 }

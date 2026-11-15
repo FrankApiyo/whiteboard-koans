@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="One push and its reply: the browser draws a shape at once and pushes shape:add; BoardLive casts the payload, applies it on the board server and replies; the browser's reply handler keeps the shape, restores the server's copy or removes it">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --client: #1f3326; --clientedge: #69db7c; --server: #26304d; --serveredge: #8aa4ff; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .client { fill: var(--client); stroke: var(--clientedge); stroke-width: 2; }
+    .server { fill: var(--server); stroke: var(--serveredge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#a); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .head { font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="360"/>
+
+  <text x="20" y="30" class="head">Draw first, then ask the server</text>
+
+  <rect class="client" x="20" y="56" width="220" height="230" rx="8"/>
+  <text x="130" y="82" text-anchor="middle" class="head">Browser</text>
+  <text x="36" y="118">1. sendAdd: draw now</text>
+  <text x="36" y="146">2. pushEvent shape:add</text>
+  <text x="36" y="228">5. onReply handler:</text>
+  <text x="52" y="250" class="small">keep, restore the server's</text>
+  <text x="52" y="268" class="small">shape, or remove it</text>
+
+  <rect class="server" x="400" y="56" width="220" height="230" rx="8"/>
+  <text x="510" y="82" text-anchor="middle" class="head">BoardLive</text>
+  <text x="416" y="146">3. handle_event/3</text>
+  <text x="432" y="168" class="small">Shapes.cast/1 checks it</text>
+  <text x="416" y="196">4. apply_op, then</text>
+  <text x="432" y="218" class="small">{:reply, map, socket}</text>
+
+  <path class="edge" d="M240,140 L398,140"/>
+  <text x="320" y="128" text-anchor="middle" class="small">the whole shape</text>
+
+  <path class="edge" d="M400,240 L242,240"/>
+  <text x="320" y="262" text-anchor="middle" class="small">ok: true, or ok: false</text>
+  <text x="320" y="279" text-anchor="middle" class="small">with shape or null</text>
+
+  <text x="20" y="318" class="small">A payload that fails the cast never reaches the board server; it gets ok: false.</text>
+  <text x="20" y="338" class="small">A reply that is neither shape rolls the browser back to the shape from before.</text>
+</svg>

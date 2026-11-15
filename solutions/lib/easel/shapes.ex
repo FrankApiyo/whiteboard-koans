@@ -6,10 +6,8 @@ defmodule Easel.Shapes do
   @kinds %{"rect" => Rect, "ellipse" => Ellipse, "line" => Line, "pen" => Pen}
 
   def cast(payload) when is_map(payload) do
-    with {:ok, %{kind: kind}} <- cast_kind(payload),
-         schema = Map.fetch!(@kinds, kind),
-         {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
-      {:ok, shape |> Map.from_struct() |> Map.put(:kind, kind)}
+    with {:ok, %{kind: kind}} <- cast_kind(payload) do
+      cast_shape(Map.fetch!(@kinds, kind), kind, payload)
     end
   end
 
@@ -42,6 +40,12 @@ defmodule Easel.Shapes do
 
   def cast_id(%{"id" => id}) when is_binary(id), do: Ecto.UUID.cast(id)
   def cast_id(_payload), do: :error
+
+  defp cast_shape(schema, kind, payload) do
+    with {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
+      {:ok, shape |> Map.from_struct() |> Map.put(:kind, kind)}
+    end
+  end
 
   defp cast_kind(payload) do
     {%{}, %{kind: :string}}

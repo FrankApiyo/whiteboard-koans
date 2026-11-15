@@ -35,13 +35,12 @@ function kindFieldsValid(value: Record<string, unknown>): boolean {
 }
 
 export function isShape(value: unknown): value is Shape {
+  if (!isRecord(value) || !kindFieldsValid(value)) return false
   return (
-    isRecord(value) &&
     isString(value.id) &&
     isColor(value.color) &&
     hasNumbers(value, ["x", "y"]) &&
-    (value.z === undefined || isFiniteNumber(value.z)) &&
-    kindFieldsValid(value)
+    (value.z === undefined || isFiniteNumber(value.z))
   )
 }
 

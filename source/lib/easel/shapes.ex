@@ -6,10 +6,8 @@ defmodule Easel.Shapes do
   @kinds %{"rect" => Rect, "ellipse" => Ellipse, "line" => Line, "pen" => Pen}
 
   def cast(payload) when is_map(payload) do
-    with {:ok, %{kind: kind}} <- cast_kind(payload),
-         schema = Map.fetch!(@kinds, kind),
-         {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
-      {:ok, shape |> Map.from_struct() |> Map.put(:kind, kind)}
+    with {:ok, %{kind: kind}} <- cast_kind(payload) do
+      cast_shape(Map.fetch!(@kinds, kind), kind, payload)
     end
   end
 
@@ -21,6 +19,7 @@ defmodule Easel.Shapes do
   end
 
   def cast_move(payload) when is_map(payload) do
+    # >>> answer 09: cast id, x and y onto the board, or :error
     move =
       {%{}, %{id: Ecto.UUID, x: :integer, y: :integer}}
       |> cast(payload, [:id, :x, :y])
@@ -36,12 +35,23 @@ defmodule Easel.Shapes do
       |> apply_action(:move)
 
     with {:error, _changeset} <- move, do: :error
+    # <<<
   end
 
   def cast_move(_payload), do: :error
 
+  # >>> answer 09: cast the id of any payload, or :error | stub: def cast_id(_payload)
   def cast_id(%{"id" => id}) when is_binary(id), do: Ecto.UUID.cast(id)
   def cast_id(_payload), do: :error
+  # <<<
+
+  defp cast_shape(schema, kind, payload) do
+    # >>> answer 09: the kind's changeset, applied, with the kind put back
+    with {:ok, shape} <- schema |> struct() |> schema.changeset(payload) |> apply_action(:cast) do
+      {:ok, shape |> Map.from_struct() |> Map.put(:kind, kind)}
+    end
+    # <<<
+  end
 
   defp cast_kind(payload) do
     {%{}, %{kind: :string}}
