@@ -41,6 +41,7 @@ node_modules/
 /priv/svelte/
 
 # Course
+/.koans/
 /_verify/
 /course/_build/
 /spike/
