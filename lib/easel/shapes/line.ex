@@ -6,10 +6,10 @@ defmodule Easel.Shapes.Line do
   embedded_schema do
     field :id, :string
     field :color, :string
-    field :x, :integer
-    field :y, :integer
-    field :dx, :integer
-    field :dy, :integer
+    field :x, Easel.Shapes.StrictInteger
+    field :y, Easel.Shapes.StrictInteger
+    field :dx, Easel.Shapes.StrictInteger
+    field :dy, Easel.Shapes.StrictInteger
   end
 
   def changeset(line, attrs) do

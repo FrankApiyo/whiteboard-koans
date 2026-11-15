@@ -6,10 +6,10 @@ defmodule Easel.Shapes.Ellipse do
   embedded_schema do
     field :id, :string
     field :color, :string
-    field :x, :integer
-    field :y, :integer
-    field :w, :integer
-    field :h, :integer
+    field :x, Easel.Shapes.StrictInteger
+    field :y, Easel.Shapes.StrictInteger
+    field :w, Easel.Shapes.StrictInteger
+    field :h, Easel.Shapes.StrictInteger
   end
 
   def changeset(ellipse, attrs) do

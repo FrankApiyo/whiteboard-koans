@@ -9,9 +9,9 @@ defmodule Easel.Shapes.Pen do
   embedded_schema do
     field :id, :string
     field :color, :string
-    field :x, :integer
-    field :y, :integer
-    field :points, {:array, {:array, :integer}}
+    field :x, Easel.Shapes.StrictInteger
+    field :y, Easel.Shapes.StrictInteger
+    field :points, {:array, {:array, Easel.Shapes.StrictInteger}}
   end
 
   def max_points, do: @max_points

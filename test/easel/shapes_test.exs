@@ -45,6 +45,13 @@ defmodule Easel.ShapesTest do
       assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "x", 1.5)))
     end
 
+    test "numeric strings are not integers" do
+      assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "x", "5")))
+      assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "w", "30")))
+      assert {:error, _} = Shapes.cast(payload("line", %{"dx" => "1", "dy" => 1}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [["1", 2]]}))
+    end
+
     test "negative and out of range origin" do
       assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "x", -1)))
       assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "y", 1001)))
