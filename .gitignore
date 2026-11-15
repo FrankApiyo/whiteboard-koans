@@ -42,4 +42,5 @@ node_modules/
 
 # Course
 /_verify/
+/course/_build/
 /spike/
