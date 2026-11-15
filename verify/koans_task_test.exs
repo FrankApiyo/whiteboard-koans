@@ -8,17 +8,19 @@ defmodule Verify.KoansTaskTest do
   @fixtures "verify/fixtures/koans_task"
   @results Path.join(CourseRunner.root(), "_build/koans_results")
 
-  defp koans(case_name) do
+  defp koans(case_name, extra_env \\ []) do
     dir = Path.join(@fixtures, case_name)
 
-    env = [
-      {"KOANS_VERIFY", "1"},
-      {"KOANS_DIR", Path.join(dir, "test/koans")},
-      {"KOANS_TS_DIR", Path.join(dir, "assets/koans")},
-      {"KOANS_LIB", nil},
-      {"KOANS_RESULTS", nil},
-      {"MIX_TEST_PARTITION", "verify"}
-    ]
+    env =
+      extra_env ++
+        [
+          {"KOANS_VERIFY", "1"},
+          {"KOANS_DIR", Path.join(dir, "test/koans")},
+          {"KOANS_TS_DIR", Path.join(dir, "assets/koans")},
+          {"KOANS_LIB", nil},
+          {"KOANS_RESULTS", nil},
+          {"MIX_TEST_PARTITION", "verify"}
+        ]
 
     CourseRunner.mix(["koans"], env)
   end
@@ -36,7 +38,8 @@ defmodule Verify.KoansTaskTest do
 
     assert status == 1, output
     assert output =~ ~r/\AType check failed:/, output
-    assert output =~ "#{ts_file}:4:", output
+    assert output =~ ~r/\AType check failed:\n  #{Regex.escape(ts_file)}:4:\d+  \S/, output
+    refute output =~ "Fix the types", output
     refute File.exists?(results_file("ex.jsonl")), "no ExUnit run after a type error"
   end
 
@@ -86,7 +89,47 @@ defmodule Verify.KoansTaskTest do
     assert output =~ ~r/-+ Enlightenment -+/, output
     assert output =~ "All 4 koans pass.", output
 
-    {_output, status} = koans("ex_filled")
+    {output, status} = koans("ex_filled")
     assert status == 1
+    assert output =~ "2 of 4 koans answered.", output
+    refute output =~ "Enlightenment"
+  end
+
+  test "type_gate_fails_closed_when_svelte_check_cannot_run" do
+    File.mkdir_p!(@results)
+    File.write!(results_file("ex.jsonl"), "stale\n")
+    dir = Path.join(@fixtures, "ex_filled")
+
+    {output, status} =
+      CourseRunner.mix(["koans"], [
+        {"KOANS_VERIFY", "1"},
+        {"KOANS_DIR", Path.join(dir, "test/koans")},
+        {"KOANS_TS_DIR", "#{@fixtures}/missing/assets/koans"},
+        {"KOANS_LIB", nil},
+        {"MIX_TEST_PARTITION", "verify"}
+      ])
+
+    assert status == 1, output
+    assert output =~ "Type check could not run", output
+    refute output =~ "koans answered"
+    refute File.exists?(results_file("ex.jsonl")), "a gate failure leaves no stale results"
+  end
+
+  test "missing_commands_print_one_line" do
+    for {var, name} <- [{"KOANS_NPX", "npx"}, {"KOANS_NPM", "npm"}] do
+      {output, status} = koans("enlightenment", [{var, "no-such-#{name}"}])
+
+      assert status == 1, output
+      assert output =~ "no-such-#{name} not found: run mix setup", output
+      refute output =~ "** (", output
+    end
+  end
+
+  test "an_empty_course_is_not_enlightenment" do
+    {output, status} = koans("empty")
+
+    assert status == 1, output
+    assert output =~ "No koans found", output
+    refute output =~ "Enlightenment"
   end
 end

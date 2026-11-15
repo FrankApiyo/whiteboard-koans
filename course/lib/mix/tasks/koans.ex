@@ -10,22 +10,24 @@ defmodule Mix.Tasks.Koans do
   use Mix.Task
 
   @results_dir "_build/koans_results"
+  @max_type_errors 5
   @machine_error ~r/^\d+ ERROR "([^"]+)" (\d+):(\d+) "(.*)"$/
 
   @impl Mix.Task
   def run(_args) do
     tree = tree_dir()
-
-    tree |> type_check() |> report_type_errors()
     ex_dir = ex_koans_dir()
     ts_dir = ts_koans_dir(tree)
 
+    total = Koans.Footer.total(ex_dir) + Koans.Footer.ts_total(ts_dir)
+
     clear_results()
+    tree |> type_check() |> report_type_errors()
+    if total == 0, do: stop("No koans found: nothing to answer.")
     run_step("mix", ["test"], "ex.jsonl")
-    run_step("npm", ["test"], "ts.jsonl")
+    run_step(command("KOANS_NPM", "npm"), ["test"], "ts.jsonl")
 
     records = Koans.Results.read(@results_dir)
-    total = Koans.Footer.total(ex_dir) + Koans.Footer.ts_total(ts_dir)
     footer = Koans.Results.footer(records, total)
 
     Mix.shell().info(footer)
@@ -59,25 +61,42 @@ defmodule Mix.Tasks.Koans do
 
   defp type_check(tree) do
     args = ["svelte-check", "--tsconfig", Path.join(tree, "tsconfig.json"), "--output", "machine"]
-    {output, _status} = System.cmd("npx", args, stderr_to_stdout: true)
+    {output, status} = run_command(command("KOANS_NPX", "npx"), args, [])
 
-    output
-    |> String.split("\n", trim: true)
-    |> Enum.flat_map(&Regex.scan(@machine_error, &1, capture: :all_but_first))
+    errors =
+      output
+      |> String.split("\n", trim: true)
+      |> Enum.flat_map(&Regex.scan(@machine_error, &1, capture: :all_but_first))
+
+    if errors == [] and status != 0 do
+      stop("Type check could not run (exit #{status}):\n#{output}")
+    end
+
+    errors
   end
 
   defp report_type_errors([]), do: :ok
 
   defp report_type_errors(errors) do
     lines =
-      Enum.map(errors, fn [file, line, col, message] -> "#{file}:#{line}:#{col} #{message}" end)
+      errors
+      |> Enum.take(@max_type_errors)
+      |> Enum.map(fn [file, line, col, message] -> "  #{file}:#{line}:#{col}  #{message}" end)
 
-    Mix.shell().info(
-      "Type check failed:\n" <>
-        Enum.join(lines, "\n") <>
-        "\nFix the types above, then run mix koans again."
-    )
+    stop("Type check failed:\n" <> Enum.join(lines, "\n"))
+  end
 
+  defp command(env_var, default), do: System.get_env(env_var, default)
+
+  defp run_command(command, args, env) do
+    case System.find_executable(command) do
+      nil -> stop("#{command} not found: run mix setup")
+      path -> System.cmd(path, args, env: env, stderr_to_stdout: true)
+    end
+  end
+
+  defp stop(message) do
+    Mix.shell().info(message)
     exit({:shutdown, 1})
   end
 
@@ -88,7 +107,7 @@ defmodule Mix.Tasks.Koans do
 
   defp run_step(command, args, results_file) do
     env = [{"KOANS_RESULTS", @results_dir}]
-    {output, _status} = System.cmd(command, args, env: env, stderr_to_stdout: true)
+    {output, _status} = run_command(command, args, env)
 
     unless File.regular?(Path.join(@results_dir, results_file)) do
       Mix.shell().info(output)
