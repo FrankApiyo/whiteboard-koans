@@ -164,6 +164,9 @@ defmodule Koans.Ch07.BoardsAndShapesInTheDatabaseTest do
     assert Rect.changeset(%Rect{}, box).valid?
     assert Ellipse.changeset(%Ellipse{}, box).valid?
     assert Rect.changeset(%Rect{}, %{box | "w" => 1}).valid?
+    assert Rect.changeset(%Rect{}, %{box | "h" => 1}).valid?
+    assert Ellipse.changeset(%Ellipse{}, %{box | "w" => 1}).valid?
+    assert Ellipse.changeset(%Ellipse{}, %{box | "h" => 1}).valid?
     assert errors_on(Rect.changeset(%Rect{}, %{box | "w" => 0})) == %{w: ["must be greater than 0"]}
     assert errors_on(Rect.changeset(%Rect{}, %{box | "color" => "#000000"})) == %{color: ["is invalid"]}
     assert errors_on(Rect.changeset(%Rect{}, %{box | "h" => 0})) == %{h: ["must be greater than 0"]}

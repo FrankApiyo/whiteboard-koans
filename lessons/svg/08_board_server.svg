@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="The board server: a caller reaches a board by slug through the Registry; ensure_started starts it under the BoardSupervisor; the server keeps the shapes in memory, saves after a window, stops when idle, and saves in terminate">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-label="The board server: a caller looks a board up by slug in the Registry and calls its pid directly; ensure_started starts it under the BoardSupervisor; the server keeps the shapes in memory, saves after a window, stops when idle, and saves in terminate">
   <style>
     :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --server: #e8eefc; --serveredge: #3b5bdb; --store: #fff4e6; --storeedge: #e8590c; --arrow: #5c6370; }
     @media (prefers-color-scheme: dark) {
@@ -48,10 +48,10 @@
   <text x="545" y="144" class="small">start_child</text>
 
   <path class="edge" d="M105,110 L105,178"/>
-  <text x="115" y="144" class="small">call(via(slug))</text>
+  <text x="95" y="144" text-anchor="end" class="small">lookup(slug)</text>
 
-  <path class="edge" d="M190,210 L298,210"/>
-  <text x="244" y="200" text-anchor="middle" class="small">pid</text>
+  <path class="edge" d="M190,100 L330,168"/>
+  <text x="268" y="122" class="small">call(pid)</text>
 
   <path class="edge" d="M380,328 L380,282"/>
   <text x="372" y="310" text-anchor="end" class="small">init/1 loads</text>
