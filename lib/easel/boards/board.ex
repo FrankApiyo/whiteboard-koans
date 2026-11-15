@@ -13,7 +13,7 @@ defmodule Easel.Boards.Board do
 
   def changeset(board, attrs) do
     board
-    |> cast(attrs, [:title, :slug])
+    |> cast(attrs, [:title])
     |> validate_required([:title, :slug])
     |> validate_length(:title, max: 80)
     |> unique_constraint(:slug)

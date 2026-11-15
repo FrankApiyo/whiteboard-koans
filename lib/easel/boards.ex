@@ -27,12 +27,12 @@ defmodule Easel.Boards do
   end
 
   def save_shapes(%Board{id: board_id}, shapes) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-    rows = Enum.map(shapes, &to_row(&1, board_id, now))
+    rows = Enum.map(shapes, &to_row(&1, board_id))
 
-    Repo.transaction(fn ->
+    Repo.transact(fn ->
       Repo.delete_all(from s in Shape, where: s.board_id == ^board_id)
-      rows |> Enum.chunk_every(500) |> Enum.each(&Repo.insert_all(Shape, &1))
+      Repo.insert_all(Shape, rows)
+      {:ok, length(rows)}
     end)
   end
 
@@ -43,16 +43,14 @@ defmodule Easel.Boards do
 
   defp topic(slug), do: "board:#{slug}"
 
-  defp to_row(shape, board_id, now) do
+  defp to_row(shape, board_id) do
     %{
       board_id: board_id,
       client_id: shape.id,
       kind: shape.kind,
       color: shape.color,
       z: shape.z,
-      data: Map.drop(shape, [:id, :kind, :color, :z]),
-      inserted_at: now,
-      updated_at: now
+      data: Map.drop(shape, [:id, :kind, :color, :z])
     }
   end
 

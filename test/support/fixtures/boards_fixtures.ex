@@ -1,10 +1,9 @@
 defmodule Easel.BoardsFixtures do
-  alias Easel.Boards
   alias Easel.Boards.{Board, Shape}
   alias Easel.Repo
 
   def board_fixture(attrs \\ %{}) do
-    %Board{title: "Sketch", slug: Boards.generate_slug()}
+    %Board{title: "Sketch", slug: unique_slug()}
     |> struct!(Map.new(attrs))
     |> Repo.insert!()
   end
@@ -21,4 +20,6 @@ defmodule Easel.BoardsFixtures do
     |> struct!(Map.new(attrs))
     |> Repo.insert!()
   end
+
+  defp unique_slug, do: "board-#{System.unique_integer([:positive])}"
 end

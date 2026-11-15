@@ -9,7 +9,5 @@ defmodule Easel.Boards.Shape do
     field :data, :map
 
     belongs_to :board, Easel.Boards.Board
-
-    timestamps()
   end
 end

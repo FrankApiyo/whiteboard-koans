@@ -47,11 +47,9 @@ defmodule Easel.ShapesTest do
       assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "x", 1.5)))
     end
 
-    test "numeric strings are not integers" do
-      assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "x", "5")))
-      assert {:error, _} = Shapes.cast(payload("rect", Map.put(@rect, "w", "30")))
-      assert {:error, _} = Shapes.cast(payload("line", %{"dx" => "1", "dy" => 1}))
-      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [["1", 2]]}))
+    test "a numeric string is normalised to an integer" do
+      assert {:ok, %{x: 5, w: 30}} = Shapes.cast(payload("rect", %{"w" => "30", "h" => 40, "x" => "5"}))
+      assert {:error, _} = Shapes.cast(payload("rect", %{"w" => "abc", "h" => 1}))
     end
 
     test "negative and out of range origin" do
@@ -83,6 +81,18 @@ defmodule Easel.ShapesTest do
       assert {:ok, _} = Shapes.cast(payload("pen", %{"points" => List.duplicate([0, 0], 2000)}))
     end
 
+    test "pen points that leave the board" do
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[-11, 0]]}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[0, 981]]}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1591, 0]]}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1, 2], [0, -21]]}))
+      assert {:ok, _} = Shapes.cast(payload("pen", %{"points" => [[-10, 0], [0, 980]]}))
+    end
+
+    test "float pen points" do
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1.5, 0]]}))
+    end
+
     test "malformed pen points" do
       assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1, 2, 3]]}))
       assert {:error, _} = Shapes.cast(payload("pen", %{"points" => []}))
@@ -95,6 +105,17 @@ defmodule Easel.ShapesTest do
 
     test "zero or negative size" do
       assert {:error, _} = Shapes.cast(payload("rect", %{"w" => 0, "h" => 10}))
+    end
+  end
+
+  describe "ids" do
+    test "an upper-case id is stored normalised, so move and delete find the shape" do
+      upper = String.upcase(@id)
+      {:ok, shape} = Shapes.cast(payload("rect", %{"w" => 3, "h" => 4, "id" => upper}))
+
+      assert shape.id == @id
+      assert {:ok, @id} = Shapes.cast_id(%{"id" => upper})
+      assert {:ok, %{id: @id}} = Shapes.cast_move(%{"id" => upper, "x" => 1, "y" => 1})
     end
   end
 

@@ -4,6 +4,4 @@ defmodule Easel.Palette do
   def colors, do: @colors
 
   def random, do: Enum.random(@colors)
-
-  def member?(color), do: color in @colors
 end

@@ -1,20 +1,25 @@
 defmodule Easel.Shapes.Line do
   use Ecto.Schema
+  import Ecto.Changeset
   import Easel.Shapes.Validations
+
+  @fields [:id, :color, :x, :y, :dx, :dy]
 
   @primary_key false
   embedded_schema do
-    field :id, :string
+    field :id, Ecto.UUID
     field :color, :string
-    field :x, Easel.Shapes.StrictInteger
-    field :y, Easel.Shapes.StrictInteger
-    field :dx, Easel.Shapes.StrictInteger
-    field :dy, Easel.Shapes.StrictInteger
+    field :x, :integer
+    field :y, :integer
+    field :dx, :integer
+    field :dy, :integer
   end
 
   def changeset(line, attrs) do
     line
-    |> common_changeset(attrs, [:dx, :dy])
+    |> cast(attrs, @fields)
+    |> validate_required(@fields)
+    |> validate_inclusion(:color, Easel.Palette.colors())
     |> validate_extent(&extent/1)
   end
 

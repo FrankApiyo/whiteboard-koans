@@ -19,6 +19,19 @@ defmodule Easel.Boards.OpsTest do
     assert map_size(twice.shapes) == 1
   end
 
+  test "re-adding a known id replaces the shape and keeps its z" do
+    other = %{@shape | id: "7f1c2d3e-4a5b-4c6d-8e7f-0123456789ab"}
+    {:applied, state, _, _} = Ops.apply(@empty, {:add, @shape})
+    {:applied, state, _, _} = Ops.apply(state, {:add, other})
+
+    assert {:applied, again, "shape:added", payload} =
+             Ops.apply(state, {:add, %{@shape | color: "#2f9e44"}})
+
+    assert %{color: "#2f9e44", z: 0} = again.shapes[@id]
+    assert payload.z == 0
+    assert again.next_z == 2
+  end
+
   test "move updates the origin" do
     {:applied, state, _, _} = Ops.apply(@empty, {:add, @shape})
 

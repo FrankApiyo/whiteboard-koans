@@ -9,8 +9,6 @@ defmodule Easel.Repo.Migrations.CreateShapes do
       add :color, :string, null: false
       add :z, :integer, null: false
       add :data, :map, null: false
-
-      timestamps()
     end
 
     create unique_index(:shapes, [:board_id, :client_id])

@@ -15,6 +15,8 @@ defmodule Easel.BoardsTest do
   test "create_board generates a slug and validates the title" do
     assert {:ok, board} = Boards.create_board(%{"title" => "Plan"})
     assert board.slug =~ ~r/^[A-Za-z0-9_-]{22}$/
+    assert {:ok, chosen} = Boards.create_board(%{"title" => "Plan", "slug" => "mine"})
+    refute chosen.slug == "mine"
     assert {:error, changeset} = Boards.create_board(%{"title" => ""})
     assert %{title: ["can't be blank"]} = errors_on(changeset)
   end
@@ -26,11 +28,10 @@ defmodule Easel.BoardsTest do
   end
 
   test "list_boards returns the named boards in slug order" do
-    boards = for slug <- ~w(c a b d), do: board_fixture(slug: slug)
+    for slug <- ~w(c a b d), do: board_fixture(slug: slug)
     slugs = ~w(c a b) ++ ["unknown"]
 
     assert Enum.map(Boards.list_boards(slugs), & &1.slug) == ~w(a b c)
-    assert length(boards) == 4
     assert Boards.list_boards([]) == []
   end
 

@@ -3,23 +3,23 @@ defmodule Easel.Shapes.Pen do
   import Ecto.Changeset
   import Easel.Shapes.Validations
 
-  @max_points 2000
+  @fields [:id, :color, :x, :y, :points]
 
   @primary_key false
   embedded_schema do
-    field :id, :string
+    field :id, Ecto.UUID
     field :color, :string
-    field :x, Easel.Shapes.StrictInteger
-    field :y, Easel.Shapes.StrictInteger
-    field :points, {:array, {:array, Easel.Shapes.StrictInteger}}
+    field :x, :integer
+    field :y, :integer
+    field :points, {:array, {:array, :integer}}
   end
-
-  def max_points, do: @max_points
 
   def changeset(pen, attrs) do
     pen
-    |> common_changeset(attrs, [:points])
-    |> validate_length(:points, min: 1, max: @max_points)
+    |> cast(attrs, @fields)
+    |> validate_required(@fields)
+    |> validate_inclusion(:color, Easel.Palette.colors())
+    |> validate_length(:points, min: 1, max: 2000)
     |> validate_pairs()
     |> validate_extent(&extent/1)
   end
