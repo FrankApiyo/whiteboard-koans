@@ -4,16 +4,16 @@ defmodule Easel.Boards.BoardServer do
   alias Easel.Boards
   alias Easel.Boards.Ops
 
-  @supervisor Easel.Boards.BoardSupervisor
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: via(Keyword.fetch!(opts, :slug)))
   end
 
-  def via(slug), do: {:via, Registry, {Easel.Boards.Registry, slug}}
+  def via(slug) do
+    {:via, Registry, {Easel.Boards.Registry, slug}}
+  end
 
   def ensure_started(slug) do
-    case DynamicSupervisor.start_child(@supervisor, {__MODULE__, slug: slug}) do
+    case DynamicSupervisor.start_child(Easel.Boards.BoardSupervisor, {__MODULE__, slug: slug}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
       :ignore -> {:error, :not_found}
@@ -92,9 +92,8 @@ defmodule Easel.Boards.BoardServer do
   @impl true
   def terminate(_reason, state), do: save(state)
 
-  # :noproc means the board had already stopped; :normal means it stopped for
-  # idleness while this call waited. Retrying on :shutdown would restart boards
-  # while the app or a test is stopping them.
+  # Never retry on :shutdown: that would restart boards while the app or a test
+  # is stopping them.
   defp call(slug, request) do
     GenServer.call(via(slug), request)
   catch

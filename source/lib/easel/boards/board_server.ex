@@ -4,21 +4,26 @@ defmodule Easel.Boards.BoardServer do
   alias Easel.Boards
   alias Easel.Boards.Ops
 
-  @supervisor Easel.Boards.BoardSupervisor
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: via(Keyword.fetch!(opts, :slug)))
   end
 
-  def via(slug), do: {:via, Registry, {Easel.Boards.Registry, slug}}
+  def via(slug) do
+    # >>> answer 08: a Registry via tuple on the slug
+    {:via, Registry, {Easel.Boards.Registry, slug}}
+    # <<<
+  end
 
   def ensure_started(slug) do
-    case DynamicSupervisor.start_child(@supervisor, {__MODULE__, slug: slug}) do
+    # >>> answer 08: start under the supervisor, or reuse the running one
+    case DynamicSupervisor.start_child(Easel.Boards.BoardSupervisor, {__MODULE__, slug: slug}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
       :ignore -> {:error, :not_found}
       {:error, reason} -> {:error, reason}
     end
+
+    # <<<
   end
 
   def snapshot(slug), do: call(slug, :snapshot)
@@ -31,7 +36,9 @@ defmodule Easel.Boards.BoardServer do
 
   @impl true
   def init(opts) do
+    # >>> answer 08: trap exits
     Process.flag(:trap_exit, true)
+    # <<<
     opts = Keyword.merge(Application.get_env(:easel, :board_server, []), opts)
 
     # A deleted board returns :ignore so the supervisor drops it instead of
@@ -64,7 +71,9 @@ defmodule Easel.Boards.BoardServer do
 
   @impl true
   def handle_call(:snapshot, _from, state) do
+    # >>> answer 08: reply with the shapes, lowest z first
     {:reply, state.shapes |> Map.values() |> Enum.sort_by(& &1.z), state}
+    # <<<
   end
 
   def handle_call({:get_shape, id}, _from, state) do
@@ -83,18 +92,21 @@ defmodule Easel.Boards.BoardServer do
   end
 
   @impl true
+  # >>> answer 08: save, stop when idle, ignore the rest | stub: def handle_info(_msg, _state)
   def handle_info(:save, state), do: {:noreply, save(state)}
 
   def handle_info({:idle, ref}, %{idle_ref: ref} = state), do: {:stop, :normal, state}
 
   def handle_info(_stale_or_stray, state), do: {:noreply, state}
 
+  # <<<
+
   @impl true
   def terminate(_reason, state), do: save(state)
 
-  # :noproc means the board had already stopped; :normal means it stopped for
-  # idleness while this call waited. Retrying on :shutdown would restart boards
-  # while the app or a test is stopping them.
+  # Never retry on :shutdown: that would restart boards while the app or a test
+  # is stopping them.
+  # >>> answer 08: call, and retry once on a stopped board | stub: defp call(_slug, _request)
   defp call(slug, request) do
     GenServer.call(via(slug), request)
   catch
@@ -103,14 +115,18 @@ defmodule Easel.Boards.BoardServer do
       GenServer.call(via(slug), request)
   end
 
+  # <<<
+
   defp next_z([]), do: 0
   defp next_z(shapes), do: Enum.max_by(shapes, & &1.z).z + 1
 
   defp open_save_window(%{dirty?: true} = state), do: state
 
   defp open_save_window(state) do
+    # >>> answer 08: schedule :save and mark the state dirty
     Process.send_after(self(), :save, state.save_after)
     %{state | dirty?: true}
+    # <<<
   end
 
   defp save(%{dirty?: false} = state), do: state
@@ -122,8 +138,10 @@ defmodule Easel.Boards.BoardServer do
 
   defp reset_idle_timer(state) do
     if state.idle_timer, do: Process.cancel_timer(state.idle_timer)
+    # >>> answer 08: a fresh ref, and a timer that sends it
     ref = make_ref()
     timer = Process.send_after(self(), {:idle, ref}, state.idle_after)
     %{state | idle_ref: ref, idle_timer: timer}
+    # <<<
   end
 end
