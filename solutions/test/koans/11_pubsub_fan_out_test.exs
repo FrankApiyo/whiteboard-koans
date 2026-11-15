@@ -6,26 +6,26 @@ defmodule Koans.Ch11.PubsubFanOutTest do
 
   One board, many viewers. Phoenix.PubSub keeps processes on topics: subscribe/2 puts the
   caller on one, broadcast/3 sends a message to every process on it, the caller too if it
-  subscribed, and broadcast_from/4 to every one but the pid it names. On one node the sends
-  happen inside the call, so when it returns each subscriber has the message in its mailbox.
-  A board's topic is Boards.topic(slug), "board:" and the slug. A scoreboard, for one:
+  subscribed, and broadcast_from/4 to every one but the pid it names. On one node the call sends
+  to each subscriber before it returns. Messages from one process to another arrive in the order
+  sent; two senders' messages have no set order. A board's topic is Boards.topic(slug):
 
       def watch(m), do: Phoenix.PubSub.subscribe(Scores.PubSub, "match:" <> m)
       def score(m, goal), do: Phoenix.PubSub.broadcast(Scores.PubSub, "match:" <> m, goal)
 
   The board server broadcasts each op it applies as {:board_op, event, payload}, and every
-  BoardLive pushes it to its browser (chapter 10), the sender's own included. join/2
-  subscribes before it takes the snapshot. An op applied before the snapshot is in it; one
-  applied after the subscribe arrives as a message; one in between is in both, a harmless
-  repeat. The other order loses an op that lands between the snapshot and the subscribe.
+  BoardLive pushes it to its browser (chapter 10), the sender's own included. join/2 subscribes
+  before it takes the snapshot. An op applied before the snapshot is in it; one applied after the
+  subscribe arrives as a message; one in between is in both, a harmless repeat. The board server
+  sends both its broadcasts and the snapshot reply, so the view gets every later op after the
+  snapshot, in the order applied. The other order loses an op between snapshot and subscribe.
 
-  Cursors skip the board server and are never stored. The cursor:move handler puts x and y on
-  me (tab, name and colour) and sends {:cursor, cursor} with broadcast_from/4 from self(), so
-  every other BoardLive pushes it as cursor:moved and the sender's browser, which knows where
-  its own pointer is, gets nothing.
+  Cursors skip the board server and are never stored. They go out with broadcast_from/4, so
+  every other BoardLive pushes them and the sender's browser, which knows where its own
+  pointer is, gets nothing.
 
   Across nodes, PubSub's default adapter sends each broadcast once to every other node, which
-  hands it to its own subscribers, so a viewer on any node hears the board. But the Registry is
+  hands it to its own subscribers (local_broadcast/3 stays on this node). But the Registry is
   per node: a cluster needs a cluster-wide name (:global, or Horde) to keep one board server.
 
       Write:          lib/easel/boards.ex:56  (Easel.Boards.subscribe/1)

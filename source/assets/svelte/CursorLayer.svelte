@@ -50,6 +50,7 @@
 
   .layer :global(.cursor::before) {
     content: "";
+    flex: none;
     width: 12px;
     height: 16px;
     background: var(--cursor-color);

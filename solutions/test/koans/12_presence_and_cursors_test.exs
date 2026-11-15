@@ -3,33 +3,33 @@ defmodule Koans.Ch12.PresenceAndCursorsTest do
   Files this chapter touches
     - lib/easel_web/live/board_live.ex: EaselWeb.BoardLive.track_presence/2, people/1, handle_info/2
 
-  Presence knows who is here. Phoenix.Presence (the Phoenix course's chapter 14) tracks
-  processes on a topic, each under a key with a map of metadata, and forgets a process when it
-  exits. Presence.track/4 is a call to the tracker shard that owns the topic, and so is
-  Presence.list/1, so a list right after your own track already holds you. The list is a map
-  from each key to %{metas: [...]}: several processes can share a key, so metas is a list, and
-  the tracker adds a phx_ref to each meta. A lobby that tracks phones, for one:
+  Presence knows who is here. Phoenix.Presence (the Phoenix course's chapter 14) tracks processes
+  on a topic, each under a key with a map of metadata, and forgets a process when it exits.
+  Presence.track/4 is a call to this node's tracker shard for the topic, and so is
+  Presence.list/1, so a list right after your own track already holds you. The list maps each key
+  to %{metas: [...]}: several processes can share a key, so metas is a list, and the tracker adds
+  a phx_ref to each meta. A lobby of phones:
 
       {:ok, _ref} = Presence.track(self(), "lobby", "phone-1", %{nick: "kim"})
       Presence.list("lobby")
       #=> %{"phone-1" => %{metas: [%{nick: "kim", phx_ref: "F2x..."}]}}
 
-  Easel keys presence by tab, not by person. me holds name and colour from the session, and
-  join/2 adds a random tab, so the tab is the key and the rest of me is the metadata. Ada with
-  the board open in two tabs is two presences, listed twice: ["Ada", "Ada"]. people/1 makes the
-  people prop from the list, one %{tab, name, color} per key from its first meta. mount assigns
-  [] (the static render tracks nobody, and its me has no tab), and join/2 lists them once.
+  Easel keys presence by tab, not by person: join/2 adds a random tab to me (name and colour
+  from the session), so the tab is the key and the rest of me the metadata. Ada in two tabs is
+  listed twice: ["Ada", "Ada"]. people/1 makes the people prop, one %{tab, name, color} per key
+  from its first meta; mount assigns [] (the static render tracks nobody, its me has no tab).
 
-  When a tab joins or leaves, the tracker on each node broadcasts a presence_diff to that
-  node's subscribers of the topic: %Phoenix.Socket.Broadcast{event: "presence_diff", payload:
-  %{joins: ..., leaves: ...}}. BoardLive has been one since chapter 11. The payload says who
-  changed, but BoardLive simply lists again: the list is the truth, and live_svelte sends just
-  the people prop. A diff comes a moment later, from a task, so a koan sends one itself.
-  Closing a tab ends its LiveView process, the tracker drops its presence, and the next list
-  leaves it out; the browser then drops that tab's cursor (this chapter's TypeScript koans).
+  When a tab joins or leaves, each node's tracker sends a presence_diff to that node's
+  subscribers of the topic, BoardLive among them since chapter 11: a %Phoenix.Socket.Broadcast{}
+  with event "presence_diff" and a payload of joins and leaves. Other nodes hear of it on the
+  trackers' next delta broadcast, every 1.5 s by default, so their lists lag by that much.
+  BoardLive just lists again, and live_svelte sends only the people prop. A diff comes a moment
+  later, from a task, once the shard's list has changed, so a koan waits for Lin's leave on its
+  own subscription, then sends Ada a diff itself. A closed tab's LiveView ends, the tracker drops
+  it, and the browser drops its cursor (the TypeScript koans).
 
       Write:          lib/easel_web/live/board_live.ex:111  (EaselWeb.BoardLive.track_presence/2)
-      Exercised by:   test/koans/12_presence_and_cursors_test.exs:74
+      Exercised by:   test/koans/12_presence_and_cursors_test.exs:75
 
   API you'll use
     Presence.track/4  Presence.track(self(), "lobby", "phone-1", %{nick: "kim"}) is {:ok, ref}
@@ -40,8 +40,9 @@ defmodule Koans.Ch12.PresenceAndCursorsTest do
                       entry that doesn't match the pattern is skipped
     [head | _]        [first | _] = [1, 2] binds first to 1
     assign/2          assign(socket, count: 2) is the socket with count set
-    %Phoenix.Socket.Broadcast{}  a presence_diff arrives as this struct; match event:
+    %Phoenix.Socket.Broadcast{}  a presence_diff arrives as this; match on event: "presence_diff"
     send/2            send(view.pid, message), as in chapter 10
+    assert_receive/2  assert_receive {:done, _} waits for a message, up to a second here
     GenServer.stop/1  GenServer.stop(view.pid) ends a view, as closing its tab would
     board_props/1     the Board's whole props
 
@@ -93,14 +94,22 @@ defmodule Koans.Ch12.PresenceAndCursorsTest do
 
   koan "Implement the presence_diff clause of handle_info/2 so the people prop follows who joins and who leaves: on any diff, list the people again." do
     board = board_fixture()
+    :ok = Boards.subscribe(board.slug)
     ada = open(board, "Ada")
     assert names(ada) == ["Ada"]
     lin = open(board, "Lin")
+    lin_tab = board_props(lin)["me"]["tab"]
 
     send(ada.pid, presence_diff(board))
     assert names(ada) == ["Ada", "Lin"]
 
     GenServer.stop(lin.pid)
+
+    assert_receive %Phoenix.Socket.Broadcast{
+      event: "presence_diff",
+      payload: %{leaves: %{^lin_tab => _}}
+    }
+
     send(ada.pid, presence_diff(board))
     assert names(ada) == ["Ada"]
   end

@@ -102,7 +102,7 @@ defmodule EaselWeb.BoardLive do
 
   def handle_info(%Phoenix.Socket.Broadcast{event: "presence_diff"}, socket) do
     # >>> 12
-    __("12: list the people again")
+    __("12: list the people again", {:noreply, socket})
     # <<< 12
   end
 

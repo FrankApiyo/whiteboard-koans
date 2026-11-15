@@ -108,7 +108,7 @@ defmodule EaselWeb.BoardLive do
   end
 
   def handle_info(%Phoenix.Socket.Broadcast{event: "presence_diff"}, socket) do
-    # >>> answer 12: list the people again
+    # >>> answer 12: list the people again | default: {:noreply, socket}
     {:noreply, assign(socket, people: people(socket.assigns.board.slug))}
     # <<<
   end

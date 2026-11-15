@@ -22,12 +22,13 @@ sent. This limiter keeps the leading edge only, and a cursor drawn with it stops
     }
 
 throttle.ts keeps lastRun, held (the latest arguments) and timer; the given run(args) cancels
-what waits, stamps lastRun with now() and calls fn. now is injected, Date.now by default.
-makeCursorSender(live, ms = 50) pushes cursor:move through a throttle, x and y rounded, as the
-server takes integers only: one per 50 ms. Board calls its cancel() when it unmounts.
+what waits, stamps lastRun with now(), Date.now by default, and calls fn. makeCursorSender(live,
+ms = 50) pushes cursor:move through a throttle, x and y rounded, as the server takes integers
+only: one per 50 ms. Board calls its cancel() when it unmounts. The throttle is the client
+being polite; the server checks only for integers, and a rate limit there would drop the rest.
 
-    Write:          assets/js/throttle.ts:16  (11: clear the timer and the held call)
-    Exercised by:   assets/koans/11_pubsub_fan_out.test.ts:117
+    Write:          assets/js/throttle.ts:28  (11: run now, or hold the latest call for the window's end)
+    Exercised by:   assets/koans/11_pubsub_fan_out.test.ts:68
 
 API you'll use
   - setTimeout, clearTimeout: const id = setTimeout(ring, 300) calls ring once, 300 ms on;
@@ -40,7 +41,8 @@ API you'll use
   - live.pushEvent: chapter 09
   - vi.useFakeTimers, vi.useRealTimers: fake setTimeout and Date.now until put back;
     vi.advanceTimersByTime(10) moves the clock 10 ms and runs what falls due, and
-    vi.advanceTimersToNextTimer() moves it to the next timer and runs that
+    vi.advanceTimersToNextTimer() moves it to the next timer and runs that;
+    vi.getTimerCount() is how many fake timers wait
   - createFakeLive: given; live.pushed lists each push as { event, payload }
 
 Picture: lessons/svg/11_fan_out.svg
@@ -63,7 +65,7 @@ function withFakeTimers(run: () => void): void {
   }
 }
 
-test("Implement throttled, the function a throttle hands out. 1. Work out how much of the window is left since lastRun. 2. When none is left, run this call now. 3. Otherwise hold these arguments and, unless a timer is already waiting, start one for what is left that runs whatever is held then.", () => {
+test("Implement cancel and throttled, the two halves of a throttle; the given run calls cancel first. 1. cancel clears any waiting timer and forgets the held call. 2. throttled works out how much of the window is left since lastRun. 3. When none is left, it runs this call now. 4. Otherwise it holds these arguments and, unless a timer is already waiting, starts one for what is left that runs whatever is held then.", () => {
   withFakeTimers(() => {
     const calls: number[] = []
     const throttled = throttle((n: number) => calls.push(n), 50)
@@ -74,6 +76,7 @@ test("Implement throttled, the function a throttle hands out. 1. Work out how mu
     throttled(2)
     throttled(3)
     expect(calls).toEqual([1])
+    expect(vi.getTimerCount()).toBe(1)
     vi.advanceTimersByTime(19)
     expect(calls).toEqual([1])
     vi.advanceTimersByTime(1)
@@ -114,13 +117,14 @@ test("A throttle reads the time from its injected clock, and a call that leads d
   })
 })
 
-test("Implement cancel, which a throttle's owner calls when it is done: clear any waiting timer and forget the held call, so nothing runs later and the next held call gets a timer of its own.", () => {
+test("cancel, which a throttle's owner calls when it is done, clears any waiting timer, so nothing runs later and the next held call gets a timer of its own.", () => {
   withFakeTimers(() => {
     const calls: number[] = []
     const throttled = throttle((n: number) => calls.push(n), 50)
     throttled(1)
     throttled(2)
     throttled.cancel()
+    expect(vi.getTimerCount()).toBe(0)
     vi.advanceTimersByTime(200)
     expect(calls).toEqual([1])
 
