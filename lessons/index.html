@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Easel koans lessons</title>
+<style>
+:root { --bg: #ffffff; --fg: #1f2933; --muted: #52606d; --code-bg: #f1f4f8; --border: #d5dbe3; --link: #1a56b0; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1b1f23; --fg: #e6e9ec; --muted: #9aa5b1; --code-bg: #262c33; --border: #3a424b; --link: #7ab3ff; }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, sans-serif; }
+main { max-width: 46rem; margin: 0 auto; padding: 1rem 16px 4rem; }
+a { color: var(--link); }
+nav ol { columns: 16rem; list-style: none; padding: 0; margin: 0 0 2rem; }
+nav li { padding: 0.15rem 0; break-inside: avoid; }
+.chapter { border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 2rem; }
+h2 { font-size: 1.3rem; margin: 0 0 0.75rem; overflow-wrap: anywhere; }
+h3 { font-size: 1rem; color: var(--muted); margin: 1.25rem 0 0.25rem; }
+h3.kind { font-size: 1.05rem; color: var(--fg); margin-top: 1.75rem; }
+.num { color: var(--muted); font-variant-numeric: tabular-nums; }
+ul.files { margin: 0.25rem 0 0.6rem; padding-left: 1.25rem; }
+p { margin: 0.6rem 0; overflow-wrap: anywhere; }
+code, pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.875rem; }
+code { background: var(--code-bg); padding: 0.05rem 0.25rem; border-radius: 3px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.6rem 0.8rem; overflow-x: auto; margin: 0.6rem 0; }
+figure { margin: 1rem 0 0; }
+figure svg { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Easel koans lessons</h1>
+<nav aria-label="Chapters">
+<ol>
+<li><a href="#ch00">00 About these koans</a></li>
+</ol>
+</nav>
+<section class="chapter" id="ch00">
+<h2><span class="num">00</span> About these koans</h2>
+<h3 class="kind">TypeScript and Svelte</h3>
+<h3>Files this chapter touches</h3>
+<ul class="files">
+<li><code>assets/js/hello.ts</code>: greet</li>
+</ul>
+<p>Easel is a shared whiteboard, and the koans build it in two languages: TypeScript and Svelte koans in assets/koans/ run under Vitest, Elixir koans in test/koans/ run under ExUnit. One command runs both:</p>
+<pre>mix koans</pre>
+<p>It stops at the earliest koan you have not answered, TypeScript before Elixir within a chapter, and prints a footer for it. A value blank is a bare __ inside a koan. A code blank is a __blank("NN: tag") line in assets/js/ or assets/svelte/, between two marker lines that name its chapter: replace that line with your code and keep the markers. Its footer names two places:</p>
+<pre>Write:          assets/js/hello.ts:3  (00: greet)
+Exercised by:   assets/koans/00_about_koans.test.ts:35</pre>
+<p>Write: is where your code goes, with the blank's tag. Exercised by: is the koan that ran it.</p>
+<p>Before any koan runs, svelte-check reads every .ts and .svelte file. A type error stops the run and names its file and line, as a compile error does in Elixir: fix it, then run again. npm test runs only the TypeScript koans, and mix test only the Elixir ones.</p>
+<h3>API you'll use</h3>
+<pre>  - template literals: `${count} shapes` puts the value of count into the string</pre>
+<h3 class="kind">Elixir</h3>
+<h3>Files this chapter touches</h3>
+<ul class="files">
+<li><code>lib/easel/hello.ex</code>: Easel.Hello.greet/1</li>
+</ul>
+<p>The Elixir half of the course. Elixir code blanks live in lib/ and test/support/ and work as in the Phoenix course: replace the __(...) line with code and keep the marker lines.</p>
+<pre># &gt;&gt;&gt; 07
+__("07: list boards newest first")
+# &lt;&lt;&lt; 07</pre>
+<p>Every tag starts with its chapter, in both languages, so one :vimgrep lists a chapter's blanks everywhere (:copen shows them):</p>
+<pre>:vimgrep /__("07\|__blank("07/ lib/** assets/**</pre>
+<p>An Elixir footer names the function a blank belongs to, where TypeScript names the tag:</p>
+<pre>Write:          lib/easel/hello.ex:9  (Easel.Hello.greet/1)
+Exercised by:   test/koans/00_about_koans_test.exs:46</pre>
+<p>Some blanks have a default, as in __("11: subscribe", :ok) or __blank("10: listen", () =&gt; {}). Until you fill one it returns the default, so the app keeps working, and it fails only koans of its own chapter, with the same footer.</p>
+<p>Run mix phx.server once and open localhost:4000. The name page works from the start; the board pages show a blank on Phoenix's debug page, which is the course talking, not a crash. After 08 you can create a board and open it, after 10 what you draw stays after a reload, and after 12 two windows draw together and list each other. Stop the server and go on.</p>
+<h3>API you'll use</h3>
+<pre>  - String.split/3: String.split("07: list boards", ": ", parts: 2) is ["07", "list boards"]</pre>
+</section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    // >>> course
+    "allowUnreachableCode": true,
+    "paths": { "@koans/*": ["./koans_support/*"] }
+    // <<< course
+  },
+  "include": [
+    "js/**/*.ts",
+    "svelte/**/*",
+    "test/**/*",
+    // >>> course
+    "koans/**/*",
+    "koans_support/**/*"
+    // <<< course
+  ]
+}

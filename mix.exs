@@ -39,7 +39,12 @@ defmodule Easel.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test, koans: :test]
+      preferred_envs: [
+        precommit: :test,
+        # >>> course
+        koans: :test
+        # <<< course
+      ]
     ]
   end
 

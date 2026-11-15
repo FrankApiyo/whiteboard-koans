@@ -6,6 +6,11 @@
 @source "../js";
 @source "../svelte/**/*.svelte";
 @source "../../lib/easel_web";
+/* >>> course */
+/* Classes used only in blanked markup reach the build from the solved tree. */
+@source "../../solutions/assets/svelte/**/*.svelte";
+@source "../../solutions/lib/easel_web";
+/* <<< course */
 
 /* A Tailwind plugin that makes "hero-#{ICON}" classes available.
    The heroicons installation itself is managed by your mix.exs */

@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19"
+          otp-version: "28"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-test-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-test-${{ runner.os }}-
+
+      # package.json installs live_svelte and phoenix from deps/, so Hex goes first.
+      - run: mix deps.get
+      - run: npm ci
+      - run: mix compile --warnings-as-errors
+      - run: mix format --check-formatted
+      # The layout reads the Vite manifest, so the tests need built assets.
+      - run: mix assets.build
+      - run: mix test
+      - run: npm test
+      - run: npx svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19"
+          otp-version: "28"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-e2e-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: mix-e2e-${{ runner.os }}-
+
+      - run: mix deps.get
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Playwright starts the app with MIX_ENV=e2e on port 4100 (config/e2e.exs).
+      - run: npm run e2e

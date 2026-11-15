@@ -1,0 +1,9 @@
+@import "tailwindcss" source(none);
+@source "../js";
+@source "../svelte/**/*.svelte";
+/* >>> course */
+/* Classes that appear only in blanked markup. */
+@source "../../solutions/assets/svelte/**/*.svelte";
+/* <<< course */
+
+/* This file is for your main application CSS */

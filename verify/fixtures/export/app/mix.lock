@@ -1,0 +1,4 @@
+%{
+  "koans": {:path, "course", []},
+  "phoenix": {:hex, :phoenix, "1.8.0", "abc", [:mix], [], "hexpm", "def"},
+}

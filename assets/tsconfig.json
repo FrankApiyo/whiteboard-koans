@@ -20,9 +20,9 @@
   "include": [
     "js/**/*.ts",
     "svelte/**/*",
-    "koans/**/*",
     "test/**/*",
     // >>> course
+    "koans/**/*",
     "koans_support/**/*"
     // <<< course
   ]

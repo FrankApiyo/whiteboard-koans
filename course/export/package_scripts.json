@@ -1,0 +1,6 @@
+{
+  "test": "vitest run --config assets/vitest.config.ts",
+  "check": "svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings",
+  "build": "mix assets.build",
+  "e2e": "playwright test"
+}
