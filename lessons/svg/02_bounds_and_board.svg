@@ -38,19 +38,18 @@
   <line x1="330" y1="16" x2="330" y2="266" class="frame"/>
 
   <text x="350" y="28">toBoard: page to board</text>
-  <rect class="frame" x="350" y="44" width="130" height="150"/>
-  <text x="356" y="62" class="small">page</text>
-  <rect class="alt" x="372" y="84" width="96" height="60"/>
-  <text x="378" y="160" class="small">left, top, width,</text>
-  <text x="378" y="176" class="small">height of the canvas</text>
-  <circle class="dot" cx="420" cy="114" r="5"/>
-  <text x="428" y="110" class="small">clientX,</text>
-  <text x="428" y="126" class="small">clientY</text>
-  <line x1="486" y1="114" x2="510" y2="114" class="arrow"/>
-  <rect class="box" x="516" y="74" width="110" height="80"/>
-  <text x="524" y="94" class="small">board</text>
-  <text x="524" y="146" class="small">1600 by 1000</text>
-  <circle class="dot" cx="571" cy="114" r="5"/>
+  <rect class="frame" x="346" y="44" width="150" height="150"/>
+  <text x="352" y="62" class="small">page</text>
+  <rect class="alt" x="360" y="80" width="120" height="64"/>
+  <circle class="dot" cx="420" cy="112" r="5"/>
+  <text x="420" y="136" text-anchor="middle" class="small">clientX, clientY</text>
+  <text x="356" y="164" class="small">left, top, width,</text>
+  <text x="356" y="180" class="small">height of the canvas</text>
+  <line x1="502" y1="112" x2="522" y2="112" class="arrow"/>
+  <rect class="box" x="528" y="72" width="104" height="80"/>
+  <text x="536" y="90" class="small">board</text>
+  <text x="536" y="144" class="small">1600 by 1000</text>
+  <circle class="dot" cx="580" cy="112" r="5"/>
   <text x="350" y="234" class="small">The point keeps its place in the canvas,</text>
   <text x="350" y="250" class="small">whatever size the canvas has on the page.</text>
 </svg>

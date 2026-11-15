@@ -5,14 +5,16 @@ Files this chapter touches
 
 TypeScript basics. TypeScript is JavaScript plus types that the compiler checks and then erases,
 so a type never changes what runs. Annotate a binding (const width: number = 1600) or let the
-compiler infer it (const title = "Easel" is a string). A type alias names any type: Tool is
-"select" | "rect" | "ellipse" | "line" | "pen", a union of literal types that admits those five
-strings and no other. An interface names an object's shape; z?: number is an optional field that
-reads as undefined when missing, and "z" in shape is false then. readonly forbids writes, but
-only at compile time: Object.freeze(x) is the run-time lock and Object.isFrozen(x) asks for it.
-Record<Tool, string> is an object with one string for each tool, and (value: unknown) => boolean
-is the type of a function. types.ts builds Color from a value: PALETTE is the 8 strings
-"#e03131", "#f08c00", ... "#c2255c" with as const, and (typeof PALETTE)[number] is their union.
+compiler infer it: let title = "Easel" is a string, but const title = "Easel" has the literal
+type "Easel", as it can't change. A type alias names a type: Tool is the union of five literal
+types "select" | "rect" | "ellipse" | "line" | "pen". An interface names an object's shape;
+z?: number is an optional field that reads as undefined when missing, and "z" in shape is false
+then. readonly forbids writes, but only at compile time: Object.freeze(x) is the run-time lock and
+Object.isFrozen(x) asks for it. Record<Tool, string> holds one string per tool, and
+(value: unknown) => boolean is a function type. Array entries widen to string like a let, so
+types.ts writes PALETTE, the 8 strings "#e03131", "#f08c00", ... "#c2255c", with as const: each
+entry keeps its literal type and the array becomes readonly. (typeof PALETTE)[number] is Color,
+their union. In a type, typeof X is the type of the value X; in code, typeof is a run-time check.
 
 Data from the server arrives as unknown, which you can't read until a type guard narrows it. A
 guard returns a boolean, and its return type says what true proves:
@@ -26,13 +28,15 @@ and arrays too; NaN and Infinity are a "number". The koans build shapes with rec
 assets/test/support/fixtures.ts, and rect({ z: 3 }) overrides one field.
 
     Write:          assets/js/guards.ts:17  (01: string check)
-    Exercised by:   assets/koans/01_typescript_basics.test.ts:58
+    Exercised by:   assets/koans/01_typescript_basics.test.ts:62
 
 API you'll use
   - typeof: typeof 3 is "number", typeof null is "object"
+  - === and !==: compare with these; == converts types first, so 0 == "" is true
   - Array.isArray: Array.isArray([]) is true, Array.isArray({}) is false
   - Number.isFinite: Number.isFinite(1) is true, Number.isFinite(Number.NaN) is false
-  - .some: ["a", "b"].some((s) => s === "b") is true
+  - .some: ["a", "b"].some((s) => s === "b") is true; PALETTE.includes(value) won't compile
+    for an unknown value, because includes takes a Color, while .some can compare anything
   - Object.keys: Object.keys({ a: 1, b: 2 }) is ["a", "b"]
   - Object.freeze and Object.isFrozen: Object.isFrozen(Object.freeze([1])) is true
   - JSON.parse: JSON.parse('{"x": 1}') is { x: 1 }, typed any
@@ -45,7 +49,7 @@ import { isColor, isFiniteNumber, isRecord, isString } from "../js/guards"
 import { BOARD_WIDTH, PALETTE, type Color, type Tool } from "../js/types"
 import { rect } from "../test/support/fixtures"
 
-test("An annotation is checked by the compiler and erased before the code runs, so typeof sees only the value.", () => {
+test("An annotation is erased before the code runs, so typeof sees only the value, and it reports null and arrays as object.", () => {
   const width: number = BOARD_WIDTH
   const title = "Easel"
   expect(typeof width).toBe(__)
@@ -55,7 +59,7 @@ test("An annotation is checked by the compiler and erased before the code runs, 
   expect(Array.isArray([1, 2])).toBe(__)
 })
 
-test("Implement isString in assets/js/guards.ts so it is true for strings only. 1. Open the file on the Write: line. 2. Replace the __blank line with a return of one typeof comparison, and keep the marker lines.", () => {
+test("Implement isString in assets/js/guards.ts so it is true for strings only: return one typeof comparison.", () => {
   expect(isString("")).toBe(true)
   expect(isString("pen")).toBe(true)
   expect(isString(1)).toBe(false)
@@ -70,7 +74,7 @@ test("Implement isRecord so it is true for a plain object and false for null, an
   expect(isRecord("x")).toBe(false)
 })
 
-test("as const keeps each palette entry as its exact string, and Color is the union of those eight strings.", () => {
+test("PALETTE holds eight strings, and its first entry can be stored as a Color.", () => {
   const first: Color = PALETTE[0]
   expect(first).toBe(__)
   expect(PALETTE.length).toBe(__)

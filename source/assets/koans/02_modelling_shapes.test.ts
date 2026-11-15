@@ -18,17 +18,17 @@ each [dx, dy] from x, y. Comparing kind narrows the type, in an if or a switch:
     }
 
 In the default branch s is never, because every kind has a case, and assertNever(x: never)
-accepts only that: add a fifth kind and each such switch fails to compile until it handles it.
-If a bad value gets through at run time it throws Error(`Unexpected value: ${JSON.stringify(x)}`).
+accepts only that: add a fifth kind and each such switch fails to compile until it handles it. A
+bad value that gets through at run time throws Error(`Unexpected value: ${JSON.stringify(x)}`).
+Types are structural: any object with numeric x and y is a Point, so a shape stands for its start.
 
 Fixtures: rect() is 200 by 100 at 100, 100; ellipse() is 200 by 100 at 400, 300; line() runs from
-50, 50 by dx 100, dy 100; pen() starts at 20, 20 with 2 points. Shapes on the board are drawn in
-array order, so the last one is on top. The board is 1600 by 1000 at any canvas size: a pointer's
-clientX and clientY are measured from the canvas's left and top on the page and scaled by its
-width and height, as getBoundingClientRect() reports them.
+50, 50 by dx 100, dy 100; pen() starts at 20, 20 with 2 points. The last shape in an array is
+drawn on top. The board is BOARD_WIDTH by BOARD_HEIGHT (1600 by 1000, in types.ts) at any canvas
+size. clientX and clientY are measured from the window's top left, like getBoundingClientRect().
 
     Write:          assets/js/geometry.ts:100  (02: describe each kind)
-    Exercised by:   assets/koans/02_modelling_shapes.test.ts:68
+    Exercised by:   assets/koans/02_modelling_shapes.test.ts:69
 
 API you'll use
   - switch on kind: case "line": narrows s to Line until the next case
@@ -38,6 +38,7 @@ API you'll use
   - .find: [1, 2, 3].find((n) => n > 1) is 2, and undefined when nothing matches
   - ??: a ?? b is b when a is null or undefined
   - [...xs].reverse(): a reversed copy; xs.reverse() alone reverses xs itself
+  - as never: "hexagon" as never forces the type, so a koan can hand assertNever a bad value
 
 Picture: lessons/svg/02_bounds_and_board.svg
 */
@@ -88,6 +89,8 @@ test("Fill the rect case of hitTest: a point inside the rect, or within toleranc
   expect(hitTest(rect(), { x: 306, y: 206 })).toBe(true)
   expect(hitTest(rect(), { x: 80, y: 150 })).toBe(false)
   expect(hitTest(rect(), { x: 150, y: 207 })).toBe(false)
+  expect(hitTest(rect(), { x: 150, y: 94 })).toBe(true)
+  expect(hitTest(rect(), { x: 150, y: 93 })).toBe(false)
   expect(hitTest(rect(), { x: 80, y: 150 }, 25)).toBe(true)
 })
 
@@ -101,10 +104,11 @@ test("Implement topmostAt so it returns the last shape the point hits, or null o
   expect(shapes).toEqual([below, above])
 })
 
-test("Implement moveTo so it returns a copy of the shape at the new x and y and leaves the original alone. Svelte redraws when it sees a new object, so shapes are replaced, never changed in place.", () => {
+test("Implement moveTo so it returns a copy of the shape at the new x and y and leaves the original alone. Svelte redraws when it sees a new object, so shapes are replaced, never changed in place. A spread copies one level, so moved and original share points.", () => {
   const original = pen()
   const moved = moveTo(original, 5, 6)
-  expect(moved).toEqual({ ...original, x: 5, y: 6 })
+  expect(moved).toEqual({ kind: "pen", id: ID_B, color: "#7048e8", x: 5, y: 6, points: [[10, 0], [10, 10]] })
+  expect(moved.kind === "pen" ? moved.points : null).toBe(original.points)
   expect(moved).not.toBe(original)
   expect(original.x).toBe(20)
 })
@@ -115,4 +119,5 @@ test("Implement toBoard so it maps a pointer's client coordinates to board coord
   expect(toBoard(10, 20, canvasOnPage)).toEqual({ x: 0, y: 0 })
   expect(toBoard(11, 21, canvasOnPage)).toEqual({ x: 2, y: 2 })
   expect(toBoard(810, 520, { left: 10, top: 20, width: 1600, height: 1000 })).toEqual({ x: 800, y: 500 })
+  expect(toBoard(13, 22, { left: 10, top: 20, width: 1000, height: 600 })).toEqual({ x: 5, y: 3 })
 })
