@@ -10,6 +10,7 @@ defmodule Koans.Ts.SourceCheck do
   @exercises ~r/exercises:\s*(?:"([^"]*)"|\[([^\]]*)\])/
   @koan_file ~r{(^|/)assets/koans/(?<chapter>\d\d)_[^/]*\.test\.ts\z}
   @ts_script ~r/\blang\s*=\s*["']ts["']/
+  @course_line ~r{\A\s*// (>>>|<<<) course\z}
 
   def check(text, path, opts \\ []) do
     source = source(text, path)
@@ -224,6 +225,7 @@ defmodule Koans.Ts.SourceCheck do
     |> Enum.flat_map(fn {text, line} ->
       cond do
         Markers.parse_line(text) != nil -> []
+        text =~ @course_line -> []
         text =~ ~r/<!-- (>>> answer|<<< -->)/ -> [{line, "markup marker not on its own line"}]
         text =~ ~r{// (>>> answer|<<<)} -> [{line, "// marker not on its own line"}]
         true -> []

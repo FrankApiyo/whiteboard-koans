@@ -113,6 +113,11 @@ defmodule Verify.TsSourceCheckTest do
     assert "#{@lib}:1: // marker not on its own line" in errors("f() // >>> answer 02: a\n", @lib)
   end
 
+  test "a course block is not a marker" do
+    text = "// >>> course\nimport \"@koans/blanks.ts\"\n// <<< course\n"
+    assert SourceCheck.check(text, "source/assets/js/app.js") == :ok
+  end
+
   for path <- ~w(source/assets/js/types.ts source/assets/js/live.ts source/assets/js/shapes.d.ts
                  source/assets/test/support/fake_canvas.ts source/assets/js/app.js) do
     test "never a blank: #{path}" do

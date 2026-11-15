@@ -1,3 +1,5 @@
 export function greet(name: string): string {
-  return `Hello, ${name}!`
+  // >>> 00
+  __blank("00: greet");
+  // <<< 00
 }

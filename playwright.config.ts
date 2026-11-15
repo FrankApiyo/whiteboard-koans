@@ -21,7 +21,7 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: `http://localhost:${port}`,
-    trace: "off",
+    trace: "retain-on-failure",
   },
   projects: [
     {
@@ -31,7 +31,13 @@ export default defineConfig({
   ],
   webServer: {
     command: serverSteps.join(" && "),
-    env: { MIX_ENV: "e2e" },
+    env: {
+      MIX_ENV: "e2e",
+      // >>> course
+      // The learner's lib/ holds blanks, so the suite runs the solved app.
+      KOANS_LIB: "solutions/lib",
+      // <<< course
+    },
     url: `http://127.0.0.1:${port}/name`,
     reuseExistingServer: false,
     timeout: 300_000,

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import {
   click,
+  colorOf,
   cursorOf,
   draw,
   drag,
@@ -11,6 +12,7 @@ import {
   person,
   pickTool,
   shapes,
+  signInAgain,
   twoPeopleOnOneBoard,
   type Visitor,
 } from "./board"
@@ -63,7 +65,12 @@ test("a shape dragged by one person moves for the other", async () => {
   await expect(shapes(lin.page)).not.toHaveText([before])
 
   const [after] = await expectSameShapes(lin.page, ada.page, 1)
-  expect(after).toMatch(/^rectangle \d+ by \d+ at /)
+  const moved = /^rectangle (\d+) by (\d+) at (\d+), (\d+)$/.exec(after)
+  expect(moved).not.toBeNull()
+  const [, w, h, x, y] = (moved ?? []).map(Number)
+  // Pointer positions round through screen pixels, so allow a few board units either way.
+  expect([w, h]).toEqual([expect.closeTo(300, -1), expect.closeTo(200, -1)])
+  expect([x, y]).toEqual([expect.closeTo(600, -1), expect.closeTo(500, -1)])
 })
 
 test("a shape deleted by one person disappears for the other", async () => {
@@ -84,8 +91,16 @@ test("a shape deleted by one person disappears for the other", async () => {
 
 test("one person's pointer shows as a cursor with their name and colour for the other", async () => {
   const [ada, lin] = visitors
-  const adaColor = await person(ada.page, "Ada").locator("[data-color]").getAttribute("data-color")
+  const adaColor = await colorOf(ada.page, "Ada")
   expect(adaColor).toMatch(/^#[0-9a-f]{6}$/i)
+
+  const boardPath = new URL(lin.page.url()).pathname
+  let linColor = await colorOf(lin.page, "Lin")
+  for (let tries = 0; linColor === adaColor && tries < 10; tries++) {
+    await signInAgain(lin, boardPath)
+    linColor = await colorOf(lin.page, "Lin")
+  }
+  expect(linColor).not.toBe(adaColor)
 
   await hover(ada.page, { x: 800, y: 500 })
 
@@ -117,8 +132,6 @@ test("every shape is still there after a reload", async () => {
   const [ada, lin] = visitors
   const described = await drawOneOfEach(ada, lin)
 
-  // The board saves in a 200 ms window after a change; waiting past it matches the manual check.
-  await ada.page.waitForTimeout(1_000)
   await ada.page.reload()
 
   await expect(shapes(ada.page)).toHaveText(described)

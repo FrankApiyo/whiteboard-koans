@@ -86,13 +86,13 @@ defmodule Easel.Boards.BoardServerTest do
   end
 
   test "an op postpones the idle stop", %{board: board} do
-    pid = start_supervised!({BoardServer, slug: board.slug, idle_after: 300})
+    pid = start_supervised!({BoardServer, slug: board.slug, idle_after: 600})
     ref = Process.monitor(pid)
-    Process.sleep(200)
+    Process.sleep(300)
 
     :ok = BoardServer.apply_op(board.slug, {:add, rect()})
 
-    refute_receive {:DOWN, ^ref, _, _, _}, 200
+    refute_receive {:DOWN, ^ref, _, _, _}, 300
     assert_receive {:DOWN, ^ref, :process, ^pid, :normal}, 1_000
   end
 

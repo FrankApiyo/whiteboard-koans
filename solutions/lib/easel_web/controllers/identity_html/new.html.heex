@@ -1,0 +1,11 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    What should others call you?
+    <:subtitle>Your name labels your cursor on every board you join.</:subtitle>
+  </.header>
+
+  <.form for={@form} action={~p"/name"}>
+    <.input field={@form[:name]} label="Display name" maxlength="40" required />
+    <.button variant="primary">Continue</.button>
+  </.form>
+</Layouts.app>

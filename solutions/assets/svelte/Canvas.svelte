@@ -1,0 +1,115 @@
+<script lang="ts">
+  import type { BoardState } from "../js/board_state.svelte"
+  import { describe, toBoard } from "../js/geometry"
+  import { drawBoard, fitCanvas } from "../js/render"
+  import {
+    dragTarget,
+    pointerDown,
+    pointerMove,
+    pointerUp,
+    type Commit,
+    type ToolState,
+  } from "../js/tools"
+  import { BOARD_HEIGHT, BOARD_WIDTH, type Point, type Shape } from "../js/types"
+
+  interface Props {
+    state: BoardState
+    oncommit: (commit: Commit, before?: Shape) => void
+    oncursor?: (point: Point) => void
+  }
+
+  let { state: board, oncommit, oncursor }: Props = $props()
+
+  let canvas = $state<HTMLCanvasElement>()
+  let tool = $state.raw<ToolState>({ mode: "idle" })
+  let dragStart: Shape | undefined
+  let dropAt: { id: string; x: number; y: number } | null = null
+
+  const shapes = $derived(board.ordered())
+  const drawn = $derived(tool.mode === "drawing" ? [...shapes, tool.draft] : shapes)
+
+  $effect(() => {
+    const ctx = canvas?.getContext("2d")
+    if (canvas && ctx) fitCanvas(canvas, ctx, window.devicePixelRatio || 1)
+  })
+
+  $effect(() => {
+    const ctx = canvas?.getContext("2d")
+    if (!ctx) return
+    const toDraw = drawn
+    const selectedId = board.selectedId
+    const frame = requestAnimationFrame(() => drawBoard(ctx, toDraw, selectedId))
+    return () => cancelAnimationFrame(frame)
+  })
+
+  type CanvasPointerEvent = PointerEvent & { currentTarget: HTMLCanvasElement }
+
+  function boardPoint(event: CanvasPointerEvent): Point {
+    return toBoard(event.clientX, event.clientY, event.currentTarget.getBoundingClientRect())
+  }
+
+  function down(event: CanvasPointerEvent) {
+    if (!event.isPrimary || event.button !== 0) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
+    tool = pointerDown(tool, board.tool, boardPoint(event), env)
+    const grabbed = tool.mode === "dragging" ? tool.id : null
+    board.draggingId = grabbed
+    dragStart = grabbed ? board.shapes.get(grabbed) : undefined
+    if (board.tool === "select") board.selectedId = grabbed
+  }
+
+  function move(event: CanvasPointerEvent) {
+    if (!event.isPrimary) return
+    const point = boardPoint(event)
+    oncursor?.(point)
+    tool = pointerMove(tool, point)
+    dropAt = dragTarget(tool, point)
+    if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+  }
+
+  function up(event: CanvasPointerEvent) {
+    if (event.isPrimary) finish(pointerUp(tool, boardPoint(event)).commit)
+  }
+
+  function cancel(event: PointerEvent) {
+    if (event.isPrimary) finish(dropAt && { kind: "move", ...dropAt })
+  }
+
+  function finish(commit: Commit | null) {
+    const before = dragStart
+    tool = { mode: "idle" }
+    board.draggingId = null
+    dragStart = undefined
+    dropAt = null
+    if (commit) oncommit(commit, before)
+  }
+</script>
+
+<div role="group" aria-label="Whiteboard">
+  <canvas
+    bind:this={canvas}
+    style:aspect-ratio="{BOARD_WIDTH} / {BOARD_HEIGHT}"
+    onpointerdown={down}
+    onpointermove={move}
+    onpointerup={up}
+    onpointercancel={cancel}
+  >
+    <ul>
+      {#each shapes as shape (shape.id)}
+        <li>{describe(shape)}</li>
+      {/each}
+    </ul>
+  </canvas>
+</div>
+
+<style>
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    background: white;
+    border-radius: 0.5rem;
+  }
+</style>

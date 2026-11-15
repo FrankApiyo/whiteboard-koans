@@ -3,6 +3,8 @@ defmodule Verify.CourseRunner do
 
   @root Path.expand("../..", __DIR__)
   @koan_line ~r/^\s*koan\s+"/
+  @ts_koan_line ~r/^test\("/
+  @ts_results "tmp/course_results"
   @verify_env [
     {"KOANS_LIB", "_verify/lib"},
     {"MIX_TEST_PARTITION", "chapters"},
@@ -23,7 +25,12 @@ defmodule Verify.CourseRunner do
 
   def chapter(path), do: path |> Path.basename() |> String.slice(0, 2)
 
-  def all_chapters, do: "source/test/koans" |> koan_files() |> Enum.map(&chapter/1)
+  def all_chapters do
+    (koan_files("source/test/koans") ++ ts_koan_files("source/assets/koans"))
+    |> Enum.map(&chapter/1)
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
 
   def chapters, do: select(all_chapters(), only())
 
@@ -34,7 +41,7 @@ defmodule Verify.CourseRunner do
 
     if requested == [] or unknown != [] do
       raise ArgumentError,
-            "KOANS_ONLY=#{System.get_env("KOANS_ONLY")} names no chapter in source/test/koans " <>
+            "KOANS_ONLY=#{System.get_env("KOANS_ONLY")} names no chapter in source/ " <>
               "(unknown: #{Enum.join(unknown, ",")}; present: #{Enum.join(all, ",")})"
     end
 
@@ -48,9 +55,21 @@ defmodule Verify.CourseRunner do
     |> Enum.sort()
   end
 
+  def ts_koan_files(dir) do
+    [@root, dir, "[0-9][0-9]_*.test.ts"]
+    |> Path.join()
+    |> Path.wildcard()
+    |> Enum.sort()
+  end
+
   def selected_files(dir), do: Enum.filter(koan_files(dir), &(chapter(&1) in chapters()))
 
+  def selected_ts_files(dir), do: Enum.filter(ts_koan_files(dir), &(chapter(&1) in chapters()))
+
   def verify_file(nn), do: "_verify/test/koans" |> koan_files() |> Enum.find(&(chapter(&1) == nn))
+
+  def ts_verify_file(nn),
+    do: "_verify/assets/koans" |> ts_koan_files() |> Enum.find(&(chapter(&1) == nn))
 
   def rel(path), do: Path.relative_to(path, @root)
 
@@ -63,7 +82,56 @@ defmodule Verify.CourseRunner do
     |> Enum.map(&elem(&1, 1))
   end
 
+  def ts_koan_lines(path) do
+    path
+    |> File.read!()
+    |> String.split("\n")
+    |> Enum.with_index(1)
+    |> Enum.filter(fn {line, _} -> Regex.match?(@ts_koan_line, line) end)
+    |> Enum.map(&elem(&1, 1))
+  end
+
   def mix(args, env \\ []), do: cmd_mix(args, cd: @root, env: env, stderr_to_stdout: true)
+
+  def npm(args, env \\ []),
+    do: System.cmd("npm", args, cd: @root, env: env, stderr_to_stdout: true)
+
+  def svelte_check(tree) do
+    System.cmd(
+      Path.join(@root, "node_modules/.bin/svelte-check"),
+      ["--tsconfig", Path.join(tree, "assets/tsconfig.json"), "--fail-on-warnings"],
+      cd: @root,
+      stderr_to_stdout: true
+    )
+  end
+
+  @doc """
+  Runs the TypeScript koans of the `_verify` tree, limited to the given files and
+  any `npm test` arguments, and returns the output, exit status and records.
+  """
+  def npm_verify(files, args \\ []) do
+    results = Path.join(@root, @ts_results)
+    File.mkdir_p!(results)
+    jsonl = Path.join(results, "ts.jsonl")
+    File.write!(jsonl, "")
+
+    {output, status} =
+      npm(["test", "--" | files ++ args], [
+        {"KOANS_LIB", "_verify/lib"},
+        {"KOANS_VERIFY", nil},
+        {"KOANS_TS_DIR", nil},
+        {"KOANS_RESULTS", @ts_results}
+      ])
+
+    {output, status, read_jsonl(jsonl)}
+  end
+
+  defp read_jsonl(path) do
+    path
+    |> File.read!()
+    |> String.split("\n", trim: true)
+    |> Enum.map(&JSON.decode!/1)
+  end
 
   def cmd_mix(args, opts) do
     opts |> Keyword.get(:cd, File.cwd!()) |> await_past_mtimes()

@@ -47,6 +47,7 @@ defmodule Easel.MixProject do
   # >>> course
   defp elixirc_paths(:test), do: [@koans_lib, Path.join(@root, "test/support")]
   defp elixirc_paths(:dev), do: [@koans_lib]
+  defp elixirc_paths(:e2e), do: [@koans_lib]
   defp elixirc_paths(_), do: ["lib"]
 
   defp test_paths do

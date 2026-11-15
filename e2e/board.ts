@@ -68,6 +68,20 @@ export function person(page: Page, name: string): Locator {
   return people(page).filter({ hasText: name })
 }
 
+export function colorOf(page: Page, name: string): Promise<string | null> {
+  return person(page, name).locator("[data-color]").getAttribute("data-color")
+}
+
+// Each sign-in draws a random palette colour, so signing in again can change it.
+export async function signInAgain(visitor: Visitor, boardPath: string): Promise<void> {
+  const { page } = visitor
+  await page.goto("/name")
+  await page.getByLabel("Display name").fill(visitor.name)
+  await page.getByRole("button", { name: "Continue" }).click()
+  await page.goto(boardPath)
+  await expect(people(page)).toHaveCount(2)
+}
+
 export function cursorOf(page: Page, name: string): Locator {
   return page.locator(".cursor", { hasText: name })
 }

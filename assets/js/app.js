@@ -1,5 +1,5 @@
 // >>> course
-import "../koans_support/blanks.ts";
+import "@koans/blanks.ts"
 // <<< course
 import "vite/modulepreload-polyfill";
 // If you want to use Phoenix channels, run `mix help phx.gen.channel`

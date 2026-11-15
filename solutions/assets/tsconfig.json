@@ -1,0 +1,13 @@
+{
+  "extends": "../../assets/tsconfig.json",
+  "compilerOptions": {
+    "paths": { "@koans/*": ["../../assets/koans_support/*"] }
+  },
+  "include": [
+    "js/**/*.ts",
+    "svelte/**/*",
+    "koans/**/*",
+    "test/**/*",
+    "../../assets/koans_support/**/*"
+  ]
+}

@@ -15,6 +15,11 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: [`${tree}/test/**/*.test.ts`],
-    setupFiles: [path.join(repo, tree, "test/support/setup.ts")],
+    setupFiles: [
+      // >>> course
+      path.join(repo, "assets/koans_support/blanks.ts"),
+      // <<< course
+      path.join(repo, tree, "test/support/setup.ts"),
+    ],
   },
 })

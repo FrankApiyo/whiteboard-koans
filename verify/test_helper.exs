@@ -1,1 +1,1 @@
-ExUnit.start(exclude: [:export_full])
+ExUnit.start(exclude: [:export_full, :after_chapter_08, :after_chapter_10, :after_chapter_12])

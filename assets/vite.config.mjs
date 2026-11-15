@@ -2,6 +2,15 @@ import { defineConfig } from 'vite'
 import { svelte } from "@sveltejs/vite-plugin-svelte"
 import liveSveltePlugin from "live_svelte/vitePlugin"
 import tailwindcss from "@tailwindcss/vite";
+// >>> course
+import path from "node:path"
+
+const repo = path.resolve(import.meta.dirname, "..")
+const tree = path.relative(
+  import.meta.dirname,
+  path.resolve(repo, path.dirname(process.env.KOANS_LIB ?? "lib"), "assets"),
+)
+// <<< course
 
 export default defineConfig({
   server: {
@@ -28,11 +37,19 @@ export default defineConfig({
     alias: {
       "@": ".",
       "phoenix-colocated": `${process.env.MIX_BUILD_PATH}/phoenix-colocated`,
+      // >>> course
+      "@koans": path.join(repo, "assets/koans_support"),
+      // <<< course
     },
   },
   plugins: [
     tailwindcss(),
     svelte({ compilerOptions: { css: "injected" } }),
-    liveSveltePlugin({ entrypoint: "./js/server.js" })
+    liveSveltePlugin({
+      entrypoint: "./js/server.js",
+      // >>> course
+      components: [path.join(tree, "svelte/**/*.svelte")],
+      // <<< course
+    })
   ]
 });

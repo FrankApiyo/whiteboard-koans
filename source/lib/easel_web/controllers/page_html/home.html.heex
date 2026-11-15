@@ -1,0 +1,20 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Easel
+    <:subtitle>Start a board and share its link to draw together.</:subtitle>
+  </.header>
+
+  <.form for={@form} action={~p"/boards"}>
+    <.input field={@form[:title]} label="Board title" maxlength="80" required />
+    <.button variant="primary">Create board</.button>
+  </.form>
+
+  <section :if={@boards != []}>
+    <h2 class="text-sm font-semibold">Your recent boards</h2>
+    <ul class="mt-2 space-y-1">
+      <li :for={board <- @boards}>
+        <.link href={~p"/b/#{board.slug}"} class="link">{board.title}</.link>
+      </li>
+    </ul>
+  </section>
+</Layouts.app>
