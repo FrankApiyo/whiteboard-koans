@@ -42,6 +42,4 @@ node_modules/
 
 # Course
 /_verify/
-/_build/koans_results/
-/solutions/assets/node_modules
 /spike/
