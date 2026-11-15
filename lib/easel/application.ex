@@ -16,7 +16,13 @@ defmodule Easel.Application do
       {Phoenix.PubSub, name: Easel.PubSub},
       EaselWeb.Presence,
       {Registry, keys: :unique, name: Easel.Boards.Registry},
-      {DynamicSupervisor, name: Easel.Boards.BoardSupervisor, strategy: :one_for_one},
+      # Boards crash independently. The default limit, 3 restarts in 5 s across all boards,
+      # would let a few crashes on different boards stop every board.
+      {DynamicSupervisor,
+       name: Easel.Boards.BoardSupervisor,
+       strategy: :one_for_one,
+       max_restarts: 100,
+       max_seconds: 5},
       # Start to serve requests, typically the last entry
       EaselWeb.Endpoint
     ]

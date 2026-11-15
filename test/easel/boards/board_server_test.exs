@@ -144,6 +144,22 @@ defmodule Easel.Boards.BoardServerTest do
     refute BoardServer.ensure_started(board.slug) == {:ok, pid}
   end
 
+  test "crashes on other boards leave the supervisor and this board running", %{board: board} do
+    {:ok, bystander} = BoardServer.ensure_started(board.slug)
+    supervisor = Process.whereis(Easel.Boards.BoardSupervisor)
+
+    for _ <- 1..6 do
+      {:ok, pid} = BoardServer.ensure_started(board_fixture().slug)
+      ref = Process.monitor(pid)
+      Process.exit(pid, :kill)
+      assert_receive {:DOWN, ^ref, :process, ^pid, :killed}
+    end
+
+    assert %{specs: 7} = DynamicSupervisor.count_children(supervisor)
+    assert Process.alive?(supervisor)
+    assert Process.alive?(bystander)
+  end
+
   test "stop_boards_flushes_dirty_boards", %{board: board} do
     {:ok, _pid} =
       DynamicSupervisor.start_child(
