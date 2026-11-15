@@ -21,6 +21,8 @@ config :easel,
   ecto_repos: [Easel.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :easel, :board_server, save_after: 500, idle_after: :timer.minutes(5)
+
 # Configures the endpoint
 config :easel, EaselWeb.Endpoint,
   url: [host: "localhost"],

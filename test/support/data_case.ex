@@ -29,6 +29,7 @@ defmodule Easel.DataCase do
 
   setup tags do
     Easel.DataCase.setup_sandbox(tags)
+    on_exit(&Easel.DataCase.stop_boards/0)
     :ok
   end
 
@@ -38,6 +39,21 @@ defmodule Easel.DataCase do
   def setup_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Easel.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+  end
+
+  @doc """
+  Stops every board server, so each one flushes its pending save.
+
+  Register it with `on_exit` after `setup_sandbox/1`: callbacks run in reverse
+  order, so the boards stop while the sandbox owner can still save for them.
+  """
+  def stop_boards do
+    for {_, pid, _, _} <- DynamicSupervisor.which_children(Easel.Boards.BoardSupervisor),
+        is_pid(pid) do
+      DynamicSupervisor.terminate_child(Easel.Boards.BoardSupervisor, pid)
+    end
+
+    :ok
   end
 
   @doc """

@@ -33,6 +33,16 @@ defmodule EaselWeb.ConnCase do
 
   setup tags do
     Easel.DataCase.setup_sandbox(tags)
+    on_exit(&stop_boards/0)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
+  end
+
+  defdelegate stop_boards, to: Easel.DataCase
+
+  @doc """
+  Puts a display name and the first palette colour in the session.
+  """
+  def with_identity(conn, name) do
+    Plug.Test.init_test_session(conn, %{"name" => name, "color" => hd(Easel.Palette.colors())})
   end
 end

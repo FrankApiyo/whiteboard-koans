@@ -14,8 +14,9 @@ defmodule Easel.Application do
        repos: Application.fetch_env!(:easel, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:easel, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Easel.PubSub},
-      # Start a worker by calling: Easel.Worker.start_link(arg)
-      # {Easel.Worker, arg},
+      EaselWeb.Presence,
+      {Registry, keys: :unique, name: Easel.Boards.Registry},
+      {DynamicSupervisor, name: Easel.Boards.BoardSupervisor, strategy: :one_for_one},
       # Start to serve requests, typically the last entry
       EaselWeb.Endpoint
     ]

@@ -41,7 +41,7 @@ defmodule Easel.Boards do
   def broadcast_op(slug, message),
     do: Phoenix.PubSub.broadcast(Easel.PubSub, topic(slug), message)
 
-  defp topic(slug), do: "board:#{slug}"
+  def topic(slug), do: "board:#{slug}"
 
   defp to_row(shape, board_id) do
     %{

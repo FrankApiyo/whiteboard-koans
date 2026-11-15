@@ -10,6 +10,10 @@ defmodule EaselWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :identified do
+    plug EaselWeb.Identity
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -18,7 +22,19 @@ defmodule EaselWeb.Router do
     pipe_through :browser
     live "/svelte_demo", SvelteDemoLive
 
+    get "/name", IdentityController, :new
+    post "/name", IdentityController, :create
+  end
+
+  scope "/", EaselWeb do
+    pipe_through [:browser, :identified]
+
     get "/", PageController, :home
+    post "/boards", BoardController, :create
+
+    live_session :board, on_mount: {EaselWeb.IdentityHook, :require_identity} do
+      live "/b/:slug", BoardLive
+    end
   end
 
   # Other scopes may use custom stacks.
