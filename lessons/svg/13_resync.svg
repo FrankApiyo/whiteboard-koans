@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Two ways to resync: a reconnect mounts a new BoardLive, and a restarted board server broadcasts board_restarted to the BoardLives it has; either way the view takes a fresh snapshot and a new sync_id, and the Board component in the browser, which survived, replaces every shape when the sync_id changes">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --topic: #fff4e6; --topicedge: #f08c00; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --client: #1f3326; --clientedge: #69db7c; --server: #26304d; --serveredge: #8aa4ff; --topic: #3a2a14; --topicedge: #ffc078; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .client { fill: var(--client); stroke: var(--clientedge); stroke-width: 2; }
+    .server { fill: var(--server); stroke: var(--serveredge); stroke-width: 2; }
+    .topic { fill: var(--topic); stroke: var(--topicedge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#resync-tip); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .head { font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="resync-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="360"/>
+
+  <text x="20" y="30" class="head">Two roads to one resync</text>
+
+  <rect class="topic" x="20" y="56" width="200" height="60" rx="8"/>
+  <text x="120" y="82" text-anchor="middle">socket drops, reconnects</text>
+  <text x="120" y="102" text-anchor="middle" class="small">a new BoardLive mounts</text>
+
+  <rect class="topic" x="20" y="150" width="200" height="60" rx="8"/>
+  <text x="120" y="176" text-anchor="middle">board server restarts</text>
+  <text x="120" y="196" text-anchor="middle" class="small">init/1: :board_restarted</text>
+
+  <rect class="server" x="290" y="100" width="150" height="70" rx="8"/>
+  <text x="365" y="126" text-anchor="middle">BoardLive</text>
+  <text x="365" y="146" text-anchor="middle" class="small">fresh snapshot</text>
+  <text x="365" y="162" text-anchor="middle" class="small">new sync_id</text>
+
+  <path class="edge" d="M220,86 L288,116"/>
+  <path class="edge" d="M220,180 L288,154"/>
+
+  <rect class="client" x="480" y="90" width="140" height="90" rx="8"/>
+  <text x="550" y="116" text-anchor="middle">Board, kept</text>
+  <text x="550" y="138" text-anchor="middle" class="small">applyProps:</text>
+  <text x="550" y="154" text-anchor="middle" class="small">new sync_id, so</text>
+  <text x="550" y="170" text-anchor="middle" class="small">replace every shape</text>
+
+  <path class="edge" d="M440,135 L478,135"/>
+  <text x="459" y="124" text-anchor="middle" class="small">props</text>
+
+  <text x="20" y="262" class="small">Between resyncs, pushes change one shape at a time, in the server's order.</text>
+  <text x="20" y="284" class="small">The last move the server applies wins in every browser; an earlier one is lost.</text>
+  <text x="20" y="306" class="small">A restart loads what was saved, so an op still in the save window is gone.</text>
+</svg>

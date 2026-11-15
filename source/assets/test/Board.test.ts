@@ -1,30 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/svelte"
+import { fireEvent, screen } from "@testing-library/svelte"
 import { flushSync } from "svelte"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import Board from "../svelte/Board.svelte"
-import type { BoardProps, Person } from "../js/types"
-import { createFakeLive, type FakeLive } from "./support/fake_live"
-import { drag, placeCanvas, pointer } from "./support/canvas"
+import type { FakeLive } from "./support/fake_live"
+import { drag, pointer } from "./support/canvas"
+import { ada, lin, renderBoard } from "./support/board_harness"
 import { ellipse, ID_A, rect } from "./support/fixtures"
 
-const ada: Person = { tab: "tab-ada", name: "Ada", color: "#e03131" }
-const lin: Person = { tab: "tab-lin", name: "Lin", color: "#1971c2" }
 const SHAPE_EVENTS = ["shape:added", "shape:moved", "shape:deleted"]
 const RECT_TEXT = "rectangle 200 by 100 at 100, 100"
 const ELLIPSE_TEXT = "ellipse 200 by 100 at 400, 300"
-
-function propsFor(live: FakeLive, overrides: Partial<BoardProps> = {}): BoardProps {
-  return { shapes: [rect()], sync_id: 1, me: ada, people: [ada, lin], live, ...overrides }
-}
-
-function renderBoard(overrides: Partial<BoardProps> = {}) {
-  const live = createFakeLive()
-  const props = propsFor(live, overrides)
-  const view = render(Board, props)
-  const canvas = screen.getByRole("group", { name: "Whiteboard" }).querySelector("canvas") as HTMLCanvasElement
-  placeCanvas(canvas)
-  return { ...view, live, props, canvas }
-}
 
 const shown = (text: string) => screen.queryByText(text) !== null
 const pushedNamed = (live: FakeLive, event: string) => live.pushed.filter((p) => p.event === event)

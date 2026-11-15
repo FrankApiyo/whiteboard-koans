@@ -32,7 +32,11 @@ defmodule Easel.Boards.BoardServer do
 
   def apply_op(slug, op), do: call(slug, {:apply_op, op})
 
-  def announce_restart(slug), do: Boards.broadcast_op(slug, :board_restarted)
+  def announce_restart(slug) do
+    # >>> answer 13: tell the board's viewers its server started | default: :ok
+    Boards.broadcast_op(slug, :board_restarted)
+    # <<<
+  end
 
   @impl true
   def init(opts) do

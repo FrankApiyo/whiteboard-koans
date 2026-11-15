@@ -4,6 +4,7 @@ defmodule EaselWeb.BoardLiveTest do
   import Phoenix.LiveViewTest
   import LiveSvelte.Test
   import Easel.BoardsFixtures
+  import EaselWeb.BoardHelpers
 
   alias Easel.Boards
   alias Easel.Boards.BoardServer
@@ -21,11 +22,6 @@ defmodule EaselWeb.BoardLiveTest do
 
   setup do
     %{board: board_fixture()}
-  end
-
-  defp open(conn, board, name) do
-    {:ok, view, _html} = live(with_identity(conn, name), ~p"/b/#{board.slug}")
-    view
   end
 
   defp props(view), do: board_props(view)
@@ -70,10 +66,10 @@ defmodule EaselWeb.BoardLiveTest do
   end
 
   describe "connected mount" do
-    test "props carry the saved shapes, a sync id, me and the people", %{conn: conn, board: board} do
+    test "props carry the saved shapes, a sync id, me and the people", %{board: board} do
       shape = shape_fixture(board)
 
-      props = conn |> open(board, "Ada") |> props()
+      props = board |> open_board("Ada") |> props()
 
       assert [%{"id" => id, "kind" => "rect", "x" => 10}] = props["shapes"]
       assert id == shape.client_id
@@ -83,8 +79,8 @@ defmodule EaselWeb.BoardLiveTest do
       assert props["people"] == [props["me"]]
     end
 
-    test "the first viewer's join does not resync", %{conn: conn, board: board} do
-      view = open(conn, board, "Ada")
+    test "the first viewer's join does not resync", %{board: board} do
+      view = open_board(board, "Ada")
 
       sent = get_svelte(view).props
 
@@ -92,7 +88,7 @@ defmodule EaselWeb.BoardLiveTest do
       assert sent["sync_id"] == board_props(view)["sync_id"]
     end
 
-    test "subscribe_before_snapshot", %{conn: conn, board: board} do
+    test "subscribe_before_snapshot", %{board: board} do
       {:ok, server} = BoardServer.ensure_started(board.slug)
       shape = %{id: @id, kind: "rect", color: "#e03131", x: 1, y: 1, w: 5, h: 5, z: 0}
 
@@ -111,7 +107,7 @@ defmodule EaselWeb.BoardLiveTest do
       :ok = :sys.suspend(server)
       1 = :erlang.trace(server, true, [:receive, {:tracer, barrier}])
 
-      view = open(conn, board, "Ada")
+      view = open_board(board, "Ada")
       _ = render(view)
 
       assert_push_event view, "shape:added", %{id: @id}
@@ -120,23 +116,21 @@ defmodule EaselWeb.BoardLiveTest do
 
   describe "shape events" do
     test "an add replies ok and reaches every viewer, the sender included", %{
-      conn: conn,
       board: board
     } do
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
 
-      render_hook(bob, "shape:add", @rect)
+      add_shape(bob, @rect)
 
-      assert_reply bob, %{ok: true}
       assert_push_event ada, "shape:added", %{id: @id, x: 10, z: 0}
       assert_push_event bob, "shape:added", %{id: @id, x: 10, z: 0}
     end
 
-    test "moves and deletes reach the other viewers", %{conn: conn, board: board} do
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
-      render_hook(ada, "shape:add", @rect)
+    test "moves and deletes reach the other viewers", %{board: board} do
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
+      add_shape(ada, @rect)
 
       render_hook(ada, "shape:move", %{"id" => @id, "x" => 50, "y" => 60})
       assert_reply ada, %{ok: true}
@@ -148,19 +142,18 @@ defmodule EaselWeb.BoardLiveTest do
     end
 
     test "a rejected change to a known shape replies with the server's shape", %{
-      conn: conn,
       board: board
     } do
-      view = open(conn, board, "Ada")
-      render_hook(view, "shape:add", @rect)
+      view = open_board(board, "Ada")
+      add_shape(view, @rect)
 
       render_hook(view, "shape:move", %{"id" => @id, "x" => 5000, "y" => 60})
 
       assert_reply view, %{ok: false, shape: %{id: @id, x: 10, y: 20}}
     end
 
-    test "hostile_payloads_are_rejected_and_nothing_crashes", %{conn: conn, board: board} do
-      view = open(conn, board, "Ada")
+    test "hostile_payloads_are_rejected_and_nothing_crashes", %{board: board} do
+      view = open_board(board, "Ada")
       unknown = Ecto.UUID.generate()
       pen = %{@rect | "kind" => "pen"} |> Map.drop(["w", "h"])
 
@@ -193,12 +186,12 @@ defmodule EaselWeb.BoardLiveTest do
       assert BoardServer.snapshot(board.slug) == []
     end
 
-    test "props change only on a resync", %{conn: conn, board: board} do
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
+    test "props change only on a resync", %{board: board} do
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
       sync_id = props(ada)["sync_id"]
 
-      render_hook(bob, "shape:add", @rect)
+      add_shape(bob, @rect)
       assert_push_event ada, "shape:added", %{id: @id}
       assert props(ada)["shapes"] == []
       assert props(ada)["sync_id"] == sync_id
@@ -209,8 +202,8 @@ defmodule EaselWeb.BoardLiveTest do
       refute props(ada)["sync_id"] == sync_id
     end
 
-    test "a restarted board server gives the view a new sync id", %{conn: conn, board: board} do
-      view = open(conn, board, "Ada")
+    test "a restarted board server gives the view a new sync id", %{board: board} do
+      view = open_board(board, "Ada")
       sync_id = props(view)["sync_id"]
 
       Process.exit(server(board), :kill)
@@ -221,9 +214,9 @@ defmodule EaselWeb.BoardLiveTest do
   end
 
   describe "cursors and presence" do
-    test "a cursor reaches the other viewers but not the sender", %{conn: conn, board: board} do
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
+    test "a cursor reaches the other viewers but not the sender", %{board: board} do
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
       tab = props(ada)["me"]["tab"]
 
       render_hook(ada, "cursor:move", %{"x" => 10, "y" => 20})
@@ -232,9 +225,9 @@ defmodule EaselWeb.BoardLiveTest do
       refute_push_event ada, "cursor:moved", %{}
     end
 
-    test "a cursor with bad coordinates is dropped", %{conn: conn, board: board} do
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
+    test "a cursor with bad coordinates is dropped", %{board: board} do
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
 
       render_hook(ada, "cursor:move", %{"x" => "10", "y" => 20})
 
@@ -242,12 +235,12 @@ defmodule EaselWeb.BoardLiveTest do
       assert Process.alive?(ada.pid)
     end
 
-    test "a presence change sends people but not the shapes", %{conn: conn, board: board} do
+    test "a presence change sends people but not the shapes", %{board: board} do
       shape_fixture(board)
-      ada = open(conn, board, "Ada")
+      ada = open_board(board, "Ada")
       assert [_shape] = props(ada)["shapes"]
 
-      open(conn, board, "Bob")
+      open_board(board, "Bob")
 
       eventually(fn -> length(props(ada)["people"]) == 2 end)
       sent = get_svelte(ada).props
@@ -255,10 +248,10 @@ defmodule EaselWeb.BoardLiveTest do
       refute Map.has_key?(sent, "shapes")
     end
 
-    test "people lists every tab, and a tab that leaves drops out", %{conn: conn, board: board} do
+    test "people lists every tab, and a tab that leaves drops out", %{board: board} do
       names = fn view -> view |> props() |> Map.fetch!("people") |> Enum.map(& &1["name"]) end
-      ada = open(conn, board, "Ada")
-      bob = open(conn, board, "Bob")
+      ada = open_board(board, "Ada")
+      bob = open_board(board, "Bob")
 
       assert Enum.sort(names.(bob)) == ["Ada", "Bob"]
       eventually(fn -> Enum.sort(names.(ada)) == ["Ada", "Bob"] end)

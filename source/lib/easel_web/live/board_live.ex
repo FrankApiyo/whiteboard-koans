@@ -101,8 +101,10 @@ defmodule EaselWeb.BoardLive do
   end
 
   def handle_info(:board_restarted, socket) do
+    # >>> answer 13: a fresh snapshot and a new sync_id | default: {:noreply, socket}
     slug = socket.assigns.board.slug
     {:noreply, assign(socket, shapes: BoardServer.snapshot(slug), sync_id: sync_id())}
+    # <<<
   end
 
   def handle_info(%Phoenix.Socket.Broadcast{event: "presence_diff"}, socket) do

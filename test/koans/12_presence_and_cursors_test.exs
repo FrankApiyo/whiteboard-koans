@@ -28,7 +28,7 @@ defmodule Koans.Ch12.PresenceAndCursorsTest do
   Closing a tab ends its LiveView process, the tracker drops its presence, and the next list
   leaves it out; the browser then drops that tab's cursor (this chapter's TypeScript koans).
 
-      Write:          lib/easel_web/live/board_live.ex:110  (EaselWeb.BoardLive.track_presence/2)
+      Write:          lib/easel_web/live/board_live.ex:111  (EaselWeb.BoardLive.track_presence/2)
       Exercised by:   test/koans/12_presence_and_cursors_test.exs:74
 
   API you'll use

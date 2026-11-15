@@ -5,5 +5,7 @@ export function applyProps(
   state: BoardState,
   props: { sync_id: number; shapes: Shape[] },
 ): void {
-  if (props.sync_id !== state.syncId) state.replaceAll(props.shapes, props.sync_id)
+  // >>> 13
+  return __blank("13: replace everything when sync_id changes", undefined);
+  // <<< 13
 }
