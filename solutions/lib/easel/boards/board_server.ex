@@ -16,6 +16,7 @@ defmodule Easel.Boards.BoardServer do
     case DynamicSupervisor.start_child(@supervisor, {__MODULE__, slug: slug}) do
       {:ok, pid} -> {:ok, pid}
       {:error, {:already_started, pid}} -> {:ok, pid}
+      :ignore -> {:error, :not_found}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -32,10 +33,24 @@ defmodule Easel.Boards.BoardServer do
   def init(opts) do
     Process.flag(:trap_exit, true)
     opts = Keyword.merge(Application.get_env(:easel, :board_server, []), opts)
-    board = Boards.get_board_by_slug!(Keyword.fetch!(opts, :slug))
+
+    # A deleted board returns :ignore so the supervisor drops it instead of
+    # restarting it until the restart limit stops every board.
+    case Boards.get_board_by_slug(Keyword.fetch!(opts, :slug)) do
+      nil ->
+        :ignore
+
+      board ->
+        state = initial_state(board, opts)
+        :ok = announce_restart(board.slug)
+        {:ok, reset_idle_timer(state)}
+    end
+  end
+
+  defp initial_state(board, opts) do
     shapes = Boards.load_shapes(board)
 
-    state = %{
+    %{
       board: board,
       shapes: Map.new(shapes, &{&1.id, &1}),
       next_z: next_z(shapes),
@@ -45,9 +60,6 @@ defmodule Easel.Boards.BoardServer do
       idle_ref: nil,
       idle_timer: nil
     }
-
-    :ok = announce_restart(board.slug)
-    {:ok, reset_idle_timer(state)}
   end
 
   @impl true

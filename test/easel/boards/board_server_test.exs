@@ -160,6 +160,23 @@ defmodule Easel.Boards.BoardServerTest do
     assert Process.alive?(bystander)
   end
 
+  test "a board deleted while running is not restarted", %{board: board} do
+    {:ok, bystander} = BoardServer.ensure_started(board.slug)
+    supervisor = Process.whereis(Easel.Boards.BoardSupervisor)
+    deleted = board_fixture()
+    {:ok, pid} = BoardServer.ensure_started(deleted.slug)
+    ref = Process.monitor(pid)
+    Easel.Repo.delete!(deleted)
+
+    Process.exit(pid, :kill)
+    assert_receive {:DOWN, ^ref, :process, ^pid, :killed}
+
+    assert BoardServer.ensure_started(deleted.slug) == {:error, :not_found}
+    assert %{specs: 1} = DynamicSupervisor.count_children(supervisor)
+    assert Process.alive?(supervisor)
+    assert Process.alive?(bystander)
+  end
+
   test "stop_boards_flushes_dirty_boards", %{board: board} do
     {:ok, _pid} =
       DynamicSupervisor.start_child(

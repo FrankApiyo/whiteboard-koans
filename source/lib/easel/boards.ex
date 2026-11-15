@@ -6,6 +6,8 @@ defmodule Easel.Boards do
 
   def get_board_by_slug!(slug), do: Repo.get_by!(Board, slug: slug)
 
+  def get_board_by_slug(slug), do: Repo.get_by(Board, slug: slug)
+
   def create_board(attrs) do
     %Board{slug: generate_slug()}
     |> Board.changeset(attrs)
