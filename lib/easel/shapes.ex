@@ -21,22 +21,21 @@ defmodule Easel.Shapes do
   end
 
   def cast_move(payload) when is_map(payload) do
-    {%{}, %{id: Ecto.UUID, x: :integer, y: :integer}}
-    |> cast(payload, [:id, :x, :y])
-    |> validate_required([:id, :x, :y])
-    |> validate_number(:x,
-      greater_than_or_equal_to: 0,
-      less_than_or_equal_to: Validations.width()
-    )
-    |> validate_number(:y,
-      greater_than_or_equal_to: 0,
-      less_than_or_equal_to: Validations.height()
-    )
-    |> apply_action(:move)
-    |> case do
-      {:ok, move} -> {:ok, move}
-      {:error, _changeset} -> :error
-    end
+    move =
+      {%{}, %{id: Ecto.UUID, x: :integer, y: :integer}}
+      |> cast(payload, [:id, :x, :y])
+      |> validate_required([:id, :x, :y])
+      |> validate_number(:x,
+        greater_than_or_equal_to: 0,
+        less_than_or_equal_to: Validations.width()
+      )
+      |> validate_number(:y,
+        greater_than_or_equal_to: 0,
+        less_than_or_equal_to: Validations.height()
+      )
+      |> apply_action(:move)
+
+    with {:error, _changeset} <- move, do: :error
   end
 
   def cast_move(_payload), do: :error
