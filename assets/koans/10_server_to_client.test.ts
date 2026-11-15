@@ -153,7 +153,7 @@ test("On the Board, another viewer's shape arrives as a push and is drawn, while
     const moves = live.pushed.filter((p) => p.event === "shape:move")
     expect(moves.map((p) => p.payload)).toEqual([{ id: ID_A, x: 200, y: 200 }])
 
-    moves[0].onReply?.(undefined)
+    moves[0].onReply?.(null)
     flushSync()
     expect(described()[0]).toBe("rectangle 200 by 100 at 100, 100")
   } finally {

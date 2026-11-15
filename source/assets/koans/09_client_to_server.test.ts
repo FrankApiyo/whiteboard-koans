@@ -16,7 +16,7 @@ then push the change with a handler from onReply. The server answers { ok: true 
 { ok: false, shape } with its copy, or shape null when it has none; the handler keeps the
 change, puts the server's copy back, or removes the shape. Anything else rolls back to before,
 the shape as it was, or nothing for an add: a clause that answers {:noreply, socket} reaches
-the handler as undefined. A push that fails or times out never calls it; on a timeout LiveView
+the handler as null. A push that fails or times out never calls it; on a timeout LiveView
 reloads the page. A drag passes the shape from before the drag as sendMove's before.
 
 A guard turns unknown into a type: once isReply passes, reply.ok and reply.shape type-check.
@@ -92,7 +92,7 @@ test("Implement the handler onReply returns. 1. An ok reply keeps the local chan
   expect(state.shapes.get(ID_A)?.x).toBe(300)
   onReply(state, ID_A, rect())({ ok: false, shape: rect({ x: 42 }) })
   expect(state.shapes.get(ID_A)?.x).toBe(42)
-  onReply(state, ID_A, rect())(undefined)
+  onReply(state, ID_A, rect())(null)
   expect(state.shapes.get(ID_A)?.x).toBe(100)
   onReply(state, ID_A, rect())({ ok: false, shape: null })
   expect(state.shapes.has(ID_A)).toBe(false)
@@ -111,7 +111,7 @@ test("Implement sendAdd so a new shape shows at once and the server hears about 
   expect(live.pushed.map((p) => p.event)).toEqual(["shape:add"])
   expect(live.pushed[0].payload).toEqual(ellipse())
 
-  live.pushed[0].onReply?.(undefined)
+  live.pushed[0].onReply?.(null)
   expect(state.shapes.has(ID_B)).toBe(false)
 })
 
@@ -123,12 +123,12 @@ test("Implement sendMove: move the shape now, then push shape:move with only id,
   expect(dragged.shapes.get(ID_A)).toMatchObject({ x: 320, y: 210 })
   expect(live.pushed[0].event).toBe("shape:move")
   expect(live.pushed[0].payload).toEqual({ id: ID_A, x: 320, y: 210 })
-  live.pushed[0].onReply?.(undefined)
+  live.pushed[0].onReply?.(null)
   expect(dragged.shapes.get(ID_A)?.x).toBe(_a(100))
 
   const still = new BoardState([rect()], 1)
   sendMove(live, still, ID_A, 5, 6)
-  live.pushed[1].onReply?.(undefined)
+  live.pushed[1].onReply?.(null)
   expect(still.shapes.get(ID_A)?.x).toBe(_a(100))
 })
 
@@ -155,7 +155,7 @@ test("Implement sendDelete so a shape disappears at once and the server hears sh
     expect(pushes[1].payload).toEqual({ id: (add.payload as Shape).id })
     expect(described()).toEqual([])
 
-    pushes[1].onReply?.(undefined)
+    pushes[1].onReply?.(null)
     flushSync()
     expect(described()).toEqual(["rectangle 200 by 150 at 100, 100"])
   } finally {
