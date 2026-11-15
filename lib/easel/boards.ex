@@ -38,7 +38,8 @@ defmodule Easel.Boards do
 
   def subscribe(slug), do: Phoenix.PubSub.subscribe(Easel.PubSub, topic(slug))
 
-  def broadcast_op(slug, message), do: Phoenix.PubSub.broadcast(Easel.PubSub, topic(slug), message)
+  def broadcast_op(slug, message),
+    do: Phoenix.PubSub.broadcast(Easel.PubSub, topic(slug), message)
 
   defp topic(slug), do: "board:#{slug}"
 

@@ -9,7 +9,9 @@ defmodule Easel.Boards.Ops do
     case state.shapes do
       %{^id => shape} ->
         moved = %{shape | x: x, y: y}
-        {:applied, %{state | shapes: Map.put(state.shapes, id, moved)}, "shape:moved", %{id: id, x: x, y: y}}
+
+        {:applied, %{state | shapes: Map.put(state.shapes, id, moved)}, "shape:moved",
+         %{id: id, x: x, y: y}}
 
       _unknown ->
         {:ignored, state}

@@ -21,7 +21,10 @@ defmodule Easel.Boards.OpsTest do
 
   test "move updates the origin" do
     {:applied, state, _, _} = Ops.apply(@empty, {:add, @shape})
-    assert {:applied, moved, "shape:moved", %{id: @id, x: 9, y: 8}} = Ops.apply(state, {:move, @id, 9, 8})
+
+    assert {:applied, moved, "shape:moved", %{id: @id, x: 9, y: 8}} =
+             Ops.apply(state, {:move, @id, 9, 8})
+
     assert %{x: 9, y: 8} = moved.shapes[@id]
   end
 

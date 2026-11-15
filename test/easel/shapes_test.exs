@@ -16,11 +16,13 @@ defmodule Easel.ShapesTest do
     end
 
     test "ellipse" do
-      assert {:ok, %{kind: "ellipse", w: 30, h: 40}} = Shapes.cast(payload("ellipse", %{"w" => 30, "h" => 40}))
+      assert {:ok, %{kind: "ellipse", w: 30, h: 40}} =
+               Shapes.cast(payload("ellipse", %{"w" => 30, "h" => 40}))
     end
 
     test "line, which may run up and left" do
-      assert {:ok, %{kind: "line", dx: -5, dy: -15}} = Shapes.cast(payload("line", %{"dx" => -5, "dy" => -15}))
+      assert {:ok, %{kind: "line", dx: -5, dy: -15}} =
+               Shapes.cast(payload("line", %{"dx" => -5, "dy" => -15}))
     end
 
     test "pen" do
@@ -64,7 +66,11 @@ defmodule Easel.ShapesTest do
     end
 
     test "a shape that fills the board exactly is fine" do
-      assert {:ok, _} = Shapes.cast(%{@base | "x" => 0, "y" => 0} |> Map.merge(%{"kind" => "rect", "w" => 1600, "h" => 1000}))
+      assert {:ok, _} =
+               Shapes.cast(
+                 %{@base | "x" => 0, "y" => 0}
+                 |> Map.merge(%{"kind" => "rect", "w" => 1600, "h" => 1000})
+               )
     end
 
     test "colour outside the palette" do
