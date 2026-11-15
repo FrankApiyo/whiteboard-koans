@@ -386,7 +386,7 @@ defmodule Verify.FooterTest do
   defp golden_write(write), do: %{path: write["path"], line: write["line"], where: write["where"]}
 
   test "typescript_total_counts_top_level_test_lines" do
-    assert Footer.ts_total(@ts_koans) == 7
+    assert Footer.ts_total(@ts_koans) == 8
     assert Footer.ts_total(Path.join(@fixtures, "counts")) == 0
   end
 

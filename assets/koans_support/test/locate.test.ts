@@ -33,4 +33,20 @@ describe("locateTag", () => {
   test("a_missing_tree_is_null", () => {
     expect(locateTag("01: hit test", "verify/fixtures/ts/no_such_tree")).toBeNull()
   })
+
+  test("a_commented_out_line_blank_is_ignored", () => {
+    expect(locateTag("02: width", tree)).toBeNull()
+  })
+
+  test("a_blank_inside_a_block_comment_is_ignored", () => {
+    expect(locateTag("02: block", tree)).toBeNull()
+  })
+
+  test("a_blank_inside_a_markup_comment_is_ignored", () => {
+    expect(locateTag("03: old list", tree)).toBeNull()
+  })
+
+  test("a_blank_with_a_type_argument_is_found", () => {
+    expect(locateTag("02: names", tree)).toEqual({ path: `${tree}/js/commented.ts`, line: 11 })
+  })
 })

@@ -2,4 +2,4 @@ Replace __ with the value that makes this true.
 ------------------------------- The master says --------------------------------
 Meditate on verify/fixtures/ts/tree/assets/koans/00_values.test.ts:11
     an area is a number you can name
-2 of 7 TypeScript koans answered.
+2 of 8 TypeScript koans answered.

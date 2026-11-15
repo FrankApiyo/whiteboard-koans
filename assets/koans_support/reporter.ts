@@ -1,33 +1,13 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
-import type { Reporter, SerializedError, TestCase, TestModule } from "vitest/node"
-import { classify, type Classification, type KoanError, type Write } from "./classify.ts"
+import type { Reporter, SerializedError, TestModule } from "vitest/node"
 import { renderFooter, type FooterFailure } from "./footer.ts"
-import { CODE_MESSAGE, VALUE_MESSAGE } from "./messages.ts"
-
-const KOAN_LINE = /^test\("/
-
-export interface KoanRecord {
-  kind: "ts"
-  chapter: string
-  file: string
-  line: number
-  order: number
-  status: "ok" | "blank" | "fail"
-  meditation: string
-  at: number
-  tag: string | null
-  write: Write | null
-  diff: string | null
-}
+import { koanLines, moduleRecords, type KoanRecord, type UnhandledError } from "./records.ts"
 
 export interface KoanReporterOptions {
+  root: string
   koansDir: string
   tree: string
-}
-
-export function koanLines(source: string): number[] {
-  return source.split("\n").flatMap((text, index) => (KOAN_LINE.test(text) ? [index + 1] : []))
 }
 
 function koanFiles(dir: string): string[] {
@@ -47,110 +27,23 @@ export function countKoans(dir: string): number {
   )
 }
 
-function chapter(file: string): string {
-  return /^(\d+)/.exec(path.basename(file))?.[1] ?? "00"
+function strayKey(moduleId: string | undefined, name: string | undefined): string {
+  return `${moduleId ?? ""}\0${name ?? ""}`
 }
 
-function errorChain(error: SerializedError | undefined): SerializedError[] {
-  return error ? [error, ...errorChain(error.cause)] : []
+function testKeys(modules: TestModule[]): Set<string> {
+  return new Set(
+    modules.flatMap((module) =>
+      [...module.children.allTests()].map((testCase) => strayKey(module.moduleId, testCase.name)),
+    ),
+  )
 }
 
-function lineIn(error: SerializedError, moduleId: string): number | undefined {
-  return error.stacks?.find((frame) => frame.file === moduleId)?.line
-}
-
-function koanError(error: SerializedError, moduleId: string): KoanError {
-  const blank = errorChain(error).find((link) => link.name === "KoanBlank")
-  const tag = typeof blank?.tag === "string" ? blank.tag : undefined
-  const name = blank ? "KoanBlank" : (error.name ?? "Error")
-  return { name, tag, line: lineIn(error, moduleId) }
-}
-
-function failureText(error: SerializedError): string {
-  if (typeof error.expected === "string" && typeof error.actual === "string") {
-    return `expected: ${error.expected}\nreceived: ${error.actual}`
-  }
-  return error.message
-}
-
-function diffFor(verdict: Classification, error: SerializedError | undefined): string | null {
-  if (verdict.status === "ok" || error === undefined) return null
-  if (verdict.status === "fail") return failureText(error)
-  return verdict.tag === null ? VALUE_MESSAGE : CODE_MESSAGE
-}
-
-interface ModuleContext {
-  moduleId: string
-  file: string
-  source: string
-  lines: number[]
-  tree: string
-}
-
-function caseRecord(testCase: TestCase, index: number, context: ModuleContext): KoanRecord | null {
-  const result = testCase.result()
-  if (result.state === "skipped" || result.state === "pending") return null
-
-  const error = result.state === "failed" ? result.errors[0] : undefined
-  const line = context.lines[index] ?? 0
-  const verdict = classify({
-    error: error ? koanError(error, context.moduleId) : null,
-    koanSource: context.source,
-    koanLine: line,
-    exercises: testCase.meta().exercises ?? [],
-    tree: context.tree,
-  })
-
-  return {
-    kind: "ts",
-    chapter: chapter(context.file),
-    file: context.file,
-    line,
-    order: index + 1,
-    status: verdict.status,
-    meditation: testCase.name,
-    at: verdict.at,
-    tag: verdict.tag,
-    write: verdict.write,
-    diff: diffFor(verdict, error),
-  }
-}
-
-function loadFailure(module: TestModule, context: ModuleContext): KoanRecord[] {
-  const [error] = module.errors()
-  if (error === undefined) return []
-
-  const line = context.lines[0] ?? 1
-  return [
-    {
-      kind: "ts",
-      chapter: chapter(context.file),
-      file: context.file,
-      line,
-      order: 1,
-      status: "fail",
-      meditation: "",
-      at: lineIn(error, context.moduleId) ?? line,
-      tag: null,
-      write: null,
-      diff: error.message,
-    },
-  ]
-}
-
-function moduleRecords(module: TestModule, tree: string): KoanRecord[] {
-  const source = existsSync(module.moduleId) ? readFileSync(module.moduleId, "utf8") : ""
-  const context: ModuleContext = {
-    moduleId: module.moduleId,
-    file: path.relative(process.cwd(), module.moduleId),
-    source,
-    lines: koanLines(source),
-    tree,
-  }
-  const tests = [...module.children.allTests()]
-
-  if (tests.length === 0) return loadFailure(module, context)
-  return tests.flatMap((testCase, index) => caseRecord(testCase, index, context) ?? [])
+function byTest(errors: UnhandledError[]): Map<string, UnhandledError[]> {
+  return errors.reduce((map, error) => {
+    const key = strayKey(error.VITEST_TEST_PATH, error.VITEST_TEST_NAME)
+    return new Map(map).set(key, [...(map.get(key) ?? []), error])
+  }, new Map<string, UnhandledError[]>())
 }
 
 function byFileAndLine(a: KoanRecord, b: KoanRecord): number {
@@ -169,6 +62,12 @@ function earliestFailure(records: KoanRecord[]): FooterFailure | null {
     diff: first.diff,
     write: first.write,
   }
+}
+
+function writeResults(dir: string, records: KoanRecord[]): void {
+  mkdirSync(dir, { recursive: true })
+  const lines = records.map((record) => `${JSON.stringify(record)}\n`).join("")
+  writeFileSync(path.join(dir, "ts.jsonl"), lines)
 }
 
 export class KoanReporter implements Reporter {
@@ -191,30 +90,34 @@ export class KoanReporter implements Reporter {
     modules: ReadonlyArray<TestModule>,
     unhandledErrors: ReadonlyArray<SerializedError>,
   ): void {
-    const tree = path.relative(process.cwd(), path.resolve(this.#options.tree))
-    const unseen = modules.filter((module) => !this.#modules.includes(module))
-    const records = [...this.#modules, ...unseen].flatMap((module) => moduleRecords(module, tree))
+    const { root, koansDir, tree } = this.#options
+    const ran = [...this.#modules, ...modules.filter((module) => !this.#modules.includes(module))]
+    const strays = byTest(unhandledErrors as UnhandledError[])
+    const known = testKeys(ran)
+    const context = {
+      root,
+      tree: path.resolve(root, tree),
+      strays: (moduleId: string, name: string) => strays.get(strayKey(moduleId, name)) ?? [],
+    }
+    const records = ran.flatMap((module) => moduleRecords(module, context))
 
-    for (const error of unhandledErrors) {
-      process.stderr.write(`Unhandled error: ${error.name ?? "Error"}: ${error.message}\n`)
+    for (const [key, errors] of strays) {
+      if (known.has(key)) continue
+      for (const error of errors) {
+        process.stderr.write(`Unhandled error: ${error.name ?? "Error"}: ${error.message}\n`)
+      }
     }
 
     const resultsDir = process.env.KOANS_RESULTS
-    if (resultsDir) return writeResults(resultsDir, records)
+    if (resultsDir) return writeResults(path.resolve(root, resultsDir), records)
 
     const footer = renderFooter({
       passed: records.filter((record) => record.status === "ok").length,
-      total: countKoans(this.#options.koansDir),
+      total: countKoans(path.resolve(root, koansDir)),
       ran: records.length,
       failure: earliestFailure(records),
       scope: "typescript",
     })
     process.stdout.write(`\n${footer}\n`)
   }
-}
-
-function writeResults(dir: string, records: KoanRecord[]): void {
-  mkdirSync(dir, { recursive: true })
-  const lines = records.map((record) => `${JSON.stringify(record)}\n`).join("")
-  writeFileSync(path.join(dir, "ts.jsonl"), lines)
 }

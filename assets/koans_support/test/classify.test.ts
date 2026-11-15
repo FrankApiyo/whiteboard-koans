@@ -47,6 +47,20 @@ const dunderNames = [
   "})",
 ].join("\n")
 
+function koanWith(failingLine: string): string {
+  return ["", "", "", "", 'test("a koan", () => {', failingLine, "})"].join("\n")
+}
+
+function classifyLine(failingLine: string) {
+  return classify({
+    error: { name: "AssertionError", line: 6 },
+    koanSource: koanWith(failingLine),
+    koanLine: 5,
+    exercises: [],
+    tree,
+  })
+}
+
 describe("classify", () => {
   test("koanblank_is_a_code_blank_with_its_write_line", () => {
     const result = classify({
@@ -159,5 +173,29 @@ describe("classify", () => {
     })
 
     expect(result).toEqual({ status: "fail", at: 5, tag: null, write: null })
+  })
+
+  test("dunder_inside_a_template_expression_is_a_value_blank", () => {
+    expect(classifyLine("  expect(label(r)).toBe(`${__} px`)")).toMatchObject({
+      status: "blank",
+      at: 6,
+    })
+  })
+
+  test("dunder_in_template_text_is_not_a_blank", () => {
+    expect(classifyLine("  expect(label(r)).toBe(`__ px`)")).toMatchObject({ status: "fail" })
+  })
+
+  test("dunder_in_a_trailing_comment_is_not_a_blank", () => {
+    expect(classifyLine("  expect(area(r)).toBe(19) // was __")).toMatchObject({
+      status: "fail",
+      at: 6,
+    })
+  })
+
+  test("a_double_slash_inside_a_string_does_not_hide_a_blank", () => {
+    expect(classifyLine('  expect(link("http://x")).toBe(__)')).toMatchObject({
+      status: "blank",
+    })
   })
 })

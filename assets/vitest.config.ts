@@ -22,6 +22,7 @@ export default defineConfig({
     sequence: { sequencer: PathSequencer },
     reporters: [
       new KoanReporter({
+        root: repo,
         koansDir: path.join(repo, koansDir),
         tree: path.join(repo, path.dirname(koansDir)),
       }),

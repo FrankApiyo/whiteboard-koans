@@ -28,12 +28,18 @@ export interface Classification {
 }
 
 const STRING_LITERAL = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`/g
+const TEMPLATE_EXPRESSION = /\$\{([^}]*)\}/g
 const LINE_COMMENT = /\/\/.*$/
 const BARE_DUNDER = /(?<![\w$])__(?![\w$])/
 
+function literalAsCode(literal: string): string {
+  if (!literal.startsWith("`")) return '""'
+  return [...literal.matchAll(TEMPLATE_EXPRESSION)].map((match) => match[1]).join(" ")
+}
+
 function holdsValueBlank(source: string, line: number): boolean {
   const text = source.split("\n")[line - 1] ?? ""
-  const code = text.replace(STRING_LITERAL, '""').replace(LINE_COMMENT, "")
+  const code = text.replace(STRING_LITERAL, literalAsCode).replace(LINE_COMMENT, "")
   return BARE_DUNDER.test(code)
 }
 
