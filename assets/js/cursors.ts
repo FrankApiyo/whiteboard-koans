@@ -5,20 +5,22 @@ import type { CursorPayload, Person } from "./types"
 export type Cursors = ReadonlyMap<string, CursorPayload>
 
 export function upsertCursor(cursors: Cursors, payload: CursorPayload): Cursors {
-  return new Map(cursors).set(payload.tab, payload)
+  // >>> 12
+  __blank("12: a new map with this tab's cursor set");
+  // <<< 12
 }
 
 export function pruneCursors(cursors: Cursors, people: readonly Person[]): Cursors {
-  const present = new Set(people.map((person) => person.tab))
-  return new Map([...cursors].filter(([tab]) => present.has(tab)))
+  // >>> 12
+  __blank("12: keep the cursors of tabs still present");
+  // <<< 12
 }
 
 export function listenCursors(
   live: Live,
   set: (update: (cursors: Cursors) => Cursors) => void,
 ): () => void {
-  const ref = live.handleEvent("cursor:moved", (payload) => {
-    if (isCursorPayload(payload)) set((cursors) => upsertCursor(cursors, payload))
-  })
-  return () => live.removeHandleEvent(ref)
+  // >>> 12
+  return __blank("12: listen for cursor:moved, and stop", () => {});
+  // <<< 12
 }

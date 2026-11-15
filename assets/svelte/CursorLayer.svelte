@@ -15,18 +15,9 @@
 </script>
 
 <div class="layer" aria-hidden="true">
-  {#each visible as cursor (cursor.tab)}
-    <div
-      class="cursor"
-      data-tab={cursor.tab}
-      style:left={percent(cursor.x, BOARD_WIDTH)}
-      style:top={percent(cursor.y, BOARD_HEIGHT)}
-      style:--cursor-color={cursor.color}
-    >
-      <svg viewBox="0 0 12 16" width="12" height="16"><path d="M0 0 L12 9 L6 10 L3 16 Z" /></svg>
-      <span>{cursor.name}</span>
-    </div>
-  {/each}
+  <!-- >>> 12 -->
+  {__blank("12: a labelled cursor per tab", "")}
+  <!-- <<< 12 -->
 </div>
 
 <style>
@@ -37,7 +28,7 @@
     pointer-events: none;
   }
 
-  .cursor {
+  .layer :global(.cursor) {
     position: absolute;
     display: flex;
     align-items: flex-start;
@@ -47,11 +38,15 @@
       top 50ms linear;
   }
 
-  path {
-    fill: var(--cursor-color);
+  .layer :global(.cursor::before) {
+    content: "";
+    width: 12px;
+    height: 16px;
+    background: var(--cursor-color);
+    clip-path: polygon(0 0, 100% 56.25%, 50% 62.5%, 25% 100%);
   }
 
-  span {
+  .layer :global(.cursor span) {
     padding: 0 0.375rem;
     border-radius: 0.25rem;
     background: var(--cursor-color);

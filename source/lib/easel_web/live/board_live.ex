@@ -77,10 +77,12 @@ defmodule EaselWeb.BoardLive do
 
   def handle_event("cursor:move", %{"x" => x, "y" => y}, socket)
       when is_integer(x) and is_integer(y) do
+    # >>> answer 11: put x and y on me, broadcast it to the others
     cursor = Map.merge(socket.assigns.me, %{x: x, y: y})
     topic = Boards.topic(socket.assigns.board.slug)
     Phoenix.PubSub.broadcast_from(Easel.PubSub, self(), topic, {:cursor, cursor})
     {:noreply, socket}
+    # <<<
   end
 
   def handle_event("cursor:move", _payload, socket), do: {:noreply, socket}
@@ -93,7 +95,9 @@ defmodule EaselWeb.BoardLive do
   end
 
   def handle_info({:cursor, cursor}, socket) do
+    # >>> answer 11: push the cursor as cursor:moved
     {:noreply, push_event(socket, "cursor:moved", cursor)}
+    # <<<
   end
 
   def handle_info(:board_restarted, socket) do
@@ -102,18 +106,24 @@ defmodule EaselWeb.BoardLive do
   end
 
   def handle_info(%Phoenix.Socket.Broadcast{event: "presence_diff"}, socket) do
+    # >>> answer 12: list the people again
     {:noreply, assign(socket, people: people(socket.assigns.board.slug))}
+    # <<<
   end
 
   def track_presence(slug, me) do
+    # >>> answer 12: track this tab, with the rest of me as metadata | default: :ok
     {:ok, _ref} = Presence.track(self(), Boards.topic(slug), me.tab, Map.delete(me, :tab))
     :ok
+    # <<<
   end
 
   def people(slug) do
+    # >>> answer 12: one person per tab, from its first meta | default: []
     for {tab, %{metas: [meta | _]}} <- Presence.list(Boards.topic(slug)) do
       %{tab: tab, name: meta.name, color: meta.color}
     end
+    # <<<
   end
 
   defp run_op(socket, op, id) do

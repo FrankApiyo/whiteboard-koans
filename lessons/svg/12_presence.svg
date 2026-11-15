@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Presence per tab: each BoardLive tracks its tab with name and colour; Presence.list gives one entry per tab; a presence_diff makes every BoardLive list the people again; the browser keeps only the cursors whose tab is still among the people, so a leaving tab's cursor disappears">
+  <style>
+    :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --topic: #fff4e6; --topicedge: #f08c00; --arrow: #5c6370; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1b1e27; --ink: #e6e9f2; --muted: #a3aab8; --client: #1f3326; --clientedge: #69db7c; --server: #26304d; --serveredge: #8aa4ff; --topic: #3a2a14; --topicedge: #ffc078; --arrow: #a3aab8; }
+    }
+    .bg { fill: var(--bg); }
+    .client { fill: var(--client); stroke: var(--clientedge); stroke-width: 2; }
+    .server { fill: var(--server); stroke: var(--serveredge); stroke-width: 2; }
+    .topic { fill: var(--topic); stroke: var(--topicedge); stroke-width: 2; }
+    .edge { fill: none; stroke: var(--arrow); stroke-width: 2; marker-end: url(#presence-tip); }
+    .tip { fill: var(--arrow); }
+    text { fill: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; }
+    .small { font-size: 13px; fill: var(--muted); }
+    .head { font-weight: 600; }
+  </style>
+  <defs>
+    <marker id="presence-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="tip"/></marker>
+  </defs>
+  <rect class="bg" width="640" height="360"/>
+
+  <text x="20" y="30" class="head">One presence per tab</text>
+
+  <rect class="server" x="20" y="60" width="180" height="60" rx="8"/>
+  <text x="110" y="86" text-anchor="middle">BoardLive, a tab</text>
+  <text x="110" y="106" text-anchor="middle" class="small">track_presence(slug, me)</text>
+
+  <rect class="topic" x="250" y="50" width="370" height="80" rx="8"/>
+  <text x="266" y="74">Presence.list("board:slug")</text>
+  <text x="266" y="96" class="small">"tab-1" =&gt; metas: name Ada, colour red</text>
+  <text x="266" y="116" class="small">"tab-2" =&gt; metas: name Ada, colour red</text>
+
+  <path class="edge" d="M200,90 L248,90"/>
+  <text x="224" y="80" text-anchor="middle" class="small">track</text>
+
+  <rect class="server" x="20" y="180" width="180" height="60" rx="8"/>
+  <text x="110" y="206" text-anchor="middle">every BoardLive</text>
+  <text x="110" y="226" text-anchor="middle" class="small">presence_diff: people/1</text>
+
+  <path class="edge" d="M330,130 L202,198"/>
+  <text x="290" y="176" class="small">a join or a leave</text>
+
+  <rect class="client" x="250" y="180" width="370" height="80" rx="8"/>
+  <text x="266" y="204">Board in the browser</text>
+  <text x="266" y="226" class="small">people prop: one entry per tab</text>
+  <text x="266" y="246" class="small">cursors: kept only for tabs among the people</text>
+
+  <path class="edge" d="M200,226 L248,226"/>
+
+  <text x="20" y="300" class="small">A cursor:moved push carries the sender's tab, so it keys the cursor too.</text>
+  <text x="20" y="322" class="small">When a tab closes, its LiveView exits, Presence drops it, and its cursor goes.</text>
+</svg>

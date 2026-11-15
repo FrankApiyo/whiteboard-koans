@@ -42,8 +42,7 @@ export function sendDelete(live: Live, state: BoardState, id: string): void {
 }
 
 export function makeCursorSender(live: Live, ms = 50): Throttled<[Point]> {
-  return throttle(
-    (p: Point) => live.pushEvent("cursor:move", { x: Math.round(p.x), y: Math.round(p.y) }),
-    ms,
-  )
+  // >>> 11
+  return __blank("11: push cursor moves, throttled", Object.assign(() => {}, { cancel() {} }));
+  // <<< 11
 }

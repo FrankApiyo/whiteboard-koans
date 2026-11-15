@@ -12,9 +12,11 @@ export function throttle<Args extends unknown[]>(
   let timer: ReturnType<typeof setTimeout> | null = null
 
   function cancel(): void {
+    // >>> answer 11: clear the timer and the held call
     if (timer) clearTimeout(timer)
     timer = null
     held = null
+    // <<<
   }
 
   function run(args: Args): void {
@@ -24,6 +26,7 @@ export function throttle<Args extends unknown[]>(
   }
 
   function throttled(...args: Args): void {
+    // >>> answer 11: run now, or hold the latest call for the window's end
     const wait = ms - (now() - lastRun)
     if (wait <= 0) return run(args)
 
@@ -32,6 +35,7 @@ export function throttle<Args extends unknown[]>(
       timer = null
       if (held) run(held)
     }, wait)
+    // <<<
   }
 
   return Object.assign(throttled, { cancel })
