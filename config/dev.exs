@@ -21,10 +21,8 @@ config :easel, EaselWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "JLkhbtFX2MuNHG6Khc4jcefJI9NB29GjtMO9iiZq8YMy2GTzI/Uf4frtIFMtN0eQ",
-  watchers: [
-    esbuild: {Esbuild, :install_and_run, [:easel, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:easel, ~w(--watch)]}
-  ]
+  watchers: [vite: {PhoenixVite.Npm, :run, [:vite, ~w(dev)]}],
+  static_url: [host: "localhost", port: 5173]
 
 # ## SSL Support
 #

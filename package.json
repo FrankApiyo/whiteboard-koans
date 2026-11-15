@@ -1,0 +1,24 @@
+{
+  "type": "module",
+  "dependencies": {
+    "live_svelte": "file:./deps/live_svelte",
+    "phoenix": "file:./deps/phoenix",
+    "phoenix_html": "file:./deps/phoenix_html",
+    "phoenix_live_view": "file:./deps/phoenix_live_view",
+    "topbar": "^3.0.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@testing-library/svelte": "^5.4.2",
+    "daisyui": "^5.0.0",
+    "jsdom": "^31.0.1",
+    "phoenix_vite": "file:./deps/phoenix_vite",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.7.8",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.0",
+    "vitest": "^5.1.0"
+  }
+}

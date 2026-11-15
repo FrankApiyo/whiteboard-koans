@@ -17,7 +17,8 @@ defmodule EaselWeb do
   those modules here.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  # assets/ is served separately, by a dedicated Plug.Static plug
+  def static_paths, do: ~w(fonts images favicon.ico robots.txt)
 
   def router do
     quote do
@@ -83,6 +84,8 @@ defmodule EaselWeb do
       use Gettext, backend: EaselWeb.Gettext
 
       # HTML escaping functionality
+      import LiveSvelte
+
       import Phoenix.HTML
       # Core UI components
       import EaselWeb.CoreComponents
