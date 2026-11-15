@@ -323,4 +323,129 @@ defmodule Verify.TsSourceCheckTest do
              exercised: [{"03", "03: badge"}, {"03", "03: other"}, {"03", "03: third"}]
            ]
   end
+
+  describe "fix round 1" do
+    test "a default under a wrapped signature, a comment or a typed arrow is ok" do
+      wrapped = """
+      export function hitTest(
+        shapes: Shape[],
+        point: Point,
+        tolerance = 4,
+      ): Shape | null {
+        // >>> answer 06: hit test | default: null
+        return null
+        // <<<
+      }
+      """
+
+      commented = """
+      export function f(): number {
+        // Count the shapes.
+        // >>> answer 02: f | default: 0
+        return 1
+        // <<<
+      }
+      """
+
+      arrow = """
+      export const g = (a: { x: number }): (() => void) => {
+        // >>> answer 02: g | default: () => {}
+        return () => a.x
+        // <<<
+      }
+
+      export function h(): (n: number) => void {
+        // >>> answer 02: h | default: () => {}
+        return (n) => n
+        // <<<
+      }
+      """
+
+      for text <- [wrapped, commented, arrow], do: assert(SourceCheck.check(text, @lib) == :ok)
+    end
+
+    test "a default whose nearest block is a control-flow block" do
+      for head <- ["if (x > 0) {", "for (const s of shapes) {", "while (x) {", "switch (x) {"] do
+        text = """
+        export function f(x: number): number {
+          #{head}
+            // >>> answer 02: f | default: 0
+            return 1
+            // <<<
+          }
+          return 0
+        }
+        """
+
+        assert errors(text, @lib) == [
+                 "#{@lib}:3: default marker does not wrap a whole function body"
+               ]
+      end
+    end
+
+    @cursor """
+    <script lang="ts">
+      let { tool }: { tool: string } = $props()
+      let canvas: HTMLCanvasElement
+      // >>> answer 09: cursor
+      const cursor = $derived(tool === "pan" ? "grab" : "crosshair")
+      $effect(() => {
+        canvas.style.cursor = cursor
+      })
+      // <<<
+    </script>
+
+    <!-- the cursor follows the tool -->
+    <canvas bind:this={canvas} style="cursor: default"></canvas>
+    """
+
+    test "markup prose, comments and static attributes are not uses of a binding" do
+      assert SourceCheck.check(@cursor, @svelte) == :ok
+
+      used = String.replace(@cursor, ~s|style="cursor: default"|, ~s|style="cursor: {cursor}"|)
+
+      assert errors(used, @svelte) == [
+               "#{@svelte}:4: code blank declares cursor, used outside it"
+             ]
+    end
+
+    test "object keys and type members are not uses of a binding" do
+      text = """
+      // >>> answer 02: width
+      const width = 3
+      // <<<
+      export const box = { width: 1, height: 2 }
+      interface Size {
+        width: number
+        height?: number
+      }
+      """
+
+      assert SourceCheck.check(text, @lib) == :ok
+      used = text <> "export const twice = { width } \n"
+      assert errors(used, @lib) == ["#{@lib}:1: code blank declares width, used outside it"]
+    end
+
+    test "empty default, unclosed _a( and a regex inside _a( name their lines" do
+      assert errors(ts_block("02: f | default:"), @lib) == [
+               "#{@lib}:2: empty default expression"
+             ]
+
+      assert errors("export const x = 1\nf(_a(3\n", @lib) == [
+               "#{@lib}:2: _a( without a closing paren",
+               "#{@lib}:2: value blank outside a test body"
+             ]
+
+      assert errors(in_test("  expect(_a(\n  /a)/.test(s))).toBe(true)"), @koan) == [
+               "#{@koan}:8: regex literal inside _a("
+             ]
+    end
+
+    test "a // <<< sharing a line with code" do
+      assert "#{@lib}:2: // marker not on its own line" in errors(
+               "// >>> answer 02: a\nx // <<<\n",
+               @lib
+             )
+    end
+  end
 end

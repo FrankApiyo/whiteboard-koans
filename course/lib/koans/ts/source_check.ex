@@ -111,6 +111,12 @@ defmodule Koans.Ts.SourceCheck do
 
   def line_text(source, line), do: Enum.at(source.lines, line - 1, "")
 
+  def script_start(source, offset) do
+    Enum.find_value(source.sections, 0, fn {kind, from, to} ->
+      if kind == :script and offset >= from and offset < to, do: from
+    end)
+  end
+
   defp pair(markers) do
     {blocks, errors, open} =
       Enum.reduce(markers, {[], [], nil}, fn
@@ -219,7 +225,7 @@ defmodule Koans.Ts.SourceCheck do
       cond do
         Markers.parse_line(text) != nil -> []
         text =~ ~r/<!-- (>>> answer|<<< -->)/ -> [{line, "markup marker not on its own line"}]
-        text =~ "// >>> answer" -> [{line, "// marker not on its own line"}]
+        text =~ ~r{// (>>> answer|<<<)} -> [{line, "// marker not on its own line"}]
         true -> []
       end
     end)
