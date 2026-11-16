@@ -25,7 +25,10 @@
   // Shapes in props change only on a resync, so only sync_id is tracked.
   $effect(() => {
     const next = sync_id
-    untrack(() => applyProps(board, { sync_id: next, shapes: $state.snapshot(shapes) }))
+    untrack(() => {
+      applyProps(board, { sync_id: next, shapes: $state.snapshot(shapes) })
+      if (board.selectedId && !board.shapes.has(board.selectedId)) board.selectedId = null
+    })
   })
 
   onMount(() => {
@@ -93,7 +96,7 @@
 
   .stage {
     position: relative;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--color-base-300);
     border-radius: 0.5rem;
   }
 </style>

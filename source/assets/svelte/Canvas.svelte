@@ -24,6 +24,8 @@
   let tool = $state.raw<ToolState>({ mode: "idle" })
   let dragStart: Shape | undefined
   let dropAt: { id: string; x: number; y: number } | null = null
+  // One gesture at a time: a pen and a palm, or a mouse and a finger, are each primary.
+  let activePointer: number | null = null
 
   const shapes = $derived(board.ordered())
   const drawn = $derived(tool.mode === "drawing" ? [...shapes, tool.draft] : shapes)
@@ -51,24 +53,28 @@
   }
 
   function down(event: CanvasPointerEvent) {
-    if (!event.isPrimary || event.button !== 0) return
+    if (!event.isPrimary || event.button !== 0 || activePointer !== null) return
     // >>> answer 05: capture and start
     event.currentTarget.setPointerCapture(event.pointerId)
     const env = { color: board.color, newId: () => crypto.randomUUID(), shapes }
     tool = pointerDown(tool, board.tool, boardPoint(event), env)
     // <<<
+    activePointer = event.pointerId
     holdGrabbed()
   }
 
   function holdGrabbed() {
     const grabbed = tool.mode === "dragging" ? tool.id : null
-    board.draggingId = grabbed
     dragStart = grabbed ? board.shapes.get(grabbed) : undefined
     if (board.tool === "select") board.selectedId = grabbed
   }
 
+  function isOther(event: PointerEvent): boolean {
+    return !event.isPrimary || (activePointer !== null && event.pointerId !== activePointer)
+  }
+
   function move(event: CanvasPointerEvent) {
-    if (!event.isPrimary) return
+    if (isOther(event)) return
     const point = boardPoint(event)
     // >>> answer 05: follow the pointer
     oncursor?.(point)
@@ -77,25 +83,36 @@
     followDrag(point)
   }
 
+  // A press only becomes a drag once the shape moves, so a click never holds back other
+  // people's ops for the shape under it.
   function followDrag(point: Point) {
     dropAt = dragTarget(tool, point)
-    if (dropAt) board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+    if (!dropAt || (!board.draggingId && isAtStart(dropAt))) return
+    board.draggingId = dropAt.id
+    board.moveShape(dropAt.id, dropAt.x, dropAt.y)
+  }
+
+  function isAtStart(at: Point): boolean {
+    return dragStart !== undefined && at.x === dragStart.x && at.y === dragStart.y
   }
 
   function up(event: CanvasPointerEvent) {
-    if (!event.isPrimary) return
+    if (isOther(event) || activePointer === null) return
     // >>> answer 05: finish on pointer up
     finish(pointerUp(tool, boardPoint(event)).commit)
     // <<<
   }
 
   function cancel(event: PointerEvent) {
-    if (event.isPrimary) finish(dropAt && { kind: "move", ...dropAt })
+    if (!isOther(event) && activePointer !== null) finish(null)
   }
 
-  function finish(commit: Commit | null) {
+  function finish(gesture: Commit | null) {
+    const commit: Commit | null =
+      gesture ?? (board.draggingId && dropAt ? { kind: "move", ...dropAt } : null)
     const before = dragStart
     tool = { mode: "idle" }
+    activePointer = null
     board.draggingId = null
     dragStart = undefined
     dropAt = null

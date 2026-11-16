@@ -87,6 +87,26 @@ describe("Board sending", () => {
     expect(shown("ellipse 100 by 60 at 500, 500")).toBe(false)
   })
 
+  it("a click on a shape still applies a move made meanwhile", async () => {
+    const { live, canvas } = renderBoard()
+    await pointer(canvas, "pointerDown", 150, 130)
+    live.emit("shape:moved", { id: ID_A, x: 600, y: 600 })
+    await pointer(canvas, "pointerUp", 150, 130)
+    flushSync()
+    expect(shown("rectangle 200 by 100 at 600, 600")).toBe(true)
+    expect(pushedNamed(live, "shape:move")).toHaveLength(0)
+  })
+
+  it("a drag that comes back to its start still sends its final position", async () => {
+    const { live, canvas } = renderBoard()
+    await pointer(canvas, "pointerDown", 150, 130)
+    await pointer(canvas, "pointerMove", 250, 230)
+    await pointer(canvas, "pointerMove", 150, 130)
+    await pointer(canvas, "pointerUp", 150, 130)
+    const moves = pushedNamed(live, "shape:move").map((p) => p.payload)
+    expect(moves).toEqual([{ id: ID_A, x: 100, y: 100 }])
+  })
+
   it("a malformed reply to a drag restores the position from before the drag", async () => {
     const { live, canvas } = renderBoard()
     await drag(canvas, [150, 130], [250, 230])
@@ -106,6 +126,17 @@ describe("Board props", () => {
 
     await rerender({ ...props, shapes: [ellipse()], sync_id: 2 })
     expect([shown(RECT_TEXT), shown(ELLIPSE_TEXT)]).toEqual([false, true])
+  })
+
+  it("a resync without the selected shape clears the selection", async () => {
+    const { props, rerender, canvas } = renderBoard()
+    const deleteButton = screen.getByRole("button", { name: "Delete" }) as HTMLButtonElement
+    await pointer(canvas, "pointerDown", 150, 130)
+    await pointer(canvas, "pointerUp", 150, 130)
+    expect(deleteButton.disabled).toBe(false)
+
+    await rerender({ ...props, shapes: [ellipse()], sync_id: 2 })
+    expect(deleteButton.disabled).toBe(true)
   })
 
   it("listeners_removed_on_destroy", async () => {
