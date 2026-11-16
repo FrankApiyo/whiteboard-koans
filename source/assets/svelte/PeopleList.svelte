@@ -15,7 +15,7 @@
 </script>
 
 <section class="text-sm">
-  <h2 class="mb-2 text-xs font-semibold text-gray-500 uppercase">{count} here</h2>
+  <h2 class="mb-2 text-xs font-semibold text-base-content/70 uppercase">{count} here</h2>
   <ul class="flex flex-col gap-1" aria-label="People on this board">
     <!-- >>> answer 03: a row per person -->
     {#each people as person (person.tab)}

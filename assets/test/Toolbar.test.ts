@@ -31,7 +31,7 @@ describe("Toolbar", () => {
   it("picking a colour sets it on the board state", async () => {
     const state = new BoardState([], 1)
     render(Toolbar, { state, ondelete: () => {} })
-    await fireEvent.click(screen.getByRole("radio", { name: PALETTE[4] }))
+    await fireEvent.click(screen.getByRole("radio", { name: "Teal" }))
     expect(state.color).toBe(PALETTE[4])
   })
 

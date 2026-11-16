@@ -33,9 +33,14 @@
     display: flex;
     align-items: flex-start;
     gap: 0.125rem;
-    transition:
-      left 50ms linear,
-      top 50ms linear;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .layer :global(.cursor) {
+      transition:
+        left 50ms linear,
+        top 50ms linear;
+    }
   }
 
   .layer :global(.cursor::before) {
@@ -52,6 +57,9 @@
     border-radius: 0.25rem;
     background: var(--cursor-color);
     color: white;
+    /* Black on palette colours lighter than oklch L 0.605 (orange, yellow, green, teal), white
+       on the rest: at least 4.5:1 on every one. */
+    color: oklch(from var(--cursor-color) clamp(0, (0.605 - l) * 1000, 1) 0 0);
     font-size: 0.75rem;
     white-space: nowrap;
   }

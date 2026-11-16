@@ -13,6 +13,17 @@ export const PALETTE = [
 
 export type Color = (typeof PALETTE)[number]
 
+export const COLOR_NAMES: Record<Color, string> = {
+  "#e03131": "Red",
+  "#f08c00": "Orange",
+  "#fab005": "Yellow",
+  "#2f9e44": "Green",
+  "#1098ad": "Teal",
+  "#1971c2": "Blue",
+  "#7048e8": "Violet",
+  "#c2255c": "Pink",
+}
+
 export const BOARD_WIDTH = 1600
 export const BOARD_HEIGHT = 1000
 export const MAX_PEN_POINTS = 2000

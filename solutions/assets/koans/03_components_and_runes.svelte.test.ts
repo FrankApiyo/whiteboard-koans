@@ -28,7 +28,7 @@ declared with $bindable(). Svelte batches DOM updates: right after a click the c
 Clicked 0 times, still shows the old text until flushSync() applies the update.
 
     Write:          assets/koans/drills/03_counter.svelte:10  (03: count as state)
-    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:89
+    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:90
 
 API you'll use
   - render: const { rerender } = render(Greeting, { name: "Ada" }) mounts it in the page
@@ -40,7 +40,8 @@ API you'll use
   - $props.id: const group = $props.id() is an id unique to each mounted instance
   - $effect.root: const stop = $effect.root(() => { ... }) hosts effects outside a component
   - style:background-color={c} sets one inline style; data-color={c} sets an attribute
-  - aria-label={c} names an element, so screen.getByRole("radio", { name: c }) finds it
+  - aria-label={label} names an element: screen.getByRole("radio", { name: "Mint" }) finds the
+    one labelled "Mint"; the given COLOR_NAMES in types.ts maps each palette colour to a name
   - Math.max: Math.max(a, b) is the larger of a and b
   - classes the blanks use: the radio "absolute inset-0 size-full cursor-pointer appearance-none
     opacity-0", invisible over its swatch; each dot "mr-1.5 inline-block size-2.5 rounded-full"
@@ -160,17 +161,18 @@ test("A keyed each moves an element with its key, so when people is reordered Li
   expect(rows()[0] === linRow).toBe(true)
 }, { exercises: "03: a row per person" })
 
-test("Fill the radio in ColorPicker: one per colour and labelled by it, all named by group, each with its colour as the value, and checked only when it is the current value.", () => {
+test("Fill the radio in ColorPicker: one per colour and labelled by its name from COLOR_NAMES, all named by group, each with its colour as the value, and checked only when it is the current value.", () => {
   render(ColorPicker, { colors: PALETTE, value: PALETTE[3], onpick: () => {} })
   expect(radios().map((r) => r.value)).toEqual([...PALETTE])
   expect(radios().filter((r) => r.checked).map((r) => r.value)).toEqual(["#2f9e44"])
+  expect(radios()[3].getAttribute("aria-label")).toBe("Green")
   expect(new Set(radios().map((r) => r.name)).size).toBe(1)
 }, { exercises: "03: a radio per colour" })
 
 test("Choosing a radio fires its change event, which calls the onpick callback prop once with that radio's colour.", async () => {
   const picked: Color[] = []
   render(ColorPicker, { colors: PALETTE, value: PALETTE[0], onpick: (color) => picked.push(color) })
-  await fireEvent.click(screen.getByRole("radio", { name: "#1971c2" }))
+  await fireEvent.click(screen.getByRole("radio", { name: "Blue" }))
   expect(picked).toEqual(["#1971c2"])
 }, { exercises: "03: a radio per colour" })
 

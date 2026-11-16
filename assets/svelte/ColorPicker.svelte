@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Color } from "../js/types"
+  import { COLOR_NAMES, type Color } from "../js/types"
 
   interface Props {
     colors: readonly Color[]
@@ -16,7 +16,7 @@
   <legend class="sr-only">Colour</legend>
   {#each colors as color (color)}
     <span
-      class="relative size-7 rounded-full outline-offset-2 has-checked:outline-3 has-checked:outline-[#212529] has-focus-visible:outline-3 has-focus-visible:outline-[#1971c2]"
+      class="relative size-7 rounded-full outline-offset-2 has-checked:outline-3 has-checked:outline-base-content has-focus-visible:outline-3 has-focus-visible:outline-[#1971c2]"
       style:background-color={color}
     >
       <!-- >>> 03 -->
