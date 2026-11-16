@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Koans.Gen do
 
       {:ok, count, backed_up} ->
         Mix.shell().info("wrote #{count} files, replacing #{length(backed_up)} learner files")
-        Mix.shell().info(Koans.Gen.Backup.notice())
+        Mix.shell().info(Koans.Gen.Backup.notice(:gen))
 
       {:error, :no_source} ->
         Mix.raise("no source/ directory under #{root}")

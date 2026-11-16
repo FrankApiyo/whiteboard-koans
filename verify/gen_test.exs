@@ -532,7 +532,9 @@ defmodule Verify.GenTest do
       put(root, "lib/easel/notes.ex", answered)
 
       assert {:ok, 4, ["lib/easel/notes.ex"]} = Gen.write_all(root)
-      assert File.read!(Path.join(root, ".koans/last-reset/lib/easel/notes.ex")) == answered
+      assert File.read!(Path.join(root, ".koans/last-gen/lib/easel/notes.ex")) == answered
+      refute File.exists?(Path.join(root, ".koans/last-reset"))
+      assert Koans.Gen.Backup.notice(:gen) =~ ".koans/last-gen/"
       assert File.read!(Path.join(root, "lib/easel/notes.ex")) =~ ~s|__("07: one")|
     end
 

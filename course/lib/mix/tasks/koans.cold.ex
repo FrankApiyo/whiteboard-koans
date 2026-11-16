@@ -24,7 +24,7 @@ defmodule Mix.Tasks.Koans.Cold do
 
   defp report({:ok, :cold, rels}, _chapter, _root) do
     cold = Enum.map(rels, &"#{&1} is cold: meditations now give the behaviour only.\n")
-    Mix.shell().info(Enum.join(cold) <> Koans.Gen.Backup.notice())
+    Mix.shell().info(Enum.join(cold) <> Koans.Gen.Backup.notice(:reset))
   end
 
   defp report({:ok, :nothing_to_strip, rels}, _chapter, _root) do

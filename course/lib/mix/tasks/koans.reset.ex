@@ -47,6 +47,6 @@ defmodule Mix.Tasks.Koans.Reset do
   end
 
   defp report(label, changed) do
-    "#{label}: #{Enum.join(changed, " ")}\n#{Koans.Gen.Backup.notice()}"
+    "#{label}: #{Enum.join(changed, " ")}\n#{Koans.Gen.Backup.notice(:reset)}"
   end
 end

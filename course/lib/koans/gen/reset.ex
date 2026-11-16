@@ -59,7 +59,7 @@ defmodule Koans.Gen.Reset do
 
   defp apply_plan(root, plan) do
     changed = for {rel, text} <- plan, changed?(root, rel, text), do: {rel, text}
-    :ok = Backup.save(root, Enum.map(changed, &elem(&1, 0)))
+    :ok = Backup.save(root, Enum.map(changed, &elem(&1, 0)), :reset)
 
     for {rel, text} <- changed do
       target = Path.join(root, rel)

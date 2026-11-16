@@ -6,7 +6,7 @@ defmodule Koans.Export do
   @commit_message "feat: easel whiteboard app"
   @copied_dirs ~w(lib config priv assets test/support e2e)
   @copied_files ~w(test/test_helper.exs mix.exs mix.lock package.json package-lock.json
-                   vitest.config.ts playwright.config.ts LICENSE NOTICE)
+                   vitest.config.ts playwright.config.ts LICENSE)
   @copied_globs ["test/easel*"]
   @left_out ~w(lib/easel/hello.ex test/easel/hello_test.exs assets/js/hello.ts
                assets/test/hello.test.ts assets/vitest.config.ts assets/vitest.app.config.ts
@@ -16,6 +16,7 @@ defmodule Koans.Export do
   @blank ~r/(?<![A-Za-z0-9_$])__(?:blank)?\(/
   @templates [
     {"README.md", "README.md"},
+    {"NOTICE", "NOTICE"},
     {"formatter.exs", ".formatter.exs"},
     {"gitignore", ".gitignore"},
     {"ci.yml", ".github/workflows/ci.yml"},

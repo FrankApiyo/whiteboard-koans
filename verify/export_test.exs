@@ -45,7 +45,8 @@ defmodule Verify.ExportTest do
 
   defp clone!(from, to) do
     File.mkdir_p!(Path.dirname(to))
-    {_, 0} = System.cmd("cp", ["-c", "-R", from, to])
+    flags = if :os.type() == {:unix, :darwin}, do: ["-c", "-R"], else: ["-R", "--reflink=auto"]
+    {_, 0} = System.cmd("cp", flags ++ [from, to])
   end
 
   defp regions(text, syntax) do
@@ -709,7 +710,9 @@ defmodule Verify.ExportTest do
                   assets/test/hello.test.ts docs/early-checks.md AGENTS.md LICENSE-lessons),
         do: refute(File.exists?(Path.join(target, rel)), "#{rel} was exported")
 
-    for rel <- ~w(LICENSE NOTICE), do: assert(read(target, rel) == read(@repo, rel))
+    assert read(target, "LICENSE") == read(@repo, "LICENSE")
+    assert read(target, "NOTICE") == File.read!(Path.join(@repo, "course/export/NOTICE"))
+    refute read(target, "NOTICE") =~ "CC BY"
     assert read(target, "LICENSE") =~ "Apache License\n                           Version 2.0"
     assert JSON.decode!(read(target, "package.json"))["license"] == "Apache-2.0"
 

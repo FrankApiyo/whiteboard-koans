@@ -38,7 +38,7 @@ defmodule Koans.Gen.Project do
     with :ok <- ensure_source(root) do
       changed = learner_changes(root, source_files(root))
       rels = Enum.map(changed, &elem(&1, 0))
-      :ok = Koans.Gen.Backup.save(root, rels)
+      :ok = Koans.Gen.Backup.save(root, rels, :reset)
       Enum.each(changed, fn {rel, content} -> write_file!(Path.join(root, rel), content) end)
       {:ok, rels}
     end
@@ -47,7 +47,7 @@ defmodule Koans.Gen.Project do
   # A learner's answers live in the files generation rewrites, so they are copied aside first.
   defp back_up_learner(root, files) do
     rels = for {rel, _content} <- learner_changes(root, files), existing?(root, rel), do: rel
-    :ok = Koans.Gen.Backup.save(root, rels)
+    :ok = Koans.Gen.Backup.save(root, rels, :gen)
     rels
   end
 
