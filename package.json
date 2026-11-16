@@ -4,7 +4,7 @@
     "test": "vitest run --config assets/vitest.config.ts",
     "test:app": "vitest run --config assets/vitest.app.config.ts",
     "test:course": "vitest run --config assets/vitest.course.config.ts",
-    "check": "svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings",
+    "check": "svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings && tsc -p e2e",
     "e2e": "playwright test"
   },
   "dependencies": {

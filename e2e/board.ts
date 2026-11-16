@@ -82,6 +82,18 @@ export async function signInAgain(visitor: Visitor, boardPath: string): Promise<
   await expect(people(page)).toHaveCount(2)
 }
 
+interface WithLiveSocket {
+  liveSocket: { connect(): void; disconnect(): void }
+}
+
+export async function goOffline(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as WithLiveSocket).liveSocket.disconnect())
+}
+
+export async function goOnline(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as WithLiveSocket).liveSocket.connect())
+}
+
 export function cursorOf(page: Page, name: string): Locator {
   return page.locator(".cursor", { hasText: name })
 }

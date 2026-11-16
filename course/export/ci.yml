@@ -42,6 +42,7 @@ jobs:
       - run: mix test
       - run: npm test
       - run: npx svelte-check --tsconfig assets/tsconfig.json --fail-on-warnings
+      - run: npx tsc -p e2e
 
   e2e:
     runs-on: ubuntu-latest

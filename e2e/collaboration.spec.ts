@@ -6,6 +6,8 @@ import {
   draw,
   drag,
   expectSameShapes,
+  goOffline,
+  goOnline,
   hover,
   joinBoard,
   people,
@@ -126,6 +128,19 @@ test("the people list shows both people, marks yourself, and drops whoever leave
   await expect(people(ada.page)).toHaveCount(1)
   await expect(people(ada.page)).toHaveText(["Ada (you)"])
   await expect(cursorOf(ada.page, "Lin")).toHaveCount(0)
+})
+
+test("a person who reconnects catches up on what was drawn while they were away", async () => {
+  const [ada, lin] = visitors
+  await goOffline(lin.page)
+  await expect(people(ada.page)).toHaveCount(1)
+
+  await draw(ada.page, "Rectangle", [{ x: 100, y: 100 }, { x: 400, y: 300 }])
+  await expect(shapes(ada.page)).toHaveCount(1)
+  await expect(shapes(lin.page)).toHaveCount(0)
+
+  await goOnline(lin.page)
+  await expectSameShapes(ada.page, lin.page, 1)
 })
 
 test("every shape is still there after a reload", async () => {
