@@ -161,6 +161,10 @@ on port 4100 with its own database under `tmp/e2e/`, so it never meets the dev s
 - Deletes leave no tombstone, so an `add` for a shape that arrives after its delete brings the
   shape back. One socket delivers a client's messages in order, so it takes a client that
   resends an old `add`.
+- Shapes drawn while the connection is down are lost: the push fails, and the resync on
+  reconnect replaces the board with the server's copy.
+- A remote cursor stays where it last was until its person leaves the board.
+- A pen stroke stops growing at 2,000 points, which a long scribble reaches in under a minute.
 - A board holds at most 2,000 shapes (`max_shapes` in `config/config.exs`); an add past that
   gets `ok: false`. There is no server-side rate limit: the client sends its cursor at most 20
   times a second, but the server does not enforce that.
