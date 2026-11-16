@@ -11,7 +11,8 @@ defmodule Mix.Tasks.Koans do
 
   @results_dir "_build/koans_results"
   @max_type_errors 5
-  @machine_error ~r/^\d+ ERROR "([^"]+)" (\d+):(\d+) "(.*)"$/
+  @machine_line ~r/^\d+ (ERROR|WARNING) ("(?:[^"\\]|\\.)*") (\d+):(\d+) ("(?:[^"\\]|\\.)*")$/
+  @compiler_warning ~r/^\s*warning: /
 
   @impl Mix.Task
   def run(_args) do
@@ -22,14 +23,16 @@ defmodule Mix.Tasks.Koans do
     total = Koans.Footer.total(ex_dir) + Koans.Footer.ts_total(ts_dir)
 
     clear_results()
-    tree |> type_check() |> report_type_errors()
+    %{errors: errors, warnings: type_warnings} = type_check(tree)
+    report_type_errors(errors)
     if total == 0, do: stop("No koans found: nothing to answer.")
-    run_step("mix", ["test"], "ex.jsonl")
+    ex_output = run_step("mix", ["test"], "ex.jsonl")
     run_step(command("KOANS_NPM", "npm"), ["test"], "ts.jsonl")
 
     records = Koans.Results.read(@results_dir)
     footer = Koans.Results.footer(records, total)
 
+    report_warnings(type_warnings ++ compiler_warnings(ex_output))
     Mix.shell().info(footer)
     unless enlightened?(records, total), do: exit({:shutdown, 1})
   end
@@ -59,38 +62,71 @@ defmodule Mix.Tasks.Koans do
     end
   end
 
+  # --no keeps npx from downloading svelte-check when node_modules is incomplete.
   defp type_check(tree) do
-    args = ["svelte-check", "--tsconfig", Path.join(tree, "tsconfig.json"), "--output", "machine"]
+    unless File.dir?("node_modules"), do: stop("node_modules/ is missing: run mix setup")
+    config = Path.join(tree, "tsconfig.json")
+    args = ["--no", "--", "svelte-check", "--tsconfig", config, "--output", "machine"]
     {output, status} = run_command(command("KOANS_NPX", "npx"), args, [])
 
-    errors =
+    problems =
       output
       |> String.split("\n", trim: true)
-      |> Enum.flat_map(&Regex.scan(@machine_error, &1, capture: :all_but_first))
+      |> Enum.flat_map(&Regex.scan(@machine_line, &1, capture: :all_but_first))
+      |> Enum.map(&type_problem/1)
+
+    errors = for {"ERROR", line} <- problems, do: line
+    warnings = for {"WARNING", line} <- problems, do: line
 
     if errors == [] and status != 0 do
       stop("Type check could not run (exit #{status}):\n#{output}")
     end
 
-    errors
+    %{errors: errors, warnings: warnings}
+  end
+
+  defp type_problem([kind, file, line, col, message]) do
+    [first | rest] = message |> JSON.decode!() |> String.split("\n")
+    continued = Enum.map(rest, &("\n      " <> &1))
+    {kind, "  #{JSON.decode!(file)}:#{line}:#{col}  #{first}#{continued}"}
   end
 
   defp report_type_errors([]), do: :ok
 
   defp report_type_errors(errors) do
-    lines =
-      errors
-      |> Enum.take(@max_type_errors)
-      |> Enum.map(fn [file, line, col, message] -> "  #{file}:#{line}:#{col}  #{message}" end)
+    stop("Type check failed:\n" <> Enum.join(Enum.take(errors, @max_type_errors), "\n"))
+  end
 
-    stop("Type check failed:\n" <> Enum.join(lines, "\n"))
+  defp compiler_warnings(output) do
+    output
+    |> String.split("\n")
+    |> Enum.reduce({[], nil}, &collect_warning/2)
+    |> then(fn {blocks, open} -> Enum.reverse(close_block(blocks, open)) end)
+  end
+
+  defp collect_warning(line, {blocks, open}) do
+    cond do
+      Regex.match?(@compiler_warning, line) -> {close_block(blocks, open), [line]}
+      open && String.trim(line) != "" -> {blocks, [line | open]}
+      true -> {close_block(blocks, open), nil}
+    end
+  end
+
+  defp close_block(blocks, nil), do: blocks
+  defp close_block(blocks, open), do: [open |> Enum.reverse() |> Enum.join("\n") | blocks]
+
+  defp report_warnings([]), do: :ok
+
+  defp report_warnings(warnings) do
+    heading = "Warnings (the exported CI treats these as errors):"
+    Mix.shell().info(Enum.join([heading | warnings], "\n") <> "\n")
   end
 
   defp command(env_var, default), do: System.get_env(env_var, default)
 
   defp run_command(command, args, env) do
     case System.find_executable(command) do
-      nil -> stop("#{command} not found: run mix setup")
+      nil -> stop("#{command} not found: install Node 24.15 or later (see Setup)")
       path -> System.cmd(path, args, env: env, stderr_to_stdout: true)
     end
   end
@@ -113,6 +149,8 @@ defmodule Mix.Tasks.Koans do
       Mix.shell().info(output)
       exit({:shutdown, 1})
     end
+
+    output
   end
 
   defp enlightened?(records, total) do

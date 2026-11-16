@@ -95,6 +95,23 @@ defmodule Verify.KoansTaskTest do
     refute output =~ "Enlightenment"
   end
 
+  test "warnings_print_above_the_footer_without_stopping_the_run" do
+    {output, status} = koans("warnings")
+    svelte_file = "#{@fixtures}/warnings/assets/koans/start.svelte"
+
+    assert status == 0, output
+
+    assert [_, after_heading] =
+             String.split(output, "Warnings (the exported CI treats these as errors):\n")
+
+    assert after_heading =~
+             ~r/^  #{Regex.escape(svelte_file)}:3:\d+  This reference only captures/m
+
+    assert after_heading =~ ~r/warning: variable "unused" is unused/
+    assert after_heading =~ ~r/-+ Enlightenment -+/
+    refute after_heading =~ "\\n", "type messages print decoded, not JSON-escaped"
+  end
+
   test "type_gate_fails_closed_when_svelte_check_cannot_run" do
     File.mkdir_p!(@results)
     File.write!(results_file("ex.jsonl"), "stale\n")
@@ -120,7 +137,7 @@ defmodule Verify.KoansTaskTest do
       {output, status} = koans("enlightenment", [{var, "no-such-#{name}"}])
 
       assert status == 1, output
-      assert output =~ "no-such-#{name} not found: run mix setup", output
+      assert output =~ "no-such-#{name} not found: install Node 24.15 or later", output
       refute output =~ "** (", output
     end
   end
