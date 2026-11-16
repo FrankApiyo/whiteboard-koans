@@ -98,6 +98,8 @@ defmodule Easel.ShapesTest do
     test "malformed pen points" do
       assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1, 2, 3]]}))
       assert {:error, _} = Shapes.cast(payload("pen", %{"points" => []}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[1, nil]]}))
+      assert {:error, _} = Shapes.cast(payload("pen", %{"points" => [[nil, 1]]}))
     end
 
     test "missing key" do

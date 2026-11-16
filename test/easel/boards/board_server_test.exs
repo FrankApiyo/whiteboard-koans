@@ -36,15 +36,25 @@ defmodule Easel.Boards.BoardServerTest do
     assert [{^pid, _}] = Registry.lookup(Easel.Boards.Registry, board.slug)
   end
 
+  test "ensure_started finds a running board without asking the supervisor", %{board: board} do
+    {:ok, pid} = BoardServer.ensure_started(board.slug)
+    supervisor = Process.whereis(Easel.Boards.BoardSupervisor)
+    on_exit(fn -> :sys.resume(supervisor) end)
+    :ok = :sys.suspend(supervisor)
+
+    assert Task.await(Task.async(fn -> BoardServer.ensure_started(board.slug) end)) == {:ok, pid}
+  end
+
   test "start loads saved shapes and announces the restart", %{board: board} do
-    shape_fixture(board, z: 2, client_id: "b")
-    shape_fixture(board, z: 0, client_id: "a")
+    # Key order would put "a" first; only a sort by z puts "b" there.
+    shape_fixture(board, z: 2, client_id: "a")
+    shape_fixture(board, z: 0, client_id: "b")
     Boards.subscribe(board.slug)
 
     {:ok, _pid} = BoardServer.ensure_started(board.slug)
 
     assert_receive :board_restarted
-    assert [%{id: "a", z: 0}, %{id: "b", z: 2}] = BoardServer.snapshot(board.slug)
+    assert [%{id: "b", z: 0}, %{id: "a", z: 2}] = BoardServer.snapshot(board.slug)
   end
 
   test "an applied op is broadcast and an ignored op is not", %{board: board} do
@@ -56,6 +66,18 @@ defmodule Easel.Boards.BoardServerTest do
 
     assert BoardServer.apply_op(board.slug, {:delete, Ecto.UUID.generate()}) == :ignored
     refute_receive {:board_op, _, _}
+  end
+
+  test "a full board ignores new shapes but still replaces known ones", %{board: board} do
+    start_supervised!({BoardServer, slug: board.slug, max_shapes: 2})
+    first = rect()
+    second = rect(%{id: Ecto.UUID.generate()})
+
+    assert BoardServer.apply_op(board.slug, {:add, first}) == :ok
+    assert BoardServer.apply_op(board.slug, {:add, second}) == :ok
+    assert BoardServer.apply_op(board.slug, {:add, rect(%{id: Ecto.UUID.generate()})}) == :ignored
+    assert BoardServer.apply_op(board.slug, {:add, %{first | x: 70}}) == :ok
+    assert [%{id: @id, x: 70}, %{}] = BoardServer.snapshot(board.slug)
   end
 
   test "get_shape returns the shape or nil", %{board: board} do
@@ -139,8 +161,9 @@ defmodule Easel.Boards.BoardServerTest do
 
     Process.exit(pid, :kill)
 
+    # No call before the announce, so only the supervisor's restart can send it.
+    assert_receive :board_restarted, 1_000
     assert [%{id: @id}] = BoardServer.snapshot(board.slug)
-    assert_receive :board_restarted
     refute BoardServer.ensure_started(board.slug) == {:ok, pid}
   end
 

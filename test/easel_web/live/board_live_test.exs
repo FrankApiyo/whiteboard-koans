@@ -164,6 +164,8 @@ defmodule EaselWeb.BoardLiveTest do
         {"shape:add", %{@rect | "x" => 5000}},
         {"shape:add", %{@rect | "color" => "#000000"}},
         {"shape:add", Map.put(pen, "points", List.duplicate([1, 1], 2001))},
+        {"shape:add", Map.put(pen, "points", [[1, nil]])},
+        {"shape:add", Map.put(pen, "points", [[nil, 1]])},
         {"shape:add", Map.delete(@rect, "w")},
         {"shape:move", %{"id" => unknown, "x" => 1, "y" => 1}},
         {"shape:move", %{"id" => @id, "x" => 1.5, "y" => 1}},
@@ -207,9 +209,8 @@ defmodule EaselWeb.BoardLiveTest do
       sync_id = props(view)["sync_id"]
 
       Process.exit(server(board), :kill)
-      BoardServer.snapshot(board.slug)
 
-      refute props(view)["sync_id"] == sync_id
+      eventually(fn -> props(view)["sync_id"] != sync_id end)
     end
   end
 

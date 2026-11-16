@@ -95,6 +95,21 @@ defmodule Easel.BoardsTest do
       assert_raise Exqlite.Error, fn -> Boards.save_shapes(board, [rect, rect]) end
       assert length(Boards.load_shapes(board)) == 1
     end
+
+    test "a failure in a later chunk rolls back the earlier chunks" do
+      board = board_fixture()
+      original = shape_fixture(board)
+      # More rows than one statement holds at any legal chunk size; the duplicate lands last.
+      count = div(32_766, 6) + 1
+
+      rects =
+        for n <- 1..count,
+            do: %{id: "r#{n}", kind: "rect", color: "#e03131", z: n, x: 0, y: 0, w: 1, h: 1}
+
+      assert_raise Exqlite.Error, fn -> Boards.save_shapes(board, rects ++ [hd(rects)]) end
+      assert [%{id: id}] = Boards.load_shapes(board)
+      assert id == original.client_id
+    end
   end
 
   test "broadcast_op reaches subscribers of the board topic" do

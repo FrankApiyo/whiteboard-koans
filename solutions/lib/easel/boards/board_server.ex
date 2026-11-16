@@ -13,11 +13,19 @@ defmodule Easel.Boards.BoardServer do
   end
 
   def ensure_started(slug) do
-    case DynamicSupervisor.start_child(Easel.Boards.BoardSupervisor, {__MODULE__, slug: slug}) do
-      {:ok, pid} -> {:ok, pid}
-      {:error, {:already_started, pid}} -> {:ok, pid}
-      :ignore -> {:error, :not_found}
-      {:error, reason} -> {:error, reason}
+    case GenServer.whereis(via(slug)) do
+      pid when is_pid(pid) ->
+        {:ok, pid}
+
+      nil ->
+        child = {__MODULE__, slug: slug}
+
+        case DynamicSupervisor.start_child(Easel.Boards.BoardSupervisor, child) do
+          {:ok, pid} -> {:ok, pid}
+          {:error, {:already_started, pid}} -> {:ok, pid}
+          :ignore -> {:error, :not_found}
+          {:error, reason} -> {:error, reason}
+        end
     end
   end
 
@@ -59,6 +67,7 @@ defmodule Easel.Boards.BoardServer do
       dirty?: false,
       save_after: Keyword.fetch!(opts, :save_after),
       idle_after: Keyword.fetch!(opts, :idle_after),
+      max_shapes: Keyword.fetch!(opts, :max_shapes),
       idle_ref: nil,
       idle_timer: nil
     }
@@ -71,6 +80,15 @@ defmodule Easel.Boards.BoardServer do
 
   def handle_call({:get_shape, id}, _from, state) do
     {:reply, Map.get(state.shapes, id), state}
+  end
+
+  def handle_call(
+        {:apply_op, {:add, %{id: id}}},
+        _from,
+        %{shapes: shapes, max_shapes: max} = state
+      )
+      when map_size(shapes) >= max and not is_map_key(shapes, id) do
+    {:reply, :ignored, reset_idle_timer(state)}
   end
 
   def handle_call({:apply_op, op}, _from, state) do

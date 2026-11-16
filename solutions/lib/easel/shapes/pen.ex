@@ -31,9 +31,12 @@ defmodule Easel.Shapes.Pen do
 
   defp validate_pairs(changeset) do
     validate_change(changeset, :points, fn :points, points ->
-      if Enum.all?(points, &match?([_, _], &1)), do: [], else: [points: "must be [dx, dy] pairs"]
+      if Enum.all?(points, &integer_pair?/1), do: [], else: [points: "must be [dx, dy] pairs"]
     end)
   end
+
+  defp integer_pair?([dx, dy]), do: is_integer(dx) and is_integer(dy)
+  defp integer_pair?(_point), do: false
 
   defp extent(%{x: x, y: y, points: points}) do
     dxs = [0 | Enum.map(points, &hd/1)]

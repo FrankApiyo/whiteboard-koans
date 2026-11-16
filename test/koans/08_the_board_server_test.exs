@@ -146,14 +146,26 @@ defmodule Koans.Ch08.TheBoardServerTest do
     assert BoardServer.start_link(slug: board.slug) == {:error, {:already_started, pid}}
   end
 
-  koan "Implement ensure_started/1 so it starts a board's server under Easel.Boards.BoardSupervisor, hands back the one already running, and answers {:error, :not_found} for a slug with no board. 1. Ask DynamicSupervisor.start_child/2 for a {BoardServer, slug: slug} child. 2. Count an already started server as {:ok, pid}. 3. Turn :ignore into {:error, :not_found}." do
+  koan "Implement ensure_started/1 so it hands back a board's running server without asking the supervisor, starts one under Easel.Boards.BoardSupervisor when none runs, and answers {:error, :not_found} for a slug with no board. 1. Look the via name up with GenServer.whereis/1; a pid is {:ok, pid}. 2. On nil, ask DynamicSupervisor.start_child/2 for a {BoardServer, slug: slug} child. 3. Count an already started server as {:ok, pid}: another caller can start it between your lookup and your start. 4. Turn :ignore into {:error, :not_found}." do
     board = board_fixture()
+    supervisor = Process.whereis(Easel.Boards.BoardSupervisor)
 
     assert {:ok, pid} = BoardServer.ensure_started(board.slug)
-    assert BoardServer.ensure_started(board.slug) == {:ok, pid}
-    children = DynamicSupervisor.which_children(Easel.Boards.BoardSupervisor)
+    children = DynamicSupervisor.which_children(supervisor)
     assert {:undefined, pid, :worker, [BoardServer]} in children
     assert BoardServer.ensure_started("no-such-board") == {:error, :not_found}
+
+    # A suspended supervisor answers no one, so only the lookup can answer a running board.
+    on_exit(fn -> :sys.resume(supervisor) end)
+    :ok = :sys.suspend(supervisor)
+    assert Task.await(Task.async(fn -> BoardServer.ensure_started(board.slug) end)) == {:ok, pid}
+
+    other = board_fixture()
+    starting = Task.async(fn -> BoardServer.ensure_started(other.slug) end)
+    eventually(fn -> queued(supervisor) == 1 end)
+    rival = start_supervised!({BoardServer, slug: other.slug})
+    :ok = :sys.resume(supervisor)
+    assert Task.await(starting) == {:ok, rival}
   end
 
   koan "Implement call/2 and the :snapshot clause of handle_call/3 so snapshot/1 answers the shapes lowest z first, even after the server has stopped. A board can stop between the lookup and the call, so the call starts it again. 1. In call/2, GenServer.call the via name; when that exits with {:noproc, _}, run ensure_started/1, match {:ok, _} so a real start error crashes loudly, and call once more; a slug with no board raises. 2. Answer :snapshot with {:reply, shapes, state}." do

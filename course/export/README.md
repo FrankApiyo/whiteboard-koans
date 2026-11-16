@@ -161,8 +161,9 @@ on port 4100 with its own database under `tmp/e2e/`, so it never meets the dev s
 - Deletes leave no tombstone, so an `add` for a shape that arrives after its delete brings the
   shape back. One socket delivers a client's messages in order, so it takes a client that
   resends an old `add`.
-- There is no per-board shape cap and no server-side rate limit. The client sends its cursor at
-  most 20 times a second, but the server does not enforce that.
+- A board holds at most 2,000 shapes (`max_shapes` in `config/config.exs`); an add past that
+  gets `ok: false`. There is no server-side rate limit: the client sends its cursor at most 20
+  times a second, but the server does not enforce that.
 
 ## Working on it
 

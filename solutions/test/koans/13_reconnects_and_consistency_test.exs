@@ -20,9 +20,9 @@ defmodule Koans.Ch13.ReconnectsAndConsistencyTest do
       def handle_info(:prices_reloaded, socket),
         do: {:noreply, assign(socket, prices: Prices.all(), version: Prices.version())}
 
-  One race is left: a client's ensure_started can race the DynamicSupervisor's restart of a
-  killed transient board. On one node the child's EXIT reaches the supervisor first, so it holds
-  here (a cluster would need more).
+  One race is left. ensure_started/1 looks a board up before it asks the supervisor, so only a
+  caller that has just seen the board die can race the DynamicSupervisor's restart of it;
+  closing that too would take restart: :temporary and call/2's retry alone.
 
       Write:          lib/easel/boards/board_server.ex:34  (Easel.Boards.BoardServer.announce_restart/1)
       Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:65
