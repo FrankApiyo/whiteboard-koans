@@ -256,7 +256,7 @@ defmodule Verify.LessonsTest do
 
     test "the mornings table counts every chapter's koans" do
       rows = morning_rows()
-      assert length(rows) == 6
+      assert length(rows) == 7
 
       table =
         Map.new(Enum.flat_map(rows, &elem(&1, 0)), fn {nn, n} -> {nn, String.to_integer(n)} end)

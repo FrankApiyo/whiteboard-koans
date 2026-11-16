@@ -8,10 +8,10 @@ Fill the blanks, run, read the next meditation. When the last koan passes you ha
 Easel, and `mix easel.export` turns it into a clean repo of your own that you can show
 employers.
 
-There are 145 koans in 15 chapters, planned as six mornings of two hours: TypeScript for this
-app, Svelte, the board on the server (live_svelte, the database, a GenServer per board),
-talking to the browser, many people at once (PubSub, Presence, cursors), and finishing
-(reconnects and the app's own tests).
+There are 145 koans in 15 chapters, planned as seven mornings of two to three hours: TypeScript
+for this app, Svelte, drawing on a canvas, the board on the server (live_svelte, the database, a
+GenServer per board), talking to the browser, many people at once (PubSub, Presence, cursors),
+and finishing (reconnects and the app's own tests).
 
 ## Setup
 
@@ -167,16 +167,17 @@ blanks everywhere; `:copen` shows them:
 
 Chapter 00 teaches all of this with two tiny functions, one per language.
 
-## The six mornings
+## The seven mornings
 
 | Morning | Chapters (koans) | Koans |
 | ------- | ---------------- | ----- |
 | 1 | 00 about koans (3), 01 typescript basics (12), 02 modelling shapes (10) | 25 |
-| 2 | 03 components and runes (12), 04 effects bindings and the toolbar (10), 05 drawing on a canvas (10) | 32 |
-| 3 | 06 live svelte (10), 07 boards and shapes in the database (10), 08 the board server (12) | 32 |
-| 4 | 09 client to server (10), 10 server to client (8) | 18 |
-| 5 | 11 pubsub fan out (10), 12 presence and cursors (10) | 20 |
-| 6 | 13 reconnects and consistency (8), 14 testing the whole thing (10) | 18 |
+| 2 | 03 components and runes (12), 04 effects bindings and the toolbar (10) | 22 |
+| 3 | 05 drawing on a canvas (10), 06 live svelte (10) | 20 |
+| 4 | 07 boards and shapes in the database (10), 08 the board server (12) | 22 |
+| 5 | 09 client to server (10), 10 server to client (8) | 18 |
+| 6 | 11 pubsub fan out (10), 12 presence and cursors (10) | 20 |
+| 7 | 13 reconnects and consistency (8), 14 testing the whole thing (10) | 18 |
 
 Value koans take about a minute. Code koans take five to fifteen. If a morning runs long, stop at
 a chapter boundary. At most six of a morning's code blanks, counting both languages, are larger
