@@ -22,9 +22,11 @@ defmodule Koans.Gen.Project do
 
       case check(root, files) do
         [] ->
-          written = write_sides(root, selected(files, only), [:learner, :solutions])
+          files = selected(files, only)
+          backed_up = back_up_learner(root, files)
+          written = write_sides(root, files, [:learner, :solutions])
           write_tsconfig(side_root(root, :solutions))
-          {:ok, length(written)}
+          {:ok, length(written), backed_up}
 
         errors ->
           {:error, errors}
@@ -34,17 +36,28 @@ defmodule Koans.Gen.Project do
 
   def write_learner(root) do
     with :ok <- ensure_source(root) do
-      changed =
-        for file <- source_files(root),
-            content = content(file, :learner),
-            File.read(Path.join(root, file.rel)) != {:ok, content},
-            do: {file.rel, content}
-
+      changed = learner_changes(root, source_files(root))
       rels = Enum.map(changed, &elem(&1, 0))
       :ok = Koans.Gen.Backup.save(root, rels)
       Enum.each(changed, fn {rel, content} -> write_file!(Path.join(root, rel), content) end)
       {:ok, rels}
     end
+  end
+
+  # A learner's answers live in the files generation rewrites, so they are copied aside first.
+  defp back_up_learner(root, files) do
+    rels = for {rel, _content} <- learner_changes(root, files), existing?(root, rel), do: rel
+    :ok = Koans.Gen.Backup.save(root, rels)
+    rels
+  end
+
+  defp existing?(root, rel), do: File.regular?(Path.join(root, rel))
+
+  defp learner_changes(root, files) do
+    for file <- files,
+        content = content(file, :learner),
+        File.read(Path.join(root, file.rel)) != {:ok, content},
+        do: {file.rel, content}
   end
 
   def koan_chapters(root) do

@@ -16,8 +16,12 @@ defmodule Mix.Tasks.Koans.Gen do
     only = opts |> Keyword.get(:only) |> parse_only()
 
     case Koans.Gen.write_all(root, only) do
-      {:ok, count} ->
+      {:ok, count, []} ->
         Mix.shell().info("wrote #{count} files")
+
+      {:ok, count, backed_up} ->
+        Mix.shell().info("wrote #{count} files, replacing #{length(backed_up)} learner files")
+        Mix.shell().info(Koans.Gen.Backup.notice())
 
       {:error, :no_source} ->
         Mix.raise("no source/ directory under #{root}")

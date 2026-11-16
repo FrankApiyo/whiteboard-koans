@@ -3,8 +3,6 @@ defmodule Koans.Gen.Backup do
 
   @dir ".koans/last-reset"
 
-  def dir, do: @dir
-
   @doc """
   Copies the files at `rels` under `root` into the backup directory, replacing
   whatever an earlier reset left there. A file that does not exist yet is skipped.
@@ -25,6 +23,6 @@ defmodule Koans.Gen.Backup do
   end
 
   def notice do
-    "The files as they were before are in #{@dir}/ until the next reset."
+    "The files as they were before are in #{@dir}/ until the next reset or koans.gen."
   end
 end

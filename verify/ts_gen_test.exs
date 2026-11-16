@@ -436,7 +436,7 @@ defmodule Verify.TsGenTest do
     test "write_all_writes_ts_trees", %{root: root} do
       seed(root)
 
-      assert {:ok, 20} = Gen.write_all(root)
+      assert {:ok, 20, _} = Gen.write_all(root)
 
       js = File.read!(Path.join(root, "assets/js/m.ts"))
       assert js =~ "  // >>> 09\n  __blank(\"09: nine ts\");\n  // <<< 09\n"
@@ -462,9 +462,9 @@ defmodule Verify.TsGenTest do
       refute File.exists?(Path.join(root, "assets/tsconfig.json"))
       assert {:error, :enoent} = File.lstat(Path.join(root, "solutions/assets/node_modules"))
 
-      assert {:ok, _} = Gen.write_all(root, ["10"])
+      assert {:ok, _, _} = Gen.write_all(root, ["10"])
       put(root, "assets/koans/09_t.test.ts", "// mine\n")
-      assert {:ok, 14} = Gen.write_all(root, ["10"])
+      assert {:ok, 14, _} = Gen.write_all(root, ["10"])
       assert File.read!(Path.join(root, "assets/koans/09_t.test.ts")) == "// mine\n"
     end
 
@@ -486,7 +486,7 @@ defmodule Verify.TsGenTest do
     test "a ts answer tag counts its chapter from assets/koans", %{root: root} do
       put(root, "source/lib/easel/m.ex", lib("04"))
       put(root, "source/assets/koans/04_t.test.ts", ts_koan("04"))
-      assert {:ok, 4} = Gen.write_all(root)
+      assert {:ok, 4, _} = Gen.write_all(root)
     end
 
     test "chapters_build_writes_verify_assets", %{root: root} do

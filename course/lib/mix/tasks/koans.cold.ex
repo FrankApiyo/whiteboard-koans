@@ -38,5 +38,6 @@ defmodule Mix.Tasks.Koans.Cold do
   defp report({:error, :no_source}, _chapter, root),
     do: Mix.raise("no source/ directory under #{root}")
 
-  defp report({:error, :no_chapter}, chapter, _root), do: Mix.raise("no chapter #{chapter}")
+  defp report({:error, :no_chapter}, chapter, root),
+    do: Mix.raise(Koans.Gen.Reset.no_chapter(root, chapter))
 end

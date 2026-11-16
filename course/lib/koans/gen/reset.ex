@@ -8,6 +8,16 @@ defmodule Koans.Gen.Reset do
     with {:ok, plan} <- plan(root, chapter), do: {:ok, apply_plan(root, plan)}
   end
 
+  def no_chapter(root, chapter) do
+    case root |> Project.koan_chapters() |> Enum.sort() do
+      [] ->
+        "no chapter #{chapter}"
+
+      chapters ->
+        "no chapter #{chapter}: chapters are two digits, #{hd(chapters)} to #{List.last(chapters)}"
+    end
+  end
+
   def cold(root, chapter) do
     with :ok <- ensure_source(root),
          {:ok, koans} <- koan_files(root, chapter) do

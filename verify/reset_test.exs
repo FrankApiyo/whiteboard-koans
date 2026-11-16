@@ -388,6 +388,10 @@ defmodule Verify.ResetTest do
       assert_raise Mix.Error, ~r/no chapter 42/, fn ->
         Mix.Tasks.Koans.Reset.run(["42", "--root", root])
       end
+
+      assert_raise Mix.Error, ~r/no chapter 7: chapters are two digits, \d\d to \d\d/, fn ->
+        Mix.Tasks.Koans.Reset.run(["7", "--root", root])
+      end
     end
 
     test "reset without source raises a clear message" do

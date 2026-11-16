@@ -502,7 +502,7 @@ defmodule Verify.GenTest do
       put(root, "source/lib/easel/plain.ex", "defmodule Easel.Plain do\nend\n")
       put(root, "source/test/support/helper.ex", "defmodule Easel.Helper do\nend\n")
 
-      assert {:ok, 8} = Gen.write_all(root)
+      assert {:ok, 8, _} = Gen.write_all(root)
       assert File.read!(Path.join(root, "test/koans/07_a_test.exs")) =~ "assert 1 == __"
       assert File.read!(Path.join(root, "solutions/test/koans/07_a_test.exs")) =~ "assert 1 == 1"
 
@@ -521,12 +521,27 @@ defmodule Verify.GenTest do
       end
     end
 
+    test "a learner file it replaces is backed up first", %{root: root} do
+      put(root, "source/test/koans/07_a_test.exs", koan_file("07"))
+      put(root, "source/lib/easel/notes.ex", lib_file())
+      assert {:ok, 4, []} = Gen.write_all(root)
+
+      answered =
+        String.replace(File.read!(Path.join(root, "lib/easel/notes.ex")), ~s|__("07: one")|, "1")
+
+      put(root, "lib/easel/notes.ex", answered)
+
+      assert {:ok, 4, ["lib/easel/notes.ex"]} = Gen.write_all(root)
+      assert File.read!(Path.join(root, ".koans/last-reset/lib/easel/notes.ex")) == answered
+      assert File.read!(Path.join(root, "lib/easel/notes.ex")) =~ ~s|__("07: one")|
+    end
+
     test "only limits koan files and writes lib whole", %{root: root} do
       put(root, "source/test/koans/07_a_test.exs", koan_file("07"))
       put(root, "source/test/koans/09_b_test.exs", koan_file("09"))
       put(root, "source/lib/easel/notes.ex", lib_file())
 
-      assert {:ok, 4} = Gen.write_all(root, ["09"])
+      assert {:ok, 4, _} = Gen.write_all(root, ["09"])
       refute File.exists?(Path.join(root, "test/koans/07_a_test.exs"))
       assert File.exists?(Path.join(root, "test/koans/09_b_test.exs"))
       assert File.exists?(Path.join(root, "lib/easel/notes.ex"))

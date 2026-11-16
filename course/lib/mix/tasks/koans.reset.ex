@@ -41,7 +41,7 @@ defmodule Mix.Tasks.Koans.Reset do
       {:ok, []} -> Mix.shell().info("chapter #{chapter} was already blank")
       {:ok, changed} -> Mix.shell().info(report("reset chapter #{chapter}", changed))
       {:error, :no_source} -> Mix.raise("no source/ directory under #{root}")
-      {:error, :no_chapter} -> Mix.raise("no chapter #{chapter}")
+      {:error, :no_chapter} -> Mix.raise(Koans.Gen.Reset.no_chapter(root, chapter))
       {:error, message} -> Mix.raise(message)
     end
   end
