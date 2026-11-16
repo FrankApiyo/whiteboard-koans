@@ -85,6 +85,12 @@
     align-items: start;
   }
 
+  @media (max-width: 40rem) {
+    .main {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .stage {
     position: relative;
     border: 1px solid #dee2e6;

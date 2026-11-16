@@ -8,7 +8,9 @@ defmodule EaselWeb.BoardLive do
   @impl true
   def mount(%{"slug" => slug}, _session, socket) do
     board = Boards.get_board_by_slug!(slug)
-    socket = assign(socket, board: board, shapes: [], sync_id: 0, people: [])
+
+    socket =
+      assign(socket, board: board, page_title: board.title, shapes: [], sync_id: 0, people: [])
 
     if connected?(socket) do
       {:ok, join(socket, slug)}
@@ -34,7 +36,7 @@ defmodule EaselWeb.BoardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} wide>
       <.header>{@board.title}</.header>
       <%!-- >>> answer 06: the Board component and its props --%>
       <.svelte name="Board" props={svelte_props(assigns)} socket={@socket} />
@@ -56,6 +58,7 @@ defmodule EaselWeb.BoardLive do
       {:ok, shape} -> {:reply, run_op(socket, {:add, shape}, shape.id), socket}
       {:error, _changeset} -> {:reply, rejected(socket, payload), socket}
     end
+
     # <<<
   end
 
@@ -65,6 +68,7 @@ defmodule EaselWeb.BoardLive do
       {:ok, %{id: id, x: x, y: y}} -> {:reply, run_op(socket, {:move, id, x, y}, id), socket}
       :error -> {:reply, rejected(socket, payload), socket}
     end
+
     # <<<
   end
 
@@ -125,6 +129,7 @@ defmodule EaselWeb.BoardLive do
     for {tab, %{metas: [meta | _]}} <- Presence.list(Boards.topic(slug)) do
       %{tab: tab, name: meta.name, color: meta.color}
     end
+
     # <<<
   end
 

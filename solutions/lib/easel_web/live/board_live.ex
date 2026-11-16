@@ -8,7 +8,9 @@ defmodule EaselWeb.BoardLive do
   @impl true
   def mount(%{"slug" => slug}, _session, socket) do
     board = Boards.get_board_by_slug!(slug)
-    socket = assign(socket, board: board, shapes: [], sync_id: 0, people: [])
+
+    socket =
+      assign(socket, board: board, page_title: board.title, shapes: [], sync_id: 0, people: [])
 
     if connected?(socket) do
       {:ok, join(socket, slug)}
@@ -34,7 +36,7 @@ defmodule EaselWeb.BoardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} wide>
       <.header>{@board.title}</.header>
       <.svelte name="Board" props={svelte_props(assigns)} socket={@socket} />
     </Layouts.app>

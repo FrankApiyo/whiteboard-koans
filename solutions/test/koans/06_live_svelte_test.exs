@@ -26,7 +26,7 @@ defmodule Koans.Ch06.LiveSvelteTest do
   stays a build tool. So the div's inner target holds no component markup, its text only
   whitespace, "" once trimmed, and :ssr is false, until the hook mounts the component.
 
-      Write:          lib/easel_web/live/board_live.ex:43  (EaselWeb.BoardLive.render/1)
+      Write:          lib/easel_web/live/board_live.ex:45  (EaselWeb.BoardLive.render/1)
       Exercised by:   test/koans/06_live_svelte_test.exs:71
 
   API you'll use
