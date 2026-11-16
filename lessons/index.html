@@ -41,13 +41,13 @@ figure svg { display: block; max-width: 100%; height: auto; border: 1px solid va
 <li><a href="#ch03">03 Components and runes</a></li>
 <li><a href="#ch04">04 Effects, bindings and the toolbar</a></li>
 <li><a href="#ch05">05 Drawing on a canvas</a></li>
-<li><a href="#ch06">06 live_svelte inside a LiveView</a></li>
-<li><a href="#ch07">07 Boards and shapes in tables</a></li>
+<li><a href="#ch06">06 Svelte inside a LiveView</a></li>
+<li><a href="#ch07">07 Boards and shapes in SQLite</a></li>
 <li><a href="#ch08">08 One process per board</a></li>
 <li><a href="#ch09">09 Browser to server and back</a></li>
 <li><a href="#ch10">10 Server to browser</a></li>
 <li><a href="#ch11">11 Every change reaches every viewer</a></li>
-<li><a href="#ch12">12 Cursors follow the people here</a></li>
+<li><a href="#ch12">12 Who is here, and where</a></li>
 <li><a href="#ch13">13 Every browser converges</a></li>
 <li><a href="#ch14">14 Testing at three heights</a></li>
 </ol>
@@ -61,7 +61,7 @@ figure svg { display: block; max-width: 100%; height: auto; border: 1px solid va
 </ul>
 <p>Easel is a shared whiteboard, and the koans build it in two languages: TypeScript and Svelte koans in assets/koans/ run under Vitest, Elixir koans in test/koans/ run under ExUnit. One command runs both:</p>
 <pre>mix koans</pre>
-<p>It stops at the earliest koan you have not answered, TypeScript before Elixir within a chapter, and prints a footer for it. A value blank is a bare __ inside a koan. A code blank is a __blank("NN: tag") line in assets/js/ or assets/svelte/, between two marker lines that name its chapter: replace that line with your code and keep the markers. Its footer names two places:</p>
+<p>It stops at the earliest koan you have not answered, TypeScript before Elixir within a chapter, and prints a footer for it. A value blank is a bare __ inside a koan. A code blank is a __blank("NN: tag") line in assets/js/, assets/svelte/ or assets/koans/drills/, between two marker lines that name its chapter: replace that line with your code and keep the markers. Its footer names two places:</p>
 <pre>Write:          assets/js/hello.ts:3  (00: greet)
 Exercised by:   assets/koans/00_about_koans.test.ts:35</pre>
 <p>Write: is where your code goes, with the blank's tag. Exercised by: is the koan that ran it.</p>
@@ -75,17 +75,17 @@ Exercised by:   assets/koans/00_about_koans.test.ts:35</pre>
 </ul>
 <p>The Elixir half of the course. Elixir code blanks live in lib/ and test/support/ and work as in the Phoenix course: replace the __(...) line with code and keep the marker lines.</p>
 <pre># &gt;&gt;&gt; 07
-__("07: list boards newest first")
+__("07: the boards with these slugs")
 # &lt;&lt;&lt; 07</pre>
 <p>Every tag starts with its chapter, in both languages, so one :vimgrep lists a chapter's blanks everywhere (:copen shows them):</p>
-<pre>:vimgrep /__("07\|__blank("07/ lib/** assets/**</pre>
+<pre>:vimgrep /__("07\|__blank("07/ lib/** test/support/** assets/**</pre>
 <p>An Elixir footer names the function a blank belongs to, where TypeScript names the tag:</p>
 <pre>Write:          lib/easel/hello.ex:9  (Easel.Hello.greet/1)
 Exercised by:   test/koans/00_about_koans_test.exs:46</pre>
-<p>Some blanks have a default, as in __("11: subscribe", :ok) or __blank("10: listen", () =&gt; {}). Until you fill one it returns the default, so the app keeps working, and it fails only koans of its own chapter, with the same footer.</p>
+<p>Some blanks have a default, as in __("11: subscribe to the board's topic", :ok). Until you fill one it returns the default, so the app keeps working, and it fails only koans of its own chapter, with the same footer.</p>
 <p>Run mix phx.server once and open localhost:4000. The name page works from the start; the board pages show a blank on Phoenix's debug page, which is the course talking, not a crash. After 08 you can create a board and open it, after 10 what you draw stays after a reload, and after 12 two windows draw together and list each other. Stop the server and go on.</p>
 <h3>API you'll use</h3>
-<pre>  - String.split/3: String.split("07: list boards", ": ", parts: 2) is ["07", "list boards"]</pre>
+<pre>  - String.split/3: String.split("a: b: c", ": ", parts: 2) is ["a", "b: c"]</pre>
 </section>
 
 <section class="chapter" id="ch01">
@@ -218,10 +218,10 @@ Exercised by:   assets/koans/02_modelling_shapes.test.ts:69</pre>
 <pre>interface Props { name: string; excited?: boolean }
 let { name, excited = false }: Props = $props()
 &lt;h1&gt;Hello, {name}{excited ? "!" : "."}&lt;/h1&gt;</pre>
-<p>That is the greeting drill: given name "Ada" it shows Hello, Ada. and excited: true ends it in !. let open = $state(false) is state the markup follows: assign to it and the page updates. $derived(expr) is computed from what it reads and always current; a copy made in an $effect lags until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 used export let, $:, on:click (now deprecated), slots and createEventDispatcher; Svelte 5 has runes, snippets.</p>
+<p>That is the greeting drill: given name "Ada" it shows Hello, Ada. and excited: true ends it in !. let open = $state(false) is state the markup follows: assign to it and the page updates. $derived(expr) is computed from what it reads; a copy made in an $effect lags until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 used export let, $:, on:click, slots and createEventDispatcher; Svelte 5 replaces them with runes, callback props and snippets.</p>
 <p>{#if cond}...{:else}...{/if} shows markup on a condition, and {#each items as item (item.id)} repeats it: the key in parentheses, (item.id), moves an item's element when the list is reordered. Svelte drops spaces at the start and end of a block's content, so {#if open} (open){/if} loses its space; keep it in a string: {" (open)"}. An event attribute takes a function, as in &lt;button onclick={() =&gt; (open = !open)}&gt;Toggle&lt;/button&gt;. A child calls a callback prop such as onpick to tell its parent; reassigning a prop only overrides it locally, and a bound one is declared with $bindable(). Svelte batches DOM updates: right after a click the counter drill, at Clicked 0 times, still shows the old text until flushSync() applies the update.</p>
-<pre>Write:          assets/koans/drills/03_counter.svelte:10  (03: count as state)
-Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:89</pre>
+<pre>Write:          assets/koans/drills/03_counter.svelte:8  (03: step from props)
+Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:93</pre>
 
 <h3>API you'll use</h3>
 <pre>  - render: const { rerender } = render(Greeting, { name: "Ada" }) mounts it in the page
@@ -233,7 +233,8 @@ Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:89</pre>
   - $props.id: const group = $props.id() is an id unique to each mounted instance
   - $effect.root: const stop = $effect.root(() =&gt; { ... }) hosts effects outside a component
   - style:background-color={c} sets one inline style; data-color={c} sets an attribute
-  - aria-label={c} names an element, so screen.getByRole("radio", { name: c }) finds it
+  - aria-label={label} names an element: screen.getByRole("radio", { name: "Mint" }) finds the
+    one labelled "Mint"; the given COLOR_NAMES in types.ts maps each palette colour to a name
   - Math.max: Math.max(a, b) is the larger of a and b
   - classes the blanks use: the radio "absolute inset-0 size-full cursor-pointer appearance-none
     opacity-0", invisible over its swatch; each dot "mr-1.5 inline-block size-2.5 rounded-full"</pre>
@@ -255,7 +256,7 @@ Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:89</pre>
   return () =&gt; clearTimeout(id)
 })</pre>
 <p>bind:value={name} ties an input to state both ways: typing sets name, and setting name changes the field. bind:this={field} stores the element once it is mounted, so read it in an effect. let name = $state(initial) reads initial once, and svelte-check warns state_referenced_locally. When a one-time seed is what you mean, say so: $state(untrack(() =&gt; initial)).</p>
-<p>$state proxies a plain object or array deeply, so a push inside it is seen. A Map, Set or class instance is not proxied, so its .set is never seen (svelte/reactivity has SvelteMap). $state.raw never proxies: only assigning a new value is seen. BoardState holds its shapes as a raw ReadonlyMap and always assigns a new one. $state.snapshot(x) is a plain copy of a proxy, for logging or structuredClone. In a koan, $effect.root(fn) hosts effects.</p>
+<p>$state proxies a plain object or array deeply, so a push inside it is seen. A Map, Set or class instance is not proxied, so its .set is never seen (svelte/reactivity has SvelteMap). $state.raw never proxies: only assigning a new value is seen. BoardState keeps its shapes in a raw ReadonlyMap; in a method, this is the instance, so this.shapes = next assigns a new one. $state.snapshot(x) is a plain copy of a proxy. In a koan, $effect.root(fn) hosts effects.</p>
 <pre>Write:          assets/js/board_state.svelte.ts:25  (04: add or replace one)
 Exercised by:   assets/koans/04_effects_bindings_and_the_toolbar.svelte.test.ts:160</pre>
 
@@ -354,7 +355,7 @@ ctx.stroke()</pre>
 <p>canvas.width sizes the bitmap and CSS sizes the box; it is sharp with devicePixelRatio bitmap pixels per CSS pixel (500 CSS pixels at dpr 3 want 1500). Easel's bitmap is the 1600 by 1000 board times dpr, scaled by CSS to fit. setTransform(a, b, c, d, e, f) maps later calls: a and d scale x and y, b and c skew, e and f shift. Setting canvas.width resets the context, so size first.</p>
 <p>tools.ts is a state machine: pointerDown, pointerMove and pointerUp take a ToolState and return a new one. idle becomes drawing (an origin and a growing draft) or dragging (a shape id and the grab offset); pointerUp goes back to idle with a commit, an add or a move, or null. On down, setPointerCapture(event.pointerId) sends its events here until pointerup or pointercancel.</p>
 <pre>Write:          assets/js/render.ts:28  (05: size the canvas)
-Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119</pre>
+Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:120</pre>
 
 <h3>API you'll use</h3>
 <pre>  - ctx.lineWidth, lineCap, lineJoin: lineCap is "butt", "round" or "square", lineJoin is
@@ -374,9 +375,10 @@ Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119</pre>
     height and a line or pen that never left its start; dragTarget(t, p) is { id, x, y }, where
     the shape goes: the pointer minus the grab offset, clamped; null unless dragging
   - topmostAt: topmostAt(shapes, p) from chapter 02 is the shape on top at p, or null
-  - drawSelection, holdGrabbed, followDrag: given; drawSelection(ctx, shapes, selectedId) boxes
-    the selected shape in dashes; holdGrabbed() marks the shape a drag holds and makes it the
-    selection, or none over empty board; followDrag(point) moves a dragged shape with the pointer
+  - drawSelection, holdGrabbed, followDrag, finish: given; drawSelection(ctx, shapes, selectedId)
+    boxes the selected shape in dashes; holdGrabbed() remembers the shape under a press and
+    selects it, or none over empty board; followDrag(point) moves a grabbed shape with the
+    pointer once it leaves its start; finish(commit) ends the gesture and hands on the commit
   - crypto.randomUUID: crypto.randomUUID() is a new random id like the fixtures' ID_A; a method
     passed on bare, like list.push, loses its object, so wrap it in an arrow
   - event.currentTarget: the element whose handler is running, here the canvas; an optional
@@ -443,7 +445,7 @@ Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119</pre>
 </section>
 
 <section class="chapter" id="ch06">
-<h2><span class="num">06</span> live_svelte inside a LiveView</h2>
+<h2><span class="num">06</span> Svelte inside a LiveView</h2>
 <h3 class="kind">TypeScript and Svelte</h3>
 <h3>Files this chapter touches</h3>
 <ul class="files">
@@ -451,7 +453,7 @@ Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119</pre>
 <li><code>list</code></li>
 <li><code>lib/easel_web/live/board_live.ex</code>: render/1, svelte_props/1 (this chapter's Elixir koans)</li>
 </ul>
-<p>From the Phoenix course: mount/3 sets assigns, render/1 turns them into HEEx, and a page renders twice, as plain HTML and then over the socket (chapter 10, LiveView basics); &lt;.header&gt; and friends are function components (chapter 03). On the server, &lt;.svelte name="Board" props={...} /&gt; writes a div whose data-props is the props as JSON. Hooks run only after the socket joins, so the hook from assets/js/app.js reads the connected render's data-props, mounts the component Vite built from Board.svelte, and adds one prop the server never sends: live, the hook itself (pushEvent, handleEvent). live_svelte's Vite plugin builds the components map app.js passes to getHooks, keyed by file name, so name="Board" finds assets/svelte/Board.svelte.</p>
+<p>From the Phoenix course: mount/3 sets assigns, render/1 turns them into HEEx, and a page renders twice, as plain HTML and then over the socket (Phoenix course chapter 10, LiveView basics); &lt;.header&gt; and friends are function components (chapter 03 there). On the server, &lt;.svelte name="Board" props={...} /&gt; writes a div whose data-props is the props as JSON. Hooks run only after the socket joins, so the hook from assets/js/app.js reads the connected render's data-props, mounts the component Vite built from Board.svelte, and adds one prop the server never sends: live, the hook itself (pushEvent, handleEvent). live_svelte's Vite plugin builds the components map app.js passes to getHooks, keyed by file name, so name="Board" finds assets/svelte/Board.svelte.</p>
 <p>Board is the root. It reads its props (given), builds the BoardState its children share, and hands it down. Props go in as attributes, a callback prop is a function, and {people} is short for people={people}. live_svelte hands over the props as one $state object, so shapes is a deep proxy: seed from a plain copy, inside untrack to say a one-time read is meant (chapter 04):</p>
 <pre>let { entries }: LogProps = $props()
 const recent = untrack(() =&gt; entries.slice(-10))
@@ -545,7 +547,7 @@ Exercised by:   assets/koans/06_live_svelte.test.ts:81</pre>
 <pre>&lt;.svelte name="Clock" props={%{zone: @zone, ticks: 0}} socket={@socket} /&gt;</pre>
 <p>A page renders twice. The static render answers a plain GET with HTML: mount runs with connected?(socket) false, so BoardLive skips join/2 and renders the assigns mount gave it, no shapes, sync_id 0 and nobody here. Then the browser connects and mount runs again, connected; chapters 08 to 13 fill that path. In a koan, get(conn, path) is the static render and get_svelte(html) reads the div back as a map with :name, :id, :props and :ssr among others. The hook mounts only after the connected render is patched in, so with SSR off the browser never uses the static render's props; koans read them because they need no socket. socket={@socket} tells live_svelte the render is connected, so later renders send only the props that changed (data-props-diff); without it every render resends them all. Passing assigns to svelte_props/1 turns off change tracking for that call; live_svelte diffs itself.</p>
 <p>live_svelte can also render the component on the server (SSR), in Node. Easel turns that off with config :live_svelte, ssr: false: a canvas has no server HTML worth sending, and Node stays a build tool. So the div's inner target holds no component markup, its text only whitespace, "" once trimmed, and :ssr is false, until the hook mounts the component.</p>
-<pre>Write:          lib/easel_web/live/board_live.ex:43  (EaselWeb.BoardLive.render/1)
+<pre>Write:          lib/easel_web/live/board_live.ex:45  (EaselWeb.BoardLive.render/1)
 Exercised by:   test/koans/06_live_svelte_test.exs:71</pre>
 
 <h3>API you'll use</h3>
@@ -563,7 +565,7 @@ Exercised by:   test/koans/06_live_svelte_test.exs:71</pre>
 </section>
 
 <section class="chapter" id="ch07">
-<h2><span class="num">07</span> Boards and shapes in tables</h2>
+<h2><span class="num">07</span> Boards and shapes in SQLite</h2>
 <h3>Files this chapter touches</h3>
 <ul class="files">
 <li><code>lib/easel/boards/board.ex</code>: Easel.Boards.Board.changeset/2</li>
@@ -787,7 +789,7 @@ Exercised by:   assets/koans/09_client_to_server.test.ts:66</pre>
   <text x="320" y="279" text-anchor="middle" class="small">with shape or null</text>
 
   <text x="20" y="318" class="small">A payload that fails the cast never reaches the board server; it gets ok: false.</text>
-  <text x="20" y="338" class="small">A reply that is neither shape rolls the browser back to the shape from before.</text>
+  <text x="20" y="338" class="small">A reply that is neither of those rolls the browser back to the shape from before.</text>
 </svg>
 </figure>
 <h3 class="kind">Elixir</h3>
@@ -831,7 +833,7 @@ Exercised by:   test/koans/09_client_to_server_test.exs:76</pre>
 <li><code>assets/js/inbox.ts</code>: applyIncoming, listen</li>
 <li><code>lib/easel_web/live/board_live.ex (this chapter's Elixir koans)</code></li>
 </ul>
-<p>From the Phoenix course: handle_info/2 takes messages from other processes (chapter 14, PubSub and Presence). BoardLive's handle_info/2 turns each board op into push_event(socket, event, payload). In the browser LiveView fires it on window as phx:&lt;event&gt;, and live.handleEvent(event, callback) listens there; handleEvent returns a ref, and live.removeHandleEvent(ref) stops that one listener. LiveView drops a hook's listeners when the hook goes, but a component can't know a hook mounted it (the koans mount Board straight), so Board's onMount returns a cleanup that removes its own.</p>
+<p>From the Phoenix course: handle_info/2 takes messages from other processes (chapter 14, PubSub and Presence). BoardLive's handle_info/2 turns each board op into push_event(socket, event, payload). In the browser LiveView fires it on window as phx:&lt;event&gt;, and live.handleEvent(event, callback) listens there; handleEvent returns a ref, and live.removeHandleEvent(ref) stops that one listener. LiveView drops a hook's listeners when the hook goes, but a component can't know a hook mounted it (the koans mount Board straight), so Board's onMount returns a cleanup that removes its own. Names say the direction: the browser asks in the present (shape:add, cursor:move); the server reports in the past (shape:added, cursor:moved).</p>
 <p>Each push carries whole values: shape:added the full shape, shape:moved the id with the new x and y, shape:deleted the id. Payloads arrive as unknown, so a guard checks each one first. Applying is by id: a repeat is harmless and an unknown id does nothing. Every browser applies every op, its own included, so all end in the server's order. The shape this browser is dragging, its draggingId, ignores incoming ops: the drag's own pointer up has the last word. Props and events split the work: props seed Board and replace everything on a resync (chapter 13), events change one shape at a time and never touch the props.</p>
 <pre>function listenForBell(live: Live, ring: () =&gt; void): () =&gt; void {
   const ref = live.handleEvent("bell", () =&gt; ring())
@@ -839,7 +841,7 @@ Exercised by:   test/koans/09_client_to_server_test.exs:76</pre>
 }
 
 Write:          assets/js/payloads.ts:46  (10: a move payload)
-Exercised by:   assets/koans/10_server_to_client.test.ts:72</pre>
+Exercised by:   assets/koans/10_server_to_client.test.ts:74</pre>
 
 <h3>API you'll use</h3>
 <pre>  - live.handleEvent: live.handleEvent("bell", (payload) =&gt; ring(payload)) is a ref
@@ -912,7 +914,7 @@ Exercised by:   assets/koans/10_server_to_client.test.ts:72</pre>
   {:noreply, push_event(socket, "clock:tick", %{at: now})}
 end</pre>
 <p>Props and events split the work. live_svelte sends a prop again only when it changed, and BoardLive changes the shapes assign only on a resync (chapter 13). A push changes the browser's copy and no assign, so after any number of pushes board_props(view) still holds the snapshot from the connected mount: one shape saved before the join stays 1 shape.</p>
-<pre>Write:          lib/easel_web/live/board_live.ex:87  (EaselWeb.BoardLive.handle_info/2)
+<pre>Write:          lib/easel_web/live/board_live.ex:89  (EaselWeb.BoardLive.handle_info/2)
 Exercised by:   test/koans/10_server_to_client_test.exs:47</pre>
 
 <h3>API you'll use</h3>
@@ -1059,7 +1061,7 @@ Exercised by:   test/koans/11_pubsub_fan_out_test.exs:93</pre>
 </section>
 
 <section class="chapter" id="ch12">
-<h2><span class="num">12</span> Cursors follow the people here</h2>
+<h2><span class="num">12</span> Who is here, and where</h2>
 <h3 class="kind">TypeScript and Svelte</h3>
 <h3>Files this chapter touches</h3>
 <ul class="files">
@@ -1153,8 +1155,8 @@ Exercised by:   assets/koans/12_presence_and_cursors.test.ts:68</pre>
 Presence.list("lobby")
 #=&gt; %{"phone-1" =&gt; %{metas: [%{nick: "kim", phx_ref: "F2x..."}]}}</pre>
 <p>Easel keys presence by tab, not by person: join/2 adds a random tab to me (name and colour from the session), so the tab is the key and the rest of me the metadata. Ada in two tabs is listed twice: ["Ada", "Ada"]. people/1 makes the people prop, one %{tab, name, color} per key from its first meta; mount assigns [] (the static render tracks nobody, its me has no tab).</p>
-<p>When a tab joins or leaves, each node's tracker sends a presence_diff to that node's subscribers of the topic, BoardLive among them since chapter 11: a %Phoenix.Socket.Broadcast{} with event "presence_diff" and a payload of joins and leaves. Other nodes hear of it on the trackers' next delta broadcast, every 1.5 s by default, so their lists lag by that much. BoardLive just lists again, and live_svelte sends only the people prop. A diff comes a moment later, from a task, once the shard's list has changed, so a koan waits for Lin's leave on its own subscription, then sends Ada a diff itself. A closed tab's LiveView ends, the tracker drops it, and the browser drops its cursor (the TypeScript koans).</p>
-<pre>Write:          lib/easel_web/live/board_live.ex:111  (EaselWeb.BoardLive.track_presence/2)
+<p>When a tab joins or leaves, each node's tracker sends a presence_diff to that node's subscribers of the topic, BoardLive among them since chapter 11: a %Phoenix.Socket.Broadcast{} with event "presence_diff" and a payload of joins and leaves. Other nodes hear of it on the trackers' next delta broadcast, every 1.5 s by default, so their lists lag by that much. BoardLive just lists again, and live_svelte sends only the people prop. A diff comes a moment later: a task works it out once the shard's list has changed, and the shard broadcasts it, so a koan waits for Lin's leave on its own subscription, then sends Ada a diff itself. A closed tab's LiveView ends, the tracker drops it, and the browser drops its cursor (the TypeScript koans).</p>
+<pre>Write:          lib/easel_web/live/board_live.ex:113  (EaselWeb.BoardLive.track_presence/2)
 Exercised by:   test/koans/12_presence_and_cursors_test.exs:75</pre>
 
 <h3>API you'll use</h3>
@@ -1182,21 +1184,18 @@ Exercised by:   test/koans/12_presence_and_cursors_test.exs:75</pre>
 <li><code>lib/easel_web/live/board_live.ex (this chapter's Elixir koans)</code></li>
 <li><code>lib/easel/boards/board_server.ex (this chapter's Elixir koans)</code></li>
 </ul>
-<p>From the Phoenix course (chapter 10, LiveView basics, and chapter 13 on reconnects): a dropped socket reconnects by itself and the server mounts again, in a new process. The page stays, and so does live_svelte's hook element, so LiveView calls the hook's updated() with the new props, never mounted(): Board and its BoardState survive the reconnect.</p>
+<p>From the Phoenix course (chapter 10, LiveView basics, and chapter 13 on reconnects): a dropped socket reconnects by itself and the server mounts again, in a new process. The page stays, and so does live_svelte's hook element, so LiveView calls the hook's updated() with the new props, never mounted(): Board and its BoardState survive the reconnect. LiveView also calls a hook's disconnected() and reconnected() around a rejoin; a rejoin that fails reloads the page, and everything mounts fresh.</p>
 <p>So each connected mount sends a fresh sync_id with its snapshot, and Board's effect hands both to applyProps(state, props). A sync_id other than the state's means "this is the whole board now": replace every shape and keep the new id. The same sync_id changes nothing. Other, not greater: sync ids are unique integers for this run of the app, not a count: after a restart they start low again, so compare with !==. A playlist that reloads on a new version does the same:</p>
 <pre>if (next.version !== list.version) list.load(next.tracks, next.version)</pre>
 <p>Between resyncs the browser runs ahead. A drawn shape shows at once and goes out as shape:add; its echo, shape:added with the z the server gave it, replaces it by id. Moves carry whole positions, so the server's order decides: the last move it applies wins, in every browser, the sender's too: one process, the board server, sends every op, and messages from one process arrive in the order sent. A move it applied earlier is lost, with no merge and no warning; a delete beats any move, and since nothing remembers a deleted id, a late add with that id brings it back.</p>
 <pre>Write:          assets/js/resync.ts:9  (13: replace everything when sync_id changes)
-Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:75</pre>
+Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:74</pre>
 
 <h3>API you'll use</h3>
 <pre>  - state.syncId, state.replaceAll(shapes, syncId): chapter 04's BoardState
   - SvelteHook.updated.call(hook): what LiveView runs when the hook's element changes; it reads
     data-props again, and with data-use-diff "true" sets only the keys sent, keeping the rest
   - getHooks, SvelteHook.mounted.call(hook), hook._instance: chapter 06
-  - disconnected(), reconnected(): LiveView calls these on the hook too, around a rejoin;
-    live_svelte exposes them as useLiveConnection().connected. A rejoin that fails reloads
-    the page, and then everything mounts fresh.
   - drag, pointer, placeCanvas: chapter 05; a drag with the Rectangle tool from 100, 100 to
     300, 250 draws "rectangle 200 by 150 at 100, 100"
   - rect(), ellipse(): "rectangle 200 by 100 at 100, 100" and "ellipse 200 by 100 at 400, 300";
@@ -1204,7 +1203,7 @@ Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:75</pre>
     "rectangle 200 by 100 at 900, 600"
   - flushSync: runs pending effects now (chapter 03); createFakeLive: given</pre>
 <figure class="fig fig13" id="fig-13">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Two ways to resync: a reconnect mounts a new BoardLive, and a restarted board server broadcasts board_restarted to the BoardLives it has; either way the view takes a fresh snapshot and a new sync_id, and the Board component in the browser, which survived, replaces every shape when the sync_id changes">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Two ways to resync: a reconnect mounts a new BoardLive, and a restarted board server broadcasts :board_restarted on the board's topic; either way the view takes a fresh snapshot and a new sync_id, and the Board component in the browser, which survived, replaces every shape when the sync_id changes">
   <style>
     .fig13 { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --topic: #fff4e6; --topicedge: #f08c00; --arrow: #5c6370; }
     @media (prefers-color-scheme: dark) {
@@ -1264,12 +1263,12 @@ Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:75</pre>
 <li><code>lib/easel_web/live/board_live.ex</code>: EaselWeb.BoardLive.handle_info/2</li>
 </ul>
 <p>Every viewer comes back to the board server's state. A LiveView lives as long as its socket: when the connection drops the process ends, and the reconnect mounts a new one. That runs join/2 again in its given order (tab id, ensure_started, subscribe, track_presence, snapshot, sync_id), so the new process has a new tab, the board as the server holds it now, and a fresh sync_id, on which the browser's surviving component resyncs (the TypeScript koans).</p>
-<p>The board server can restart under its viewers instead: it crashes, and the DynamicSupervisor starts it again from the database. A crash still saves in terminate/2; a :kill skips it and loses the ops in the save window. init/1 calls announce_restart/1, which broadcasts :board_restarted on the board's topic, and each BoardLive answers it as a reconnect would: a fresh snapshot and a new sync_id. live_svelte then sends only the props that changed, which it can tell only with socket={@socket}. A shop's price list does the same when its prices reload:</p>
+<p>The board server can restart under its viewers instead: it crashes, and the DynamicSupervisor starts it again from the database, or it stopped when idle, and the next call started it again (chapter 08's call/2); every start announces. A crash still saves in terminate/2; a :kill skips it and loses the ops in the save window. init/1 calls announce_restart/1, which broadcasts :board_restarted on the board's topic, and each BoardLive answers it as a reconnect would: a fresh snapshot and a new sync_id. live_svelte then sends only the props that changed, which it can tell only with socket={@socket}. A shop's price list does the same when its prices reload:</p>
 <pre>def handle_info(:prices_reloaded, socket),
   do: {:noreply, assign(socket, prices: Prices.all(), version: Prices.version())}</pre>
-<p>One race is left: a client's ensure_started can race the DynamicSupervisor's restart of a killed transient board. On one node the child's EXIT reaches the supervisor first, so it holds here (a cluster would need more).</p>
+<p>One race is left. ensure_started/1 looks a board up before it asks the supervisor, so only a caller that has just seen the board die can race the DynamicSupervisor's restart of it; closing that too would take restart: :temporary and call/2's retry alone.</p>
 <pre>Write:          lib/easel/boards/board_server.ex:34  (Easel.Boards.BoardServer.announce_restart/1)
-Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:65</pre>
+Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:66</pre>
 
 <h3>API you'll use</h3>
 <pre>  Boards.broadcast_op/2   chapter 11; any message goes, :board_restarted too
@@ -1294,14 +1293,14 @@ Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:65</pre>
 <li><code>assets/test/support/board_harness.ts</code>: renderBoard</li>
 <li><code>test/support/board_helpers.ex (this chapter's Elixir koans)</code></li>
 </ul>
-<p>Most tests are pure: geometry, guards, the tool machine and the throttle are functions over plain data. Components run in jsdom with Testing Library, as the Phoenix course's LiveView tests (chapter 22, testing the app) ran with no browser: render mounts one, queries find elements by role and name as a person would, and a fake live records pushes and plays events. Only the Playwright suite in e2e/ runs the real thing, the solved app and two browsers, and only there do Board and BoardLive meet: LiveViewTest runs no JavaScript and Vitest fakes live, so a renamed event or prop passes both and fails only here.</p>
+<p>Most tests are pure: geometry, guards, the tool machine and the throttle are functions over plain data. Components run in jsdom with Testing Library, as the Phoenix course's LiveView tests (chapter 22, testing the app) ran with no browser: render mounts one, queries find elements by role and name as a person would, and a fake live records pushes and plays events. Only the Playwright suite in e2e/ runs the real thing, the solved app and two browsers, and only there do Board and BoardLive meet: LiveViewTest runs no JavaScript and Vitest fakes live, so a name the two sides disagree on passes both suites and fails only here.</p>
 <p>A harness puts the setup every test of a component repeats in one function. A Toolbar harness:</p>
 <pre>function renderToolbar(tool: Tool = "select") {
   const state = new BoardState([], 1)
   state.tool = tool
   return { ...render(Toolbar, { state, ondelete: () =&gt; {} }), state }
 }</pre>
-<p>renderBoard is Board's: the overrides a test gives laid over default props, Board rendered, and its canvas found in the render's own container, so two Boards can share a page. Board.test in assets/test uses it (KOANS_LIB=solutions/lib npm run test:app here, npm test once exported). The e2e suite never uses the dev server: playwright.config.ts starts its own, with MIX_ENV "e2e" on port 4100 and its own database. collaboration.spec.ts checks what only a real browser can, such as "every shape is still there after a reload": a fresh mount. Before each test, e2e/board.ts signs two people in, each in its own browser context (own cookies, so two names).</p>
+<p>renderBoard is Board's: the overrides a test gives laid over default props, Board rendered, and its canvas found in the render's own container, so two Boards can share a page. Board.test uses it (npm run test:app runs it on your code once renderBoard is filled; npm test once exported). The e2e suite never uses the dev server: playwright.config.ts starts its own, MIX_ENV "e2e" on port 4100 with its own database. collaboration.spec.ts checks what only a real browser can, as "every shape is still there after a reload": a fresh mount. Before each test, e2e/board.ts signs two people in, each in its own browser context (own cookies, so two names).</p>
 <pre>Write:          assets/test/support/board_harness.ts:19  (14: render Board, place its canvas)
 Exercised by:   assets/koans/14_testing_the_whole_thing.test.ts:63</pre>
 
@@ -1338,7 +1337,7 @@ Exercised by:   assets/koans/14_testing_the_whole_thing.test.ts:63</pre>
   <text x="20" y="30" class="head">Tests at three heights</text>
 
   <rect class="topic" x="220" y="50" width="200" height="60" rx="8"/>
-  <text x="320" y="76" text-anchor="middle">Playwright, 7 tests</text>
+  <text x="320" y="76" text-anchor="middle">Playwright, a few tests</text>
   <text x="320" y="96" text-anchor="middle" class="small">solved app, two browsers</text>
 
   <rect class="client" x="120" y="130" width="190" height="80" rx="8"/>
@@ -1367,7 +1366,7 @@ Exercised by:   assets/koans/14_testing_the_whole_thing.test.ts:63</pre>
 <ul class="files">
 <li><code>test/support/board_helpers.ex</code>: EaselWeb.BoardHelpers.open_board/2, add_shape/2</li>
 </ul>
-<p>Each piece is tested at its own height. test/easel/boards/board_server_test.exs drives the board server with no LiveView; test/easel_web/live/board_live_test.exs drives BoardLive as a browser would, with no browser: render_hook/3 sends an event, assert_reply/2 reads the answer, assert_push_event/3 a push, board_props/1 the props. Run that suite here with KOANS_LIB=solutions/lib MIX_TEST_PARTITION=app mix test; once exported, plain mix test.</p>
+<p>Each piece is tested at its own height. test/easel/boards/board_server_test.exs drives the board server with no LiveView; test/easel_web/live/board_live_test.exs drives BoardLive as a browser would, with no browser: render_hook/3 sends an event, assert_reply/2 reads the answer, assert_push_event/3 a push, board_props/1 the props. Once filled, MIX_TEST_PARTITION=app mix test runs it on your code (KOANS_LIB=solutions/lib on the reference); exported, mix test.</p>
 <p>A helper keeps a test to its point. open_board/2 does chapter 06's two renders in two steps: get/2 asks for the page, a static render, and live/1 connects that conn, which mounts again with a socket. add_shape/2 sends shape:add as Board does, a whole rect under whatever the test gives, its own id included, and asserts the reply was %{ok: true}, so a refused shape fails at the helper. A helper that asserts imports ExUnit.Assertions. A chat app's helper:</p>
 <pre>def post(view, text) do
   render_hook(view, "message:post", %{"text" =&gt; text})

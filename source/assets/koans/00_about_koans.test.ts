@@ -10,9 +10,9 @@ run under ExUnit. One command runs both:
 
 It stops at the earliest koan you have not answered, TypeScript before Elixir within a
 chapter, and prints a footer for it. A value blank is a bare __ inside a koan. A code blank
-is a __blank("NN: tag") line in assets/js/ or assets/svelte/, between two marker lines that
-name its chapter: replace that line with your code and keep the markers. Its footer names
-two places:
+is a __blank("NN: tag") line in assets/js/, assets/svelte/ or assets/koans/drills/, between
+two marker lines that name its chapter: replace that line with your code and keep the
+markers. Its footer names two places:
 
     Write:          assets/js/hello.ts:3  (00: greet)
     Exercised by:   assets/koans/00_about_koans.test.ts:35

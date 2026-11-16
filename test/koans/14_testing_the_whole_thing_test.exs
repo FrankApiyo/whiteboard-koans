@@ -6,8 +6,8 @@ defmodule Koans.Ch14.TestingTheWholeThingTest do
   Each piece is tested at its own height. test/easel/boards/board_server_test.exs drives the board
   server with no LiveView; test/easel_web/live/board_live_test.exs drives BoardLive as a browser
   would, with no browser: render_hook/3 sends an event, assert_reply/2 reads the answer,
-  assert_push_event/3 a push, board_props/1 the props. Run that suite here with
-  KOANS_LIB=solutions/lib MIX_TEST_PARTITION=app mix test; once exported, plain mix test.
+  assert_push_event/3 a push, board_props/1 the props. Once filled, MIX_TEST_PARTITION=app mix
+  test runs it on your code (KOANS_LIB=solutions/lib on the reference); exported, mix test.
 
   A helper keeps a test to its point. open_board/2 does chapter 06's two renders in two steps:
   get/2 asks for the page, a static render, and live/1 connects that conn, which mounts again

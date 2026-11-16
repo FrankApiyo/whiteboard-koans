@@ -9,7 +9,7 @@ course's LiveView tests (chapter 22, testing the app) ran with no browser: rende
 queries find elements by role and name as a person would, and a fake live records pushes and plays
 events. Only the Playwright suite in e2e/ runs the real thing, the solved app and two browsers,
 and only there do Board and BoardLive meet: LiveViewTest runs no JavaScript and Vitest fakes live,
-so a renamed event or prop passes both and fails only here.
+so a name the two sides disagree on passes both suites and fails only here.
 
 A harness puts the setup every test of a component repeats in one function. A Toolbar harness:
 
@@ -20,10 +20,10 @@ A harness puts the setup every test of a component repeats in one function. A To
     }
 
 renderBoard is Board's: the overrides a test gives laid over default props, Board rendered, and
-its canvas found in the render's own container, so two Boards can share a page. Board.test in
-assets/test uses it (KOANS_LIB=solutions/lib npm run test:app here, npm test once exported). The
-e2e suite never uses the dev server: playwright.config.ts starts its own, with MIX_ENV "e2e" on
-port 4100 and its own database. collaboration.spec.ts checks what only a real browser can, such as
+its canvas found in the render's own container, so two Boards can share a page. Board.test uses
+it (npm run test:app runs it on your code once renderBoard is filled; npm test once exported).
+The e2e suite never uses the dev server: playwright.config.ts starts its own, MIX_ENV "e2e" on
+port 4100 with its own database. collaboration.spec.ts checks what only a real browser can, as
 "every shape is still there after a reload": a fresh mount. Before each test, e2e/board.ts signs
 two people in, each in its own browser context (own cookies, so two names).
 

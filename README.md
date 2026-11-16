@@ -153,10 +153,12 @@ the markup blank's `Write:` line. Until you fill a code blank, calling it fails 
 `Replace __blank() with the code the meditation describes.` (TypeScript), and the footer points
 at the blank, not at the assertion.
 
-**Defaulted code.** A few blanks take a default, as in `__("11: subscribe", :ok)` or
-`return __blank("10: listen", () => {});`. Until you fill one it returns the default, so the app
-keeps working on the code you have written: your shapes simply do not reach the other window
-yet. A defaulted blank fails only the koans of its own chapter, with the same `Write:` footer.
+**Defaulted code.** A few blanks take a default, as in
+`__("11: subscribe to the board's topic", :ok)` or
+`return __blank("10: handle the three shape events, and stop", () => {});`. Until you fill one
+it returns the default, so the app keeps working on the code you have written: your shapes
+simply do not reach the other window yet. A defaulted blank fails only the koans of its own
+chapter, with the same `Write:` footer.
 
 Every tag starts with its chapter, in both languages, so one `:vimgrep` lists a chapter's
 blanks everywhere; `:copen` shows them:

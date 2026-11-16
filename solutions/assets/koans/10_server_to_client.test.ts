@@ -11,6 +11,8 @@ on window as phx:<event>, and live.handleEvent(event, callback) listens there; h
 returns a ref, and live.removeHandleEvent(ref) stops that one listener. LiveView drops a hook's
 listeners when the hook goes, but a component can't know a hook mounted it (the koans mount
 Board straight), so Board's onMount returns a cleanup that removes its own.
+Names say the direction: the browser asks in the present (shape:add, cursor:move); the server
+reports in the past (shape:added, cursor:moved).
 
 Each push carries whole values: shape:added the full shape, shape:moved the id with the new x
 and y, shape:deleted the id. Payloads arrive as unknown, so a guard checks each one first.
@@ -26,7 +28,7 @@ Props and events split the work: props seed Board and replace everything on a re
     }
 
     Write:          assets/js/payloads.ts:46  (10: a move payload)
-    Exercised by:   assets/koans/10_server_to_client.test.ts:72
+    Exercised by:   assets/koans/10_server_to_client.test.ts:74
 
 API you'll use
   - live.handleEvent: live.handleEvent("bell", (payload) => ring(payload)) is a ref

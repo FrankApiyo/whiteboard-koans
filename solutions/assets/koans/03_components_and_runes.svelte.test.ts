@@ -14,9 +14,9 @@ Props arrive through $props(), typed by an interface, and a default fills one le
 
 That is the greeting drill: given name "Ada" it shows Hello, Ada. and excited: true ends it in !.
 let open = $state(false) is state the markup follows: assign to it and the page updates.
-$derived(expr) is computed from what it reads and always current; a copy made in an $effect lags
-until the effect runs. Runes work as class fields in .svelte.ts files too. Svelte 4 used export
-let, $:, on:click (now deprecated), slots and createEventDispatcher; Svelte 5 has runes, snippets.
+$derived(expr) is computed from what it reads; a copy made in an $effect lags until the effect
+runs. Runes work as class fields in .svelte.ts files too. Svelte 4 used export let, $:, on:click,
+slots and createEventDispatcher; Svelte 5 replaces them with runes, callback props and snippets.
 
 {#if cond}...{:else}...{/if} shows markup on a condition, and {#each items as item (item.id)}
 repeats it: the key in parentheses, (item.id), moves an item's element when the list is reordered.
@@ -27,8 +27,8 @@ onpick to tell its parent; reassigning a prop only overrides it locally, and a b
 declared with $bindable(). Svelte batches DOM updates: right after a click the counter drill, at
 Clicked 0 times, still shows the old text until flushSync() applies the update.
 
-    Write:          assets/koans/drills/03_counter.svelte:10  (03: count as state)
-    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:90
+    Write:          assets/koans/drills/03_counter.svelte:8  (03: step from props)
+    Exercised by:   assets/koans/03_components_and_runes.svelte.test.ts:93
 
 API you'll use
   - render: const { rerender } = render(Greeting, { name: "Ada" }) mounts it in the page
@@ -51,12 +51,15 @@ Picture: none for this chapter; the lesson is on lessons/index.html too.
 import { expect } from "vitest"
 import { test } from "@koans/runtime"
 import { fireEvent, render, screen } from "@testing-library/svelte"
-import { flushSync } from "svelte"
-import Counter from "./drills/03_counter.svelte"
+import { flushSync, type Component } from "svelte"
+import CounterDrill from "./drills/03_counter.svelte"
 import Greeting from "./drills/03_greeting.svelte"
 import ColorPicker from "../svelte/ColorPicker.svelte"
 import PeopleList from "../svelte/PeopleList.svelte"
 import { PALETTE, type Color, type Me, type Person } from "../js/types"
+
+// Until $props() is written the drill declares no props, so its type is given here.
+const Counter = CounterDrill as unknown as Component<{ step?: number }>
 
 const ada: Person = { tab: "tab-ada", name: "Ada", color: "#e03131" }
 const lin: Person = { tab: "tab-lin", name: "Lin", color: "#1971c2" }
@@ -87,7 +90,7 @@ test("A component takes typed props, a prop with a default may be left out, and 
   expect(heading.textContent).toBe("Hello, Ada!")
 })
 
-test("Fill the counter drill so each click adds step to count, and its label reads Clicked, the count, then times. 1. In the script, make count state that starts at 0. 2. Replace the __blank line in the markup with a button element whose onclick adds step to count, and keep the marker lines.", async () => {
+test("Fill the counter drill so each click adds step to count, and its label reads Clicked, the count, then times. 1. In the script, read step from the props with the props rune. 2. Make count state that starts at 0. 3. Replace the __blank line in the markup with a button element whose onclick adds step to count, and keep the marker lines.", async () => {
   render(Counter, { step: 2 })
   const button = screen.getByRole("button")
   await fireEvent.click(button)

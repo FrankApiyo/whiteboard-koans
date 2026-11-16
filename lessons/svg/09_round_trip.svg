@@ -43,5 +43,5 @@
   <text x="320" y="279" text-anchor="middle" class="small">with shape or null</text>
 
   <text x="20" y="318" class="small">A payload that fails the cast never reaches the board server; it gets ok: false.</text>
-  <text x="20" y="338" class="small">A reply that is neither shape rolls the browser back to the shape from before.</text>
+  <text x="20" y="338" class="small">A reply that is neither of those rolls the browser back to the shape from before.</text>
 </svg>

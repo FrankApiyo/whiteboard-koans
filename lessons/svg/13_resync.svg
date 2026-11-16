@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Two ways to resync: a reconnect mounts a new BoardLive, and a restarted board server broadcasts board_restarted to the BoardLives it has; either way the view takes a fresh snapshot and a new sync_id, and the Board component in the browser, which survived, replaces every shape when the sync_id changes">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Two ways to resync: a reconnect mounts a new BoardLive, and a restarted board server broadcasts :board_restarted on the board's topic; either way the view takes a fresh snapshot and a new sync_id, and the Board component in the browser, which survived, replaces every shape when the sync_id changes">
   <style>
     :root { --bg: #ffffff; --ink: #1f2430; --muted: #5c6370; --client: #ebfbee; --clientedge: #2f9e44; --server: #e8eefc; --serveredge: #3b5bdb; --topic: #fff4e6; --topicedge: #f08c00; --arrow: #5c6370; }
     @media (prefers-color-scheme: dark) {

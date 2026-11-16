@@ -24,7 +24,7 @@ defmodule Koans.Ch10.ServerToClientTest do
   browser's copy and no assign, so after any number of pushes board_props(view) still holds
   the snapshot from the connected mount: one shape saved before the join stays 1 shape.
 
-      Write:          lib/easel_web/live/board_live.ex:87  (EaselWeb.BoardLive.handle_info/2)
+      Write:          lib/easel_web/live/board_live.ex:89  (EaselWeb.BoardLive.handle_info/2)
       Exercised by:   test/koans/10_server_to_client_test.exs:47
 
   API you'll use

@@ -24,11 +24,11 @@ defmodule Koans.Ch12.PresenceAndCursorsTest do
   with event "presence_diff" and a payload of joins and leaves. Other nodes hear of it on the
   trackers' next delta broadcast, every 1.5 s by default, so their lists lag by that much.
   BoardLive just lists again, and live_svelte sends only the people prop. A diff comes a moment
-  later, from a task, once the shard's list has changed, so a koan waits for Lin's leave on its
-  own subscription, then sends Ada a diff itself. A closed tab's LiveView ends, the tracker drops
+  later: a task works it out once the shard's list has changed, and the shard broadcasts it, so
+  a koan waits for Lin's leave on its own subscription, then sends Ada a diff itself. A closed tab's LiveView ends, the tracker drops
   it, and the browser drops its cursor (the TypeScript koans).
 
-      Write:          lib/easel_web/live/board_live.ex:111  (EaselWeb.BoardLive.track_presence/2)
+      Write:          lib/easel_web/live/board_live.ex:113  (EaselWeb.BoardLive.track_presence/2)
       Exercised by:   test/koans/12_presence_and_cursors_test.exs:75
 
   API you'll use

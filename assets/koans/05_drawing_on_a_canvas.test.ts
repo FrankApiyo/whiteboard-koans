@@ -28,7 +28,7 @@ offset); pointerUp goes back to idle with a commit, an add or a move, or null. O
 setPointerCapture(event.pointerId) sends its events here until pointerup or pointercancel.
 
     Write:          assets/js/render.ts:28  (05: size the canvas)
-    Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:119
+    Exercised by:   assets/koans/05_drawing_on_a_canvas.test.ts:120
 
 API you'll use
   - ctx.lineWidth, lineCap, lineJoin: lineCap is "butt", "round" or "square", lineJoin is
@@ -48,9 +48,10 @@ API you'll use
     height and a line or pen that never left its start; dragTarget(t, p) is { id, x, y }, where
     the shape goes: the pointer minus the grab offset, clamped; null unless dragging
   - topmostAt: topmostAt(shapes, p) from chapter 02 is the shape on top at p, or null
-  - drawSelection, holdGrabbed, followDrag: given; drawSelection(ctx, shapes, selectedId) boxes
-    the selected shape in dashes; holdGrabbed() marks the shape a drag holds and makes it the
-    selection, or none over empty board; followDrag(point) moves a dragged shape with the pointer
+  - drawSelection, holdGrabbed, followDrag, finish: given; drawSelection(ctx, shapes, selectedId)
+    boxes the selected shape in dashes; holdGrabbed() remembers the shape under a press and
+    selects it, or none over empty board; followDrag(point) moves a grabbed shape with the
+    pointer once it leaves its start; finish(commit) ends the gesture and hands on the commit
   - crypto.randomUUID: crypto.randomUUID() is a new random id like the fixtures' ID_A; a method
     passed on bare, like list.push, loses its object, so wrap it in an arrow
   - event.currentTarget: the element whose handler is running, here the canvas; an optional
@@ -116,12 +117,14 @@ test("A fake context keeps a list of what was done to it: a property set, then e
   expect(ctx.calls).toEqual(__)
 })
 
-test("Implement fitCanvas so the canvas holds dpr device pixels per board unit while later calls still draw in board units. 1. Size the backing store, its width and height, to the board's times dpr. 2. Set a transform that scales both axes by dpr, with no skew and no shift.", () => {
-  const canvas = document.createElement("canvas")
+test("Implement fitCanvas so the canvas holds dpr device pixels per board unit while later calls still draw in board units. A canvas forgets its transform when it is resized. 1. Size the backing store, its width and height, to the board's times dpr. 2. Then set a transform that scales both axes by dpr, with no skew and no shift.", () => {
   const ctx = createFakeContext()
+  const canvas = document.createElement("canvas")
+  for (const side of ["width", "height"] as const) {
+    Object.defineProperty(canvas, side, { set: (v: number) => ctx.calls.push([`set:${side}`, v]) })
+  }
   fitCanvas(canvas, ctx, 1.5)
-  expect([canvas.width, canvas.height]).toEqual([2400, 1500])
-  expect(ctx.calls).toEqual([["setTransform", 1.5, 0, 0, 1.5, 0, 0]])
+  expect(ctx.calls).toEqual([["set:width", 2400], ["set:height", 1500], ["setTransform", 1.5, 0, 0, 1.5, 0, 0]])
 })
 
 test("Implement drawShape so every shape is stroked in its own colour, STROKE_WIDTH wide with round caps and joins. Without beginPath, each stroke would ink every earlier path again, in the new colour. 1. Set the four stroke properties. 2. Switch on s.kind: one strokeRect for a rect; a path round the centre of its box for an ellipse; a path from the start to the far end for a line; a path from the start through each point for a pen. 3. End with a default that returns assertNever of s.", () => {
@@ -132,6 +135,7 @@ test("Implement drawShape so every shape is stroked in its own colour, STROKE_WI
   expect(path(drawn(ellipse()))).toEqual([["beginPath"], ["ellipse", 500, 350, 100, 50, 0, 0, Math.PI * 2], ["stroke"]])
   expect(path(drawn(line({ dx: -40, dy: 30 })))).toEqual([["beginPath"], ["moveTo", 50, 50], ["lineTo", 10, 80], ["stroke"]])
   expect(path(drawn(pen()))).toEqual([["beginPath"], ["moveTo", 20, 20], ["lineTo", 30, 20], ["lineTo", 30, 30], ["stroke"]])
+  expect(() => drawn({ kind: "hexagon" } as never)).toThrowError("Unexpected value")
 })
 
 test("Implement the start of drawBoard so it wipes the whole board, then draws the shapes in array order, so a later shape covers an earlier one. The transform already turns board units into pixels, so the wipe is in board units.", () => {

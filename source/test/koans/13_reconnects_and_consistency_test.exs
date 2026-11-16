@@ -11,8 +11,9 @@ defmodule Koans.Ch13.ReconnectsAndConsistencyTest do
   sync_id, on which the browser's surviving component resyncs (the TypeScript koans).
 
   The board server can restart under its viewers instead: it crashes, and the DynamicSupervisor
-  starts it again from the database. A crash still saves in terminate/2; a :kill skips it and
-  loses the ops in the save window. init/1 calls announce_restart/1, which broadcasts
+  starts it again from the database, or it stopped when idle, and the next call started it
+  again (chapter 08's call/2); every start announces. A crash still saves in terminate/2; a :kill
+  skips it and loses the ops in the save window. init/1 calls announce_restart/1, which broadcasts
   :board_restarted on the board's topic, and each BoardLive answers it as a reconnect would: a
   fresh snapshot and a new sync_id. live_svelte then sends only the props that changed, which it
   can tell only with socket={@socket}. A shop's price list does the same when its prices reload:
@@ -25,7 +26,7 @@ defmodule Koans.Ch13.ReconnectsAndConsistencyTest do
   closing that too would take restart: :temporary and call/2's retry alone.
 
       Write:          lib/easel/boards/board_server.ex:34  (Easel.Boards.BoardServer.announce_restart/1)
-      Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:65
+      Exercised by:   test/koans/13_reconnects_and_consistency_test.exs:66
 
   API you'll use
     Boards.broadcast_op/2   chapter 11; any message goes, :board_restarted too

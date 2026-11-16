@@ -71,6 +71,7 @@ test("Implement describe in assets/js/geometry.ts so it names each kind with its
   expect(describe(ellipse())).toBe("ellipse 200 by 100 at 400, 300")
   expect(describe(line())).toBe("line from 50, 50 to 150, 150")
   expect(describe(pen())).toBe("pen stroke of 2 points from 20, 20")
+  expect(() => describe({ kind: "hexagon" } as never)).toThrowError("Unexpected value")
 })
 
 test("Fill the rect and ellipse case of bounds: their box is their own x, y, w and h.", () => {
@@ -104,7 +105,7 @@ test("Implement topmostAt so it returns the last shape the point hits, or null o
   expect(shapes).toEqual([below, above])
 })
 
-test("Implement moveTo so it returns a copy of the shape at the new x and y and leaves the original alone. Svelte redraws when it sees a new object, so shapes are replaced, never changed in place. A spread copies one level, so moved and original share points.", () => {
+test("Implement moveTo so it returns a copy of the shape at the new x and y and leaves the original alone. Easel's board state, chapter 04, notices only a new object, so shapes are replaced, never changed in place. A spread copies one level, so moved and original share points.", () => {
   const original = pen()
   const moved = moveTo(original, 5, 6)
   expect(moved).toEqual({ kind: "pen", id: ID_B, color: "#7048e8", x: 5, y: 6, points: [[10, 0], [10, 10]] })

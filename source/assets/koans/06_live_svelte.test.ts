@@ -4,11 +4,11 @@ Files this chapter touches
     list
   - lib/easel_web/live/board_live.ex: render/1, svelte_props/1 (this chapter's Elixir koans)
 
-live_svelte inside a LiveView. From the Phoenix course: mount/3 sets
-assigns, render/1 turns them into HEEx, and a page renders twice, as plain HTML and then over
-the socket (chapter 10, LiveView basics); <.header> and friends are function components
-(chapter 03). On the server, <.svelte name="Board" props={...} /> writes a div whose data-props
-is the props as JSON. Hooks run only after the socket joins, so the hook from assets/js/app.js
+Svelte inside a LiveView. From the Phoenix course: mount/3 sets assigns, render/1 turns them
+into HEEx, and a page renders twice, as plain HTML and then over the socket (Phoenix course
+chapter 10, LiveView basics); <.header> and friends are function components (chapter 03
+there). On the server, <.svelte name="Board" props={...} /> writes a div whose data-props is
+the props as JSON. Hooks run only after the socket joins, so the hook from assets/js/app.js
 reads the connected render's data-props, mounts the component Vite built from Board.svelte,
 and adds one prop the server never sends: live, the hook itself (pushEvent, handleEvent).
 live_svelte's Vite plugin builds the components map app.js passes to getHooks, keyed by
@@ -52,11 +52,11 @@ Picture: lessons/svg/06_two_renders.svg
 */
 import { expect } from "vitest"
 import { test } from "@koans/runtime"
-import { unmount } from "svelte"
+import { flushSync, unmount } from "svelte"
 import { render, screen } from "@testing-library/svelte"
 import { getHooks } from "@koans/live_svelte_hooks"
 import Board from "../svelte/Board.svelte"
-import type { BoardProps, Person } from "../js/types"
+import type { BoardProps, Person, Shape } from "../js/types"
 import { createFakeLive, type FakeLive } from "../test/support/fake_live"
 import { placeCanvas, pointer } from "../test/support/canvas"
 import { ellipse, rect } from "../test/support/fixtures"
@@ -83,7 +83,7 @@ test("Fill Board.svelte's state and its canvas so the shapes from props reach th
   expect(described(canvas)).toEqual(["ellipse 200 by 100 at 400, 300", "rectangle 200 by 100 at 100, 100"])
 }, { exercises: "06: the canvas" })
 
-test("SvelteHook, which app.js builds with getHooks, mounts the component data-name names into the div's data-svelte-target, with the parsed data-props as its props plus live, the hook itself, which the server never sends.", () => {
+test("SvelteHook, which app.js builds with getHooks, mounts the component data-name names into the div's data-svelte-target, with the parsed data-props as its props plus live, the hook itself, which the server never sends. Board seeds from a plain copy, so a change made in place to those props never reaches its shapes.", () => {
   const el = document.createElement("div")
   el.dataset.name = "Board"
   el.dataset.props = JSON.stringify({ shapes: [rect()], sync_id: 7, me: ada, people: [ada] })
@@ -100,6 +100,10 @@ test("SvelteHook, which app.js builds with getHooks, mounts the component data-n
     expect(state.sync_id).toBe(_a(7))
     expect("live" in JSON.parse(el.dataset.props ?? "{}")).toBe(_a(false))
     expect(state.live).toHaveProperty("el", el)
+    const [seeded] = state.shapes as Shape[]
+    seeded.x = 999
+    flushSync()
+    expect(described(canvas)).toEqual(["rectangle 200 by 100 at 100, 100"])
   } finally {
     if (hook._instance) unmount(hook._instance)
     el.remove()

@@ -3,7 +3,10 @@
     step?: number
   }
 
-  let { step = 1 }: Props = $props()
+  let { step = 1 }: Props =
+    // >>> answer 03: step from props
+    $props()
+    // <<<
 
   let count =
     // >>> answer 03: count as state

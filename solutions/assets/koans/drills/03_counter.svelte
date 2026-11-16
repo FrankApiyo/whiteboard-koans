@@ -3,7 +3,8 @@
     step?: number
   }
 
-  let { step = 1 }: Props = $props()
+  let { step = 1 }: Props =
+    $props()
 
   let count =
     $state(0)

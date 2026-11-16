@@ -4,7 +4,7 @@ Files this chapter touches
   - assets/svelte/CursorLayer.svelte: the cursor markup
   - lib/easel_web/live/board_live.ex (this chapter's Elixir koans)
 
-Cursors follow the people here. From the Phoenix course (chapter 14, PubSub and Presence):
+Who is here, and where. From the Phoenix course (chapter 14, PubSub and Presence):
 Presence tracks who is on a topic. BoardLive tracks one presence per tab, and the people prop
 lists them as { tab, name, color }. A cursor:moved push, a CursorPayload, carries the same tab
 with x and y, so when a tab's presence goes, so does its cursor.

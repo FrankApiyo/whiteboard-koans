@@ -8,6 +8,8 @@ Every browser converges. From the Phoenix course (chapter 10, LiveView basics, a
 on reconnects): a dropped socket reconnects by itself and the server mounts again, in a new
 process. The page stays, and so does live_svelte's hook element, so LiveView calls the hook's
 updated() with the new props, never mounted(): Board and its BoardState survive the reconnect.
+LiveView also calls a hook's disconnected() and reconnected() around a rejoin; a rejoin that
+fails reloads the page, and everything mounts fresh.
 
 So each connected mount sends a fresh sync_id with its snapshot, and Board's effect hands both
 to applyProps(state, props). A sync_id other than the state's means "this is the whole board
@@ -26,16 +28,13 @@ delete beats any move, and since nothing remembers a deleted id, a late add with
 it back.
 
     Write:          assets/js/resync.ts:9  (13: replace everything when sync_id changes)
-    Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:75
+    Exercised by:   assets/koans/13_reconnects_and_consistency.test.ts:74
 
 API you'll use
   - state.syncId, state.replaceAll(shapes, syncId): chapter 04's BoardState
   - SvelteHook.updated.call(hook): what LiveView runs when the hook's element changes; it reads
     data-props again, and with data-use-diff "true" sets only the keys sent, keeping the rest
   - getHooks, SvelteHook.mounted.call(hook), hook._instance: chapter 06
-  - disconnected(), reconnected(): LiveView calls these on the hook too, around a rejoin;
-    live_svelte exposes them as useLiveConnection().connected. A rejoin that fails reloads
-    the page, and then everything mounts fresh.
   - drag, pointer, placeCanvas: chapter 05; a drag with the Rectangle tool from 100, 100 to
     300, 250 draws "rectangle 200 by 150 at 100, 100"
   - rect(), ellipse(): "rectangle 200 by 100 at 100, 100" and "ellipse 200 by 100 at 400, 300";

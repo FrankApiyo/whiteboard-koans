@@ -21,11 +21,11 @@ the field. bind:this={field} stores the element once it is mounted, so read it i
 let name = $state(initial) reads initial once, and svelte-check warns state_referenced_locally.
 When a one-time seed is what you mean, say so: $state(untrack(() => initial)).
 
-$state proxies a plain object or array deeply, so a push inside it is seen. A Map, Set or
-class instance is not proxied, so its .set is never seen (svelte/reactivity has SvelteMap).
-$state.raw never proxies: only assigning a new value is seen. BoardState holds its shapes as
-a raw ReadonlyMap and always assigns a new one. $state.snapshot(x) is a plain copy of a
-proxy, for logging or structuredClone. In a koan, $effect.root(fn) hosts effects.
+$state proxies a plain object or array deeply, so a push inside it is seen. A Map, Set or class
+instance is not proxied, so its .set is never seen (svelte/reactivity has SvelteMap). $state.raw
+never proxies: only assigning a new value is seen. BoardState keeps its shapes in a raw
+ReadonlyMap; in a method, this is the instance, so this.shapes = next assigns a new one.
+$state.snapshot(x) is a plain copy of a proxy. In a koan, $effect.root(fn) hosts effects.
 
     Write:          assets/js/board_state.svelte.ts:25  (04: add or replace one)
     Exercised by:   assets/koans/04_effects_bindings_and_the_toolbar.svelte.test.ts:160
