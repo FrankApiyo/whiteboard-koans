@@ -336,3 +336,11 @@ exports a fully filled tree and runs `mix compile --warnings-as-errors`,
 `mix format --check-formatted`, the asset build, `mix test`, `npm test` and `svelte-check` on
 it. `npm run e2e` drives the solved app in two Chromium sessions. The course's own Elixir code
 lives in `course/` and its TypeScript runtime in `assets/koans_support/`; neither is exported.
+
+## Licence
+
+The code, everything the app and the course run, is under the Apache License 2.0 (`LICENSE`).
+The lesson material is under CC BY 4.0 (`LICENSE-lessons`): the lessons and meditations in the
+koan files, the pictures in `lessons/`, and this README's prose. To reuse it, credit it as
+"Easel by Frankline Apiyo", link this repository and name the licence. `NOTICE` holds the
+copyright line; keep it with any copy of the code.

@@ -174,3 +174,7 @@ on port 4100 with its own database under `tmp/e2e/`, so it never meets the dev s
 ## Working on it
 
 Keep developing through branches and pull requests, so CI checks each change.
+
+## Licence
+
+Apache License 2.0; see `LICENSE` and `NOTICE`.

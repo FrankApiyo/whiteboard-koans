@@ -393,9 +393,12 @@ defmodule Verify.ExportTest do
                     test/test_helper.exs config/config.exs mix.lock priv/repo/seeds.exs
                     e2e/demo.spec.ts playwright.config.ts vitest.config.ts package.json
                     package-lock.json assets/svelte.config.js assets/js/geo.ts
-                    assets/svelte/List.svelte assets/test/geo.test.ts assets/test/support/helper.ts) do
+                    assets/svelte/List.svelte assets/test/geo.test.ts assets/test/support/helper.ts
+                    LICENSE NOTICE) do
         assert rel in files, "#{rel} missing"
       end
+
+      refute "LICENSE-lessons" in files, "the lesson licence was copied"
 
       for dir <- ~w(course solutions lessons verify source _verify spike docs test/koans
                     assets/koans assets/koans_support assets/node_modules priv/static) do
@@ -544,7 +547,8 @@ defmodule Verify.ExportTest do
             "### On Postgres",
             "### In a cluster",
             "## End-to-end tests",
-            "## Known limits"
+            "## Known limits",
+            "## Licence"
           ],
           do: assert(readme() =~ "\n#{heading}\n", "README lacks #{heading}")
 
@@ -653,7 +657,8 @@ defmodule Verify.ExportTest do
 
     for rel <-
           ~w(config priv assets e2e mix.exs mix.lock .formatter.exs source course package.json
-             package-lock.json vitest.config.ts playwright.config.ts),
+             package-lock.json vitest.config.ts playwright.config.ts LICENSE NOTICE
+             LICENSE-lessons),
         File.exists?(Path.join(@repo, rel)) do
       clone!(Path.join(@repo, rel), Path.join(root, rel))
     end
@@ -701,8 +706,12 @@ defmodule Verify.ExportTest do
     refute_traces!(target)
 
     for rel <- ~w(lib/easel/hello.ex test/easel/hello_test.exs assets/js/hello.ts
-                  assets/test/hello.test.ts docs/early-checks.md AGENTS.md),
+                  assets/test/hello.test.ts docs/early-checks.md AGENTS.md LICENSE-lessons),
         do: refute(File.exists?(Path.join(target, rel)), "#{rel} was exported")
+
+    for rel <- ~w(LICENSE NOTICE), do: assert(read(target, rel) == read(@repo, rel))
+    assert read(target, "LICENSE") =~ "Apache License\n                           Version 2.0"
+    assert JSON.decode!(read(target, "package.json"))["license"] == "Apache-2.0"
 
     app_js = read(target, "assets/js/app.js")
     for leftover <- ["esbuild", "--prefix assets", "user_socket"], do: refute(app_js =~ leftover)
