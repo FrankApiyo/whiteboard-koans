@@ -18,7 +18,8 @@ and finishing (reconnects and the app's own tests).
 You need Elixir 1.18 or later on Erlang/OTP 26+ (built on 1.19 / OTP 28), Node 24.15 or later.
 
 ```sh
-git clone <url> whiteboard-koans && cd whiteboard-koans
+git clone https://github.com/FrankApiyo/whiteboard-koans.git
+cd whiteboard-koans
 mix setup
 mix koans
 ```
@@ -211,14 +212,14 @@ window with its own session (a private window or another browser). Stop the serv
 
 `lessons/index.html` has the lesson of every chapter, its list of files, and a diagram where a
 picture beats prose. In a chapter with both kinds, the TypeScript lesson comes first.
-Regenerate it with `mix koans.lessons` and open it once in a browser beside Neovim:
+Regenerate it with `mix koans.lessons` and open it once in a browser beside your editor:
 
 ```sh
-open lessons/index.html
+open lessons/index.html      # macOS; on Linux: xdg-open lessons/index.html
 ```
 
 Each koan file opens with the same lesson and names its diagram. The diagrams are standalone
-files under `lessons/svg/`; `open lessons/svg/<file>` shows one in Preview.
+files under `lessons/svg/`; `open lessons/svg/<file>` (`xdg-open` on Linux) shows one.
 
 ## Trying things before you commit to an answer
 
@@ -234,7 +235,7 @@ the server and a shell together.
 **TypeScript.** Node strips types itself, so a self-contained scratch file runs as it is: put a
 few lines in `tmp/scratch.ts` (`tmp/` is ignored) and run `node tmp/scratch.ts`. To try app
 code, use a koan: app modules import without file extensions, which plain Node rejects. Plain
-expressions also work at a `node` prompt. For a type question, hover in Neovim, or run
+expressions also work at a `node` prompt. For a type question, hover in your editor, or run
 `npx svelte-check --tsconfig assets/tsconfig.json` to see what the checker says.
 
 ## Starting over
@@ -253,7 +254,8 @@ behaviour alone.
 
 Before either command writes, it copies every file it is about to change into
 `.koans/last-reset/`, replacing the copies the previous reset left there. If you reset the wrong
-chapter, copy your code back from there.
+chapter, copy your code back from there. `mix koans.gen` also re-blanks any answered file it
+rewrites (after you pull course updates, say) and copies those to `.koans/last-gen/` first.
 
 Never edit `source/`. `solutions/` has every answer filled, for after a real attempt: read one,
 close it, and write yours.

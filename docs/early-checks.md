@@ -1,5 +1,7 @@
 # Early checks
 
+Spike record from 2026-11-15; the versions are the ones used then. Requirements are in the README.
+
 Outcome: **live_svelte 0.18 with Vite (`phoenix_vite`) works. No fallback to 0.17.**
 
 Versions: Elixir 1.19.5 / OTP 28, Node 25.9.0, Phoenix 1.8.16, LiveView 1.1.33,

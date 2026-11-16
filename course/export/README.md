@@ -177,4 +177,5 @@ Keep developing through branches and pull requests, so CI checks each change.
 
 ## Licence
 
-Apache License 2.0; see `LICENSE` and `NOTICE`.
+Apache License 2.0; see `LICENSE` and `NOTICE`. You may add your own copyright line to `NOTICE`
+for your changes.
