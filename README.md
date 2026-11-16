@@ -15,11 +15,12 @@ talking to the browser, many people at once (PubSub, Presence, cursors), and fin
 
 ## Setup
 
+You need Elixir 1.18 or later on Erlang/OTP 26+ (built on 1.19 / OTP 28), Node 24.15 or later.
+
 ```sh
-cd whiteboard-koans
+git clone <url> whiteboard-koans && cd whiteboard-koans
 mix setup
 mix koans
-nvim
 ```
 
 `mix setup` fetches the Hex and npm dependencies, creates and migrates the SQLite database and
@@ -27,8 +28,10 @@ builds the assets. Run it before anything else: some koans render pages, and pag
 built assets. It is the only step that needs the network. Node is needed for the build and the
 TypeScript koans; `node_modules/` sits at the repo root, next to `package.json`.
 
-Open nvim from this directory. vim-test runs `mix test` and Vitest in the directory nvim was
-started in, and the REPLs below start there too.
+Any editor works, with the koans run from a terminal (the commands are below). In Neovim,
+[vim-test](https://github.com/vim-test/vim-test) with its default runners runs them from the
+file you are in; start nvim in the repo root, because vim-test runs `mix test` and Vitest in
+the directory nvim was started in.
 
 Do not format the koan files. `mix format` skips `test/koans/` and `.prettierignore` lists
 `assets/koans/`, but formatting one by hand or on save can rewrap a meditation or a template, so
@@ -80,16 +83,17 @@ A typo stops the run before any koan, and no footer appears. In Elixir the compi
 `mix test` for the Elixir koans and Vitest for the TypeScript ones. Each prints its own footer
 and counts only its own kind, as in `2 of 52 Elixir koans answered.`
 
-| Keys         | Runs                                                 |
-| ------------ | ---------------------------------------------------- |
-| `<leader>ts` | every koan of the language you are in                |
-| `<leader>tf` | the file you are in                                  |
-| `<leader>tt` | the single koan under the cursor                     |
-| `<leader>tl` | whatever you ran last                                |
+| vim-test       | Runs                                  | In a terminal                                    |
+| -------------- | ------------------------------------- | ------------------------------------------------ |
+| `:TestSuite`   | every koan of the language you are in | `mix test`, `npm test`                           |
+| `:TestFile`    | the file you are in                   | `mix test <file>`, `npm test -- <file>`          |
+| `:TestNearest` | the single koan under the cursor      | `mix test <file>:<line>`, `npm test -- <file> -t "<meditation>"` |
+| `:TestLast`    | whatever you ran last                 | the same command again                           |
 
-The nearest-koan key finds the koan around the cursor, so put the cursor inside the koan, not
-above it. With the cursor above every koan nothing runs, and the footer says `No koan at that
-line`.
+Map them to keys if you like, for example `<leader>ts`, `<leader>tf`, `<leader>tt` and
+`<leader>tl`. `:TestNearest` finds the koan around the cursor, so put the cursor inside the
+koan, not above it. With the cursor above every koan, in an Elixir file nothing runs and the
+footer says `No koan at that line`; in a TypeScript file the whole file runs.
 
 Commit your answers at the end of each morning, for example `git commit -am "morning 3"`. Then
 a reset by mistake or an edit you regret never costs you more than one morning.
@@ -121,7 +125,8 @@ HEEx the markers are comments and the blank is an expression in braces: `<%!-- >
 `{__("NN: tag")}`, `<%!-- <<< NN --%>`. While a file holds a blank, its imports and aliases end
 in `warn: false`; the export removes it.
 
-**TypeScript and Svelte code.** In `assets/js/`, `assets/svelte/` and `assets/test/`, a code
+**TypeScript and Svelte code.** In `assets/js/`, `assets/svelte/`, `assets/test/` and the
+drills in `assets/koans/drills/`, a code
 blank is a `__blank("NN: tag");` line between `// >>> NN` and `// <<< NN`:
 
 ```ts
@@ -216,16 +221,17 @@ files under `lessons/svg/`; `open lessons/svg/<file>` shows one in Preview.
 
 The point of a koan is to know why the answer is right. Evaluate the pieces first.
 
-**Elixir.** Use iex in a neoterm split. Start nvim in the repo root, then send a line with
-`:TREPLSendLine`, or select lines and run `:'<,'>TREPLSendSelection`. Your config makes neoterm
-launch `iex -S mix` on the first send from an Elixir buffer, so do not start iex by hand first.
+**Elixir.** Run `iex -S mix` from the repo root, in a terminal or an editor split. One option
+in Neovim is neoterm: set it to start `iex -S mix` for Elixir buffers, then send a line with
+`:TREPLSendLine` or a selection with `:'<,'>TREPLSendSelection`.
 In the shell: `recompile()` after you change a file in `lib/`, `h GenServer.call/3` for docs,
 `i value` to describe a value, and `v()` for the last result. Run `iex -S mix phx.server` for
 the server and a shell together.
 
-**TypeScript.** Node strips types itself, so a scratch file runs as it is: put a few lines in
-`tmp/scratch.ts` (`tmp/` is ignored) and run `node tmp/scratch.ts`. Plain expressions also work
-at a `node` prompt. For a type question, hover in Neovim, or run
+**TypeScript.** Node strips types itself, so a self-contained scratch file runs as it is: put a
+few lines in `tmp/scratch.ts` (`tmp/` is ignored) and run `node tmp/scratch.ts`. To try app
+code, use a koan: app modules import without file extensions, which plain Node rejects. Plain
+expressions also work at a `node` prompt. For a type question, hover in Neovim, or run
 `npx svelte-check --tsconfig assets/tsconfig.json` to see what the checker says.
 
 ## Starting over

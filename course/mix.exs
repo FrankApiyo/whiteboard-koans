@@ -5,7 +5,7 @@ defmodule Koans.MixProject do
     [
       app: :koans,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.18",
       deps: []
     ]
   end

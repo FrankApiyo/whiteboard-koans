@@ -495,7 +495,8 @@ defmodule Verify.ExportTest do
       assert index.("mix assets.build") < index.("mix test")
       assert ci =~ ~s|elixir-version: "1.19"|
       assert ci =~ ~s|otp-version: "28"|
-      assert ci =~ ~s|node-version: "25"|
+      assert length(String.split(ci, ~s|node-version: "24"|)) == 3
+      assert ci =~ "npx tsc -p e2e"
       assert ci =~ "  e2e:\n"
       refute ci =~ ~r/actions\/\S+@v[1-5]\n/
 
@@ -561,7 +562,7 @@ defmodule Verify.ExportTest do
       assert readme() =~ "validates every shape payload"
       assert readme() =~ "do not commute"
       assert readme() =~ "tombstone"
-      assert readme() =~ "no per-board shape cap"
+      refute readme() =~ "no per-board shape cap"
       assert readme() =~ "server-side rate limit"
       assert readme() =~ ~r/and because it traps exits,\s+on shutdown too/
     end
@@ -578,7 +579,9 @@ defmodule Verify.ExportTest do
       config = File.read!(Path.join(@repo, "config/config.exs"))
       assert readme() =~ "500 ms"
       assert readme() =~ "five idle minutes"
-      assert config =~ "save_after: 500, idle_after: :timer.minutes(5)"
+      assert config =~ "save_after: 500,\n  idle_after: :timer.minutes(5)"
+      assert readme() =~ "at most 2,000 shapes"
+      assert config =~ "max_shapes: 2_000"
     end
 
     test "the process and message names in the README are the code's" do

@@ -26,6 +26,8 @@ Built while working through a hands-on course on Svelte, TypeScript and real-tim
 
 ## Run it
 
+You need Elixir 1.18 or later on Erlang/OTP 26+ (built on 1.19 / OTP 28), Node 24.15 or later.
+
 ```sh
 mix setup
 mix phx.server
